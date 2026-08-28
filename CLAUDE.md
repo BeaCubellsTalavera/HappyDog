@@ -12,7 +12,15 @@ Los commits de esta sesión son trabajo conjunto. No añadir `Co-Authored-By` en
 2. Al completar cada checkbox: **primero marca `[x]` en `PLAN.md`, luego haz `git commit` inmediatamente**. Un checkbox = un commit. No agrupar varios checkboxes en un solo commit.
 3. Actualiza el bloque "Estado Actual" de `PLAN.md` al final de cada fase y commitéalo.
 4. No avances a la siguiente fase sin pedir confirmación.
-5. Al completar una fase, verificar con Playwright MCP (`http://localhost:5173`) Y pedir confirmación manual al usuario. Ambas cosas. Solo omitir Playwright si la verificación requiere dispositivo físico, cuenta Google real, o push notifications.
+5. Al terminar cada checkbox/fase: **pedir primero confirmación manual al usuario**. Playwright MCP solo se usa cuando el usuario lo pida explícitamente o reporte un problema visual. No lanzarlo por defecto.
+
+## Git flow
+
+- Rama base compartida: `develop`. `main` refleja lo que está en producción / verificado por el usuario.
+- Cada fase de `PLAN.md` se trabaja en su propia branch **creada desde `develop`**, con nombre `phase/<slug>` (ej. `phase/finfra`, `phase/f4-nfc`).
+- Al terminar una fase y tras confirmación del usuario: merge de la branch en `develop`, luego (cuando el usuario lo autorice) merge de `develop` en `main`.
+- `git push` a `origin` está autorizado tras cada commit en cualquier branch (repo privado en GitHub).
+- Nunca hacer force-push a `main` ni a `develop` sin pedirlo antes.
 
 ## Reglas específicas del proyecto
 
