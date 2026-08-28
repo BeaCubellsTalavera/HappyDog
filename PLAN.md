@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `Finfra — Infraestructura real`
-- **Último paso completado:** Finfra — reglas Firestore (F2 + F3) deployadas a `happydog-prod` con `firebase deploy --only firestore:rules`. `.firebaserc` creado con proyecto default.
-- **Próximo paso:** Finfra — deploy frontend a Vercel vía `git push origin main` (auto-deploy). Después verificar login Google y creación de feeding en `https://happy-dog-alpha.vercel.app`.
+- **Fase activa:** `Finfra` completada y verificada — pendiente merge a `develop` y luego a `main`.
+- **Último paso completado:** Finfra verificada — login Google OK en `https://happy-dog-alpha.vercel.app`, budget alert 1 €/mes activo, rules Firestore live en `happydog-prod`.
+- **Próximo paso:** merge `phase/finfra` → `develop` → `main`, y arrancar `F4 — Flujo NFC`.
 - **Bloqueos:** ninguno
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -292,7 +292,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] Añadir variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en Vercel dashboard (Settings → Environment Variables)
 - [x] `firebase deploy --only firestore:rules` contra el proyecto real (incluye rules de F2 y F3)
 - [x] Deploy frontend a Vercel: `git push origin main` (auto-deploy si está linkeado)
-- [ ] **Verificar:** app accesible en `https://<app>.vercel.app`, login Google funciona en prod, budget alert configurado a 1 €
+- [x] **Verificar:** app accesible en `https://<app>.vercel.app`, login Google funciona en prod, budget alert configurado a 1 €
 
 ### F4 — Flujo NFC · _2-3h_
 
