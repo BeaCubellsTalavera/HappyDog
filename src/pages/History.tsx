@@ -28,15 +28,15 @@ export default function History() {
 
   return (
     <Layout>
-      <div className="flex flex-col gap-6 h-full overflow-y-auto py-6 pb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto pb-6">
         {loading ? (
           <p className="text-center text-gray-400 py-8">Cargando…</p>
         ) : days.length === 0 ? (
           <p className="text-center text-gray-400 py-8">Aún no hay registros</p>
         ) : (
-          days.map(({ date, label, feedings }) => (
-            <section key={date}>
-              <h2 className="sticky top-0 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-1 capitalize z-10">
+          days.map(({ date, label, feedings }, i) => (
+            <section key={date} className={i === 0 ? 'mt-4' : 'mt-6'}>
+              <h2 className="sticky top-0 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-2 capitalize z-10">
                 {label}
               </h2>
               <div className="flex flex-col gap-2">

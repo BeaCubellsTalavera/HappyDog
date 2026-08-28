@@ -43,7 +43,7 @@ export default function Home() {
 
   return (
     <Layout>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Botones fijos — no hacen scroll */}
         <div className="pt-6 pb-4 flex flex-col gap-3 shrink-0">
           <button

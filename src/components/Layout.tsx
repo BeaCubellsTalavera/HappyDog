@@ -25,7 +25,7 @@ export function Layout({ children }: Props) {
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden flex flex-col min-h-0 px-4 max-w-md mx-auto w-full">
+      <main className="flex-1 flex flex-col min-h-0 px-4 max-w-md mx-auto w-full">
         {children}
       </main>
 
