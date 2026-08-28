@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useFeedings } from '../hooks/useFeedings';
+import { Layout } from '../components/Layout';
 import type { Feeding } from '../types';
 
 function dayLabel(dateLocal: string): string {
@@ -27,17 +27,8 @@ export default function History() {
   }, [feedings]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="flex items-center px-4 py-4 bg-white shadow-sm gap-3">
-        <Link to="/" className="text-sm font-medium text-orange-500">
-          ← Inicio
-        </Link>
-        <h1 className="text-xl font-bold text-orange-500 flex-1 text-center pr-12">
-          Historial
-        </h1>
-      </header>
-
-      <main className="flex-1 px-4 py-6 flex flex-col gap-6 max-w-md mx-auto w-full">
+    <Layout>
+      <div className="flex flex-col gap-6">
         {loading ? (
           <p className="text-center text-gray-400 py-8">Cargando…</p>
         ) : days.length === 0 ? (
@@ -75,7 +66,7 @@ export default function History() {
             </section>
           ))
         )}
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }
