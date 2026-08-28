@@ -70,7 +70,7 @@ export default function Home() {
         </div>
 
         {/* Lista — solo esta parte hace scroll */}
-        <section className="flex-1 overflow-y-auto min-h-0 pb-4">
+        <section className="flex-1 overflow-y-auto hide-scrollbar min-h-0 pb-4">
           <h2 className="sticky top-0 bg-gray-50 text-sm font-medium text-gray-500 py-2 mb-1 z-10">
             Comidas de hoy
           </h2>

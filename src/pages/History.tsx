@@ -28,7 +28,7 @@ export default function History() {
 
   return (
     <Layout>
-      <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-6">
         {loading ? (
           <p className="text-center text-gray-400 py-8">Cargando…</p>
         ) : days.length === 0 ? (
