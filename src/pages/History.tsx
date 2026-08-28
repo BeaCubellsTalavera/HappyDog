@@ -35,7 +35,7 @@ export default function History() {
           <p className="text-center text-gray-400 py-8">Aún no hay registros</p>
         ) : (
           days.map(({ date, label, feedings }, i) => (
-            <section key={date} className={i === 0 ? 'mt-4' : 'mt-6'}>
+            <section key={date} className={i === 0 ? '' : 'mt-6'}>
               <h2 className="sticky top-0 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-2 capitalize z-10">
                 {label}
               </h2>
