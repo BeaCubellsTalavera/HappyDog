@@ -1,6 +1,8 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { useAuth } from '../hooks/useAuth';
 import { useFeedings } from '../hooks/useFeedings';
+import { createFeeding } from '../lib/feedings';
 import { FeedingCard } from '../components/FeedingCard';
 import { Layout } from '../components/Layout';
 import {
@@ -8,9 +10,13 @@ import {
   type ManualFeedDialogHandle,
 } from '../components/ManualFeedDialog';
 
+type FeedState = 'idle' | 'saving' | 'done';
+
 export default function Home() {
+  const { user } = useAuth();
   const { feedings, loading } = useFeedings();
   const dialogRef = useRef<ManualFeedDialogHandle>(null);
+  const [feedState, setFeedState] = useState<FeedState>('idle');
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayFeedings = useMemo(
@@ -18,17 +24,49 @@ export default function Home() {
     [feedings, today]
   );
 
+  async function handleFeedNow() {
+    if (feedState !== 'idle' || !user) return;
+    setFeedState('saving');
+    try {
+      await createFeeding({
+        timestamp: new Date(),
+        feederUid: user.uid,
+        feederName: user.displayName ?? user.email ?? 'Desconocido',
+        method: 'manual',
+      });
+      setFeedState('done');
+      setTimeout(() => setFeedState('idle'), 2000);
+    } catch {
+      setFeedState('idle');
+    }
+  }
+
   return (
     <Layout>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <button
-          onClick={() => dialogRef.current?.open()}
-          className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-semibold rounded-2xl shadow-sm transition-colors"
+          onClick={handleFeedNow}
+          disabled={feedState !== 'idle'}
+          className={`w-full py-4 text-white font-semibold rounded-2xl shadow-sm transition-all ${
+            feedState === 'done'
+              ? 'bg-green-500'
+              : 'bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-75'
+          }`}
         >
-          Dar de comer ahora
+          {feedState === 'saving' && (
+            <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 align-middle" />
+          )}
+          {feedState === 'done' ? '✓ Anotado' : 'Dar de comer ahora'}
         </button>
 
-        <section>
+        <button
+          onClick={() => dialogRef.current?.open()}
+          className="w-full py-3 border border-orange-200 text-orange-500 text-sm font-medium rounded-2xl bg-white hover:bg-orange-50 active:bg-orange-100 transition-colors"
+        >
+          Anotar comida olvidada
+        </button>
+
+        <section className="mt-1">
           <h2 className="text-sm font-medium text-gray-500 mb-3">Comidas de hoy</h2>
           {loading ? (
             <p className="text-center text-gray-400 py-8">Cargando…</p>
