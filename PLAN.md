@@ -289,7 +289,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] **[Manual usuario]** Crear proyecto Vercel vacío en plan **Hobby (gratis)**, linkado al repo. Copiar URL HTTPS estable (`https://happy-dog-alpha.vercel.app`)
 - [x] **[Manual usuario]** Añadir dominio Vercel a Firebase Auth → Authorized domains
 - [x] **[Manual usuario]** Generar VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
-- [ ] Añadir variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en Vercel dashboard (Settings → Environment Variables)
+- [x] Añadir variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en Vercel dashboard (Settings → Environment Variables)
 - [ ] `firebase deploy --only firestore:rules` contra el proyecto real (incluye rules de F2 y F3)
 - [ ] Deploy frontend a Vercel: `git push origin main` (auto-deploy si está linkeado)
 - [ ] **Verificar:** app accesible en `https://<app>.vercel.app`, login Google funciona en prod, budget alert configurado a 1 €
