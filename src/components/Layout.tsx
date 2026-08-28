@@ -18,7 +18,7 @@ export function Layout({ children }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-16">
-      <header className="flex items-center justify-between px-4 py-4 bg-white shadow-sm">
+      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-4 bg-white shadow-sm">
         <h1 className="text-xl font-bold text-orange-500">HappyDog</h1>
         <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold text-xs">
           {initials}
