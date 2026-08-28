@@ -250,8 +250,8 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] Crear `docker-compose.yml` con servicio `firebase-emulators` (Auth + Firestore + Functions)
 - [x] Crear `firebase.json` con config de emuladores + config `functions`
 - [x] Crear `firestore.rules` stub (`allow read, write: if false;` — se irá abriendo por fase)
-- [ ] Crear `.env.example` (variables cliente)
-- [ ] Crear `.env.emulators` con `VITE_USE_EMULATORS=true` + valores dummy de Firebase project (committed)
+- [x] Crear `.env.example` (variables cliente)
+- [x] Crear `.env.emulators` con `VITE_USE_EMULATORS=true` + valores dummy de Firebase project (committed)
 - [ ] Añadir script `scripts/seed-emulators.ts` que crea users y feedings de prueba en el emulador
 - [ ] Añadir scripts a `package.json`: `"emulators": "docker compose up"`, `"dev": "vite"`, `"seed": "tsx scripts/seed-emulators.ts"`, `"deploy:functions": "cd functions && npm run build && firebase deploy --only functions"`
 - [ ] **Verificar:** `docker compose up` levanta emuladores en :4000, `npm run dev` levanta Vite en :5173, la consola del navegador muestra conexión a emuladores (no a Firebase real). Escritura en Firestore desde la consola aparece en la UI del emulador (:4000)
