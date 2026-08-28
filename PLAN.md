@@ -34,8 +34,8 @@
 ## 📍 Estado Actual
 
 - **Fase activa:** `Finfra — Infraestructura real`
-- **Último paso completado:** Finfra — Blaze activado (trial 263 EUR / 90 días) + Budget Alert de 1 EUR/mes con emails 50/90/100 % configurado en `happydog-prod`.
-- **Próximo paso:** Finfra — crear proyecto Vercel Hobby linkeado al repo GitHub, copiar URL estable.
+- **Último paso completado:** Finfra — proyecto Vercel Hobby creado y linkeado al repo. URL estable: `https://happy-dog-alpha.vercel.app`.
+- **Próximo paso:** Finfra — añadir dominio Vercel a Firebase Auth → Authorized domains.
 - **Bloqueos:** ninguno
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -286,7 +286,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] **[Manual usuario]** Crear proyecto Firebase en consola, habilitar: Auth (Google provider), Firestore (production, región `europe-southwest1` / Madrid — ⚠️ la región es permanente), Cloud Messaging, Cloud Functions
 - [x] **[Manual usuario]** Upgrade a **plan Blaze**. El uso real está órdenes de magnitud por debajo del free tier (ver tabla en sección "⚠️ Restricción")
 - [x] **[Manual usuario]** ⚠️ **Crítico:** configurar **Budget Alert** en Google Cloud Console → Billing → Budgets & alerts. Budget de **1 €/mes** con notificaciones al 50% / 90% / 100%, email a la cuenta principal. Considerar activar "Disable Billing when budget exceeded" (protección extra)
-- [ ] **[Manual usuario]** Crear proyecto Vercel vacío en plan **Hobby (gratis)**, linkado al repo. Copiar URL HTTPS estable (`https://<app>.vercel.app`)
+- [x] **[Manual usuario]** Crear proyecto Vercel vacío en plan **Hobby (gratis)**, linkado al repo. Copiar URL HTTPS estable (`https://happy-dog-alpha.vercel.app`)
 - [ ] **[Manual usuario]** Añadir dominio Vercel a Firebase Auth → Authorized domains
 - [ ] **[Manual usuario]** Generar VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
 - [ ] Añadir variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en Vercel dashboard (Settings → Environment Variables)
