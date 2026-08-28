@@ -12,13 +12,7 @@ services:
       - ./firebase.json:/app/firebase.json:ro
       - ./firestore.rules:/app/firestore.rules:ro
       - ./functions:/app/functions
-      - emulator-data:/app/.emulator-data
     command: >
       firebase emulators:start
       --project=demo-happydog
       --only=auth,firestore,functions
-      --import=/app/.emulator-data
-      --export-on-exit=/app/.emulator-data
-
-volumes:
-  emulator-data:
