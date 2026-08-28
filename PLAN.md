@@ -273,7 +273,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] `src/hooks/useFeedings.ts` reactivo, unsubscribe en cleanup
 - [x] `src/pages/Home.tsx` con listado de `FeedingCard` (avatar + nombre + hora relativa + badge nfc/manual)
 - [x] `src/components/ManualFeedDialog.tsx` con `<dialog>` HTML5, input `datetime-local`, validación zod (`no future`, `max 24h atrás`)
-- [ ] Actualizar `firestore.rules`: `feedings/` read auth, create solo con `feederUid == request.auth.uid`, no update/delete
+- [x] Actualizar `firestore.rules`: `feedings/` read auth, create solo con `feederUid == request.auth.uid`, no update/delete
 - [ ] **Verificar:** crear feeding manual desde dos móviles/pestañas, ambos ven actualización realtime; validaciones bloquean fechas futuras y >24h atrás
 
 ### Finfra — Infraestructura real (Firebase + Vercel + GitHub) · _1h_ ⚠️ _requiere acción manual_
