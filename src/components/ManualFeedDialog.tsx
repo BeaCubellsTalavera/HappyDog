@@ -60,7 +60,7 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle>((_props, ref)
     e.preventDefault();
     const result = schema.safeParse({ datetime });
     if (!result.success) {
-      setError(result.error.errors[0].message);
+      setError(result.error.issues[0].message);
       return;
     }
     if (!user) return;
