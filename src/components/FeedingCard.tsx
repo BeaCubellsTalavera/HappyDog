@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Feeding } from '../types';
@@ -7,6 +8,12 @@ interface Props {
 }
 
 export function FeedingCard({ feeding }: Props) {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => tick((n) => n + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   const initials = feeding.feederName
     .split(' ')
     .map((n) => n[0])
