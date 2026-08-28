@@ -34,8 +34,8 @@
 ## 📍 Estado Actual
 
 - **Fase activa:** `F3 — Registro manual y historial`
-- **Último paso completado:** F2 completada y verificada (login Google, sesión persistente, doc users/{uid} en Firestore).
-- **Próximo paso:** Iniciar F3 — tipos Feeding, lib feedings, hook useFeedings, Home con listado, ManualFeedDialog.
+- **Último paso completado:** F3 implementada al completo (feedings lib, useFeedings, FeedingCard, ManualFeedDialog, Home, rules). Pendiente verificación.
+- **Próximo paso:** Verificar F3 (crear feeding desde dos pestañas, validaciones zod). Tras verificar, continuar con Finfra o F4 según preferencia.
 - **Bloqueos:** ninguno
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
