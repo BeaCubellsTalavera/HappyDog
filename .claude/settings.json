@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose up*)",
+      "Bash(docker compose down*)",
+      "Bash(docker compose logs*)",
+      "Bash(docker compose build*)",
+      "Bash(docker ps*)",
+      "Bash(docker images*)",
+      "PowerShell(docker compose*)",
+      "PowerShell(npm run*)",
+      "PowerShell(npm install*)",
+      "PowerShell(npm i *)",
+      "PowerShell(npx *)",
+      "PowerShell(netstat*)",
+      "PowerShell(Start-Sleep*)",
+      "PowerShell(Get-Content*)",
+      "PowerShell(Start-Process*)"
+    ]
+  }
+}

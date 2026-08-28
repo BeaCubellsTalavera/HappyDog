@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F1 — Bootstrap Vite + TS + Tailwind + Firebase SDK + Docker`
-- **Último paso completado:** F1 completada excepto verificación manual (emuladores Docker + navegador).
-- **Próximo paso:** Verificar F1 — `docker compose up` (emuladores :4000) + `npm run dev` (:5173) + confirmar conexión a emuladores en consola.
+- **Fase activa:** `F2 — Auth con Google Sign-In persistente`
+- **Último paso completado:** F1 completada y verificada (emuladores Docker :4000 + Vite :5173 funcionando).
+- **Próximo paso:** Iniciar F2 — Auth con Google Sign-In.
 - **Bloqueos:** ninguno
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -254,7 +254,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] Crear `.env.emulators` con `VITE_USE_EMULATORS=true` + valores dummy de Firebase project (committed)
 - [x] Añadir script `scripts/seed-emulators.ts` que crea users y feedings de prueba en el emulador
 - [x] Añadir scripts a `package.json`: `"emulators": "docker compose up"`, `"dev": "vite"`, `"seed": "tsx scripts/seed-emulators.ts"`, `"deploy:functions": "cd functions && npm run build && firebase deploy --only functions"`
-- [ ] **Verificar:** `docker compose up` levanta emuladores en :4000, `npm run dev` levanta Vite en :5173, la consola del navegador muestra conexión a emuladores (no a Firebase real). Escritura en Firestore desde la consola aparece en la UI del emulador (:4000)
+- [x] **Verificar:** `docker compose up` levanta emuladores en :4000, `npm run dev` levanta Vite en :5173, la consola del navegador muestra conexión a emuladores (no a Firebase real). Escritura en Firestore desde la consola aparece en la UI del emulador (:4000)
 
 ### F2 — Auth con Google Sign-In persistente · _2-3h_
 
