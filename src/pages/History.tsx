@@ -28,7 +28,7 @@ export default function History() {
 
   return (
     <Layout>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 h-full overflow-y-auto py-6 pb-4">
         {loading ? (
           <p className="text-center text-gray-400 py-8">Cargando…</p>
         ) : days.length === 0 ? (
