@@ -284,7 +284,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 
 - [x] **[Manual usuario]** Conectar cuenta GitHub personal y crear repo privado `happydog` (o similar). Hacer `git remote add origin <url>` + `git push -u origin main`
 - [x] **[Manual usuario]** Crear proyecto Firebase en consola, habilitar: Auth (Google provider), Firestore (production, región `europe-southwest1` / Madrid — ⚠️ la región es permanente), Cloud Messaging, Cloud Functions
-- [ ] **[Manual usuario]** Upgrade a **plan Blaze**. El uso real está órdenes de magnitud por debajo del free tier (ver tabla en sección "⚠️ Restricción")
+- [x] **[Manual usuario]** Upgrade a **plan Blaze**. El uso real está órdenes de magnitud por debajo del free tier (ver tabla en sección "⚠️ Restricción")
 - [ ] **[Manual usuario]** ⚠️ **Crítico:** configurar **Budget Alert** en Google Cloud Console → Billing → Budgets & alerts. Budget de **1 €/mes** con notificaciones al 50% / 90% / 100%, email a la cuenta principal. Considerar activar "Disable Billing when budget exceeded" (protección extra)
 - [ ] **[Manual usuario]** Crear proyecto Vercel vacío en plan **Hobby (gratis)**, linkado al repo. Copiar URL HTTPS estable (`https://<app>.vercel.app`)
 - [ ] **[Manual usuario]** Añadir dominio Vercel a Firebase Auth → Authorized domains
