@@ -227,6 +227,8 @@ docker compose down               # para al terminar (datos persistidos en volum
 
 ## 🚀 Fases
 
+> **Regla de commit:** al completar cada checkbox, marcar `[x]` en PLAN.md y hacer `git commit` inmediatamente. Un checkbox = un commit. No agrupar varios. (Detalle completo en `CLAUDE.md`.)
+
 Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar el bloque **Verificar**.
 
 ### F0 — Setup y documentación · ✅ _completada_

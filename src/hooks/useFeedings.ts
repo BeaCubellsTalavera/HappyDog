@@ -13,7 +13,7 @@ const store = create<FeedingsState>(() => ({
   loading: true,
 }));
 
-export function useFeedings(limit = 50) {
+export function useFeedings(limit = 200) {
   useEffect(() => {
     return subscribeFeedings(
       limit,
