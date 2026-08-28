@@ -73,7 +73,8 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle>((_props, ref)
         method: 'manual',
       });
       close();
-    } catch {
+    } catch (err) {
+      console.error('createFeeding error:', err);
       setError('Error al guardar. Inténtalo de nuevo.');
     } finally {
       setSaving(false);

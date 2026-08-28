@@ -15,8 +15,10 @@ const store = create<FeedingsState>(() => ({
 
 export function useFeedings(limit = 50) {
   useEffect(() => {
-    return subscribeFeedings(limit, (feedings) =>
-      store.setState({ feedings, loading: false })
+    return subscribeFeedings(
+      limit,
+      (feedings) => store.setState({ feedings, loading: false }),
+      () => store.setState({ feedings: [], loading: false })
     );
   }, [limit]);
 

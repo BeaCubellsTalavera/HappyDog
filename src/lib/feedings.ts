@@ -33,21 +33,29 @@ export async function createFeeding(input: CreateFeedingInput): Promise<void> {
 
 export function subscribeFeedings(
   limitCount: number,
-  onChange: (feedings: Feeding[]) => void
+  onChange: (feedings: Feeding[]) => void,
+  onError?: (error: Error) => void
 ): () => void {
   const q = query(
     collection(db, 'feedings'),
     orderBy('timestamp', 'desc'),
     firestoreLimit(limitCount)
   );
-  return onSnapshot(q, (snap) => {
-    const feedings = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-      timestamp:
-        (d.data().timestamp as { toDate?: () => Date } | null)?.toDate?.() ??
-        new Date(),
-    })) as Feeding[];
-    onChange(feedings);
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      const feedings = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+        timestamp:
+          (d.data().timestamp as { toDate?: () => Date } | null)?.toDate?.() ??
+          new Date(),
+      })) as Feeding[];
+      onChange(feedings);
+    },
+    (error) => {
+      console.error('Firestore feedings subscription error:', error);
+      onError?.(error);
+    }
+  );
 }
