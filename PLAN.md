@@ -248,8 +248,8 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] `src/lib/firebase.ts` — `initializeApp`, exports `auth`, `db`, `messaging`. Aplicar `setPersistence(auth, browserLocalPersistence)`. Si `VITE_USE_EMULATORS === 'true'`, llamar a `connectAuthEmulator(auth, 'http://localhost:9099')` y `connectFirestoreEmulator(db, 'localhost', 8080)`
 - [x] Crear `docker/emulators.Dockerfile` (Node 20 + Java + firebase-tools)
 - [x] Crear `docker-compose.yml` con servicio `firebase-emulators` (Auth + Firestore + Functions)
-- [ ] Crear `firebase.json` con config de emuladores + config `functions`
-- [ ] Crear `firestore.rules` stub (`allow read, write: if false;` — se irá abriendo por fase)
+- [x] Crear `firebase.json` con config de emuladores + config `functions`
+- [x] Crear `firestore.rules` stub (`allow read, write: if false;` — se irá abriendo por fase)
 - [ ] Crear `.env.example` (variables cliente)
 - [ ] Crear `.env.emulators` con `VITE_USE_EMULATORS=true` + valores dummy de Firebase project (committed)
 - [ ] Añadir script `scripts/seed-emulators.ts` que crea users y feedings de prueba en el emulador
