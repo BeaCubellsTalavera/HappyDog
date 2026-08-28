@@ -34,8 +34,8 @@
 ## 📍 Estado Actual
 
 - **Fase activa:** `Finfra — Infraestructura real`
-- **Último paso completado:** Finfra — dominio `happy-dog-alpha.vercel.app` autorizado en Firebase Auth.
-- **Próximo paso:** Finfra — generar VAPID key (Firebase Console → Project Settings → Cloud Messaging → Web Push certificates).
+- **Último paso completado:** Finfra — VAPID key generada en Firebase Console (Web Push certificates).
+- **Próximo paso:** Finfra — añadir variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en Vercel (Settings → Environment Variables).
 - **Bloqueos:** ninguno
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -288,7 +288,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] **[Manual usuario]** ⚠️ **Crítico:** configurar **Budget Alert** en Google Cloud Console → Billing → Budgets & alerts. Budget de **1 €/mes** con notificaciones al 50% / 90% / 100%, email a la cuenta principal. Considerar activar "Disable Billing when budget exceeded" (protección extra)
 - [x] **[Manual usuario]** Crear proyecto Vercel vacío en plan **Hobby (gratis)**, linkado al repo. Copiar URL HTTPS estable (`https://happy-dog-alpha.vercel.app`)
 - [x] **[Manual usuario]** Añadir dominio Vercel a Firebase Auth → Authorized domains
-- [ ] **[Manual usuario]** Generar VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
+- [x] **[Manual usuario]** Generar VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
 - [ ] Añadir variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en Vercel dashboard (Settings → Environment Variables)
 - [ ] `firebase deploy --only firestore:rules` contra el proyecto real (incluye rules de F2 y F3)
 - [ ] Deploy frontend a Vercel: `git push origin main` (auto-deploy si está linkeado)
