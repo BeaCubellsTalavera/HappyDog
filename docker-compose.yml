@@ -1,0 +1,24 @@
+services:
+  firebase-emulators:
+    build:
+      context: .
+      dockerfile: docker/emulators.Dockerfile
+    ports:
+      - "4000:4000"
+      - "9099:9099"
+      - "8080:8080"
+      - "5001:5001"
+    volumes:
+      - ./firebase.json:/app/firebase.json:ro
+      - ./firestore.rules:/app/firestore.rules:ro
+      - ./functions:/app/functions
+      - emulator-data:/app/.emulator-data
+    command: >
+      firebase emulators:start
+      --project=demo-happydog
+      --only=auth,firestore,functions
+      --import=/app/.emulator-data
+      --export-on-exit=/app/.emulator-data
+
+volumes:
+  emulator-data:

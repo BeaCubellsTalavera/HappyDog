@@ -246,8 +246,8 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] Crear estructura de carpetas (`pages/`, `components/`, `hooks/`, `lib/`, `types/`, `functions/src/`, `docker/`, `scripts/`)
 - [x] `firebase init functions` (TypeScript, Node 20) — genera `functions/package.json`, `functions/tsconfig.json`, `functions/src/index.ts` stub
 - [x] `src/lib/firebase.ts` — `initializeApp`, exports `auth`, `db`, `messaging`. Aplicar `setPersistence(auth, browserLocalPersistence)`. Si `VITE_USE_EMULATORS === 'true'`, llamar a `connectAuthEmulator(auth, 'http://localhost:9099')` y `connectFirestoreEmulator(db, 'localhost', 8080)`
-- [ ] Crear `docker/emulators.Dockerfile` (Node 20 + Java + firebase-tools)
-- [ ] Crear `docker-compose.yml` con servicio `firebase-emulators` (Auth + Firestore + Functions)
+- [x] Crear `docker/emulators.Dockerfile` (Node 20 + Java + firebase-tools)
+- [x] Crear `docker-compose.yml` con servicio `firebase-emulators` (Auth + Firestore + Functions)
 - [ ] Crear `firebase.json` con config de emuladores + config `functions`
 - [ ] Crear `firestore.rules` stub (`allow read, write: if false;` — se irá abriendo por fase)
 - [ ] Crear `.env.example` (variables cliente)
