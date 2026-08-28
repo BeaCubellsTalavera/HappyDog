@@ -34,8 +34,8 @@
 ## 📍 Estado Actual
 
 - **Fase activa:** `Finfra — Infraestructura real`
-- **Último paso completado:** F3 completada y verificada (realtime en dos pestañas, validaciones zod funcionando). Fix bug zod v4: `.issues` en vez de `.errors`.
-- **Próximo paso:** Finfra — requiere acciones manuales del usuario (GitHub, Firebase, Vercel, budget alert).
+- **Último paso completado:** Finfra — proyecto Firebase creado (Auth Google, Firestore en `europe-southwest1`/Madrid, Cloud Messaging habilitados).
+- **Próximo paso:** Finfra — upgrade a plan Blaze + configurar budget alert de 1 €.
 - **Bloqueos:** ninguno
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -283,7 +283,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 > Se hace aquí, cuando ya hay frontend funcional y antes de necesitar la URL real de Vercel para grabar el tag NFC.
 
 - [x] **[Manual usuario]** Conectar cuenta GitHub personal y crear repo privado `happydog` (o similar). Hacer `git remote add origin <url>` + `git push -u origin main`
-- [ ] **[Manual usuario]** Crear proyecto Firebase en consola, habilitar: Auth (Google provider), Firestore (production, región `eur3` o `europe-west1`), Cloud Messaging, Cloud Functions
+- [x] **[Manual usuario]** Crear proyecto Firebase en consola, habilitar: Auth (Google provider), Firestore (production, región `europe-southwest1` / Madrid — ⚠️ la región es permanente), Cloud Messaging, Cloud Functions
 - [ ] **[Manual usuario]** Upgrade a **plan Blaze**. El uso real está órdenes de magnitud por debajo del free tier (ver tabla en sección "⚠️ Restricción")
 - [ ] **[Manual usuario]** ⚠️ **Crítico:** configurar **Budget Alert** en Google Cloud Console → Billing → Budgets & alerts. Budget de **1 €/mes** con notificaciones al 50% / 90% / 100%, email a la cuenta principal. Considerar activar "Disable Billing when budget exceeded" (protección extra)
 - [ ] **[Manual usuario]** Crear proyecto Vercel vacío en plan **Hobby (gratis)**, linkado al repo. Copiar URL HTTPS estable (`https://<app>.vercel.app`)
