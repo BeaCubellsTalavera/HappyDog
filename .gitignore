@@ -56,6 +56,9 @@ pnpm-debug.log*
 # Vercel
 .vercel
 
+# Playwright MCP (logs efímeros, no commitear)
+.playwright-mcp/
+
 # PWA (generated)
 public/sw.js
 public/workbox-*.js

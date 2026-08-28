@@ -9,8 +9,10 @@ Los commits de esta sesión son trabajo conjunto. No añadir `Co-Authored-By` en
 ## Flujo de Trabajo
 
 1. Lee siempre `PLAN.md` para saber la fase activa.
-2. Al terminar un paso, marca la casilla `[x]` en `PLAN.md` y actualiza el "Estado Actual".
-3. No avances a la siguiente fase sin pedir confirmación.
+2. Al completar cada checkbox: **primero marca `[x]` en `PLAN.md`, luego haz `git commit` inmediatamente**. Un checkbox = un commit. No agrupar varios checkboxes en un solo commit.
+3. Actualiza el bloque "Estado Actual" de `PLAN.md` al final de cada fase y commitéalo.
+4. No avances a la siguiente fase sin pedir confirmación.
+5. Antes de pedirle al usuario verificación manual de UI, intentar verificar con Playwright MCP (`http://localhost:5173`). Solo escalar al usuario si requiere dispositivo físico, cuenta Google real, o push notifications.
 
 ## Reglas específicas del proyecto
 
