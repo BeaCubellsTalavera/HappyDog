@@ -36,7 +36,7 @@ export default function History() {
         ) : (
           days.map(({ date, label, feedings }) => (
             <section key={date}>
-              <h2 className="text-sm font-semibold text-gray-500 mb-2 capitalize">
+              <h2 className="sticky top-0 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-1 capitalize z-10">
                 {label}
               </h2>
               <div className="flex flex-col gap-2">

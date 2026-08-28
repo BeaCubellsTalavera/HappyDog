@@ -71,7 +71,9 @@ export default function Home() {
 
         {/* Lista — solo esta parte hace scroll */}
         <section className="flex-1 overflow-y-auto min-h-0 pb-4">
-          <h2 className="text-sm font-medium text-gray-500 mb-3">Comidas de hoy</h2>
+          <h2 className="sticky top-0 bg-gray-50 text-sm font-medium text-gray-500 py-2 mb-1 z-10">
+            Comidas de hoy
+          </h2>
           {loading ? (
             <p className="text-center text-gray-400 py-8">Cargando…</p>
           ) : todayFeedings.length === 0 ? (
