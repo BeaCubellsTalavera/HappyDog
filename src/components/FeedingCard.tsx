@@ -21,10 +21,11 @@ export function FeedingCard({ feeding }: Props) {
     .toUpperCase()
     .slice(0, 2);
 
-  const relativeTime = formatDistanceToNow(feeding.timestamp, {
-    addSuffix: true,
-    locale: es,
-  });
+  const date = feeding.timestamp.toDate();
+  const relativeTime =
+    Date.now() - date.getTime() < 60_000
+      ? 'justo ahora'
+      : formatDistanceToNow(date, { addSuffix: true, locale: es });
 
   return (
     <div className="flex items-center gap-3 bg-white rounded-xl p-4 shadow-sm">

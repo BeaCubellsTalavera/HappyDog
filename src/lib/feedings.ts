@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { db } from './firebase';
-import type { Feeding } from '../types';
+import type { Feeding, NewFeeding } from '../types';
 
 type CreateFeedingInput = {
   timestamp: Date;
@@ -20,7 +20,7 @@ type CreateFeedingInput = {
 
 export async function createFeeding(input: CreateFeedingInput): Promise<void> {
   const d = input.timestamp;
-  await addDoc(collection(db, 'feedings'), {
+  const doc: NewFeeding = {
     timestamp: d,
     dateLocal: format(d, 'yyyy-MM-dd'),
     hourLocal: d.getHours(),
@@ -28,7 +28,8 @@ export async function createFeeding(input: CreateFeedingInput): Promise<void> {
     feederName: input.feederName,
     method: input.method,
     createdAt: serverTimestamp(),
-  });
+  };
+  await addDoc(collection(db, 'feedings'), doc);
 }
 
 export function subscribeFeedings(
@@ -47,9 +48,6 @@ export function subscribeFeedings(
       const feedings = snap.docs.map((d) => ({
         id: d.id,
         ...d.data(),
-        timestamp:
-          (d.data().timestamp as { toDate?: () => Date } | null)?.toDate?.() ??
-          new Date(),
       })) as Feeding[];
       onChange(feedings);
     },
