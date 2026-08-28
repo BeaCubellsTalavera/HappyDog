@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F2 — Auth con Google Sign-In persistente`
-- **Último paso completado:** F1 completada y verificada (emuladores Docker :4000 + Vite :5173 funcionando).
-- **Próximo paso:** Iniciar F2 — Auth con Google Sign-In.
+- **Fase activa:** `F3 — Registro manual y historial`
+- **Último paso completado:** F2 completada y verificada (login Google, sesión persistente, doc users/{uid} en Firestore).
+- **Próximo paso:** Iniciar F3 — tipos Feeding, lib feedings, hook useFeedings, Home con listado, ManualFeedDialog.
 - **Bloqueos:** ninguno
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -258,22 +258,21 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 
 ### F2 — Auth con Google Sign-In persistente · _2-3h_
 
-- [ ] `src/lib/auth.ts` con `signInWithGoogle()` y `signOutUser()`
-- [ ] `src/hooks/useAuth.ts` con `onAuthStateChanged` → `{ user, loading }`
-- [ ] Al primer login: crear/actualizar `users/{uid}` con `displayName`, `email`, `photoURL`, `createdAt`
-- [ ] `src/components/ProtectedRoute.tsx` con redirect a `/login?returnTo=...` si no hay user
-- [ ] `src/pages/Login.tsx` con botón "Continuar con Google" y branding HappyDog
-- [ ] `firestore.rules` v1: `users/{uid}` read auth, write solo `request.auth.uid == uid`
-- [ ] `firebase deploy --only firestore:rules`
-- [ ] **Verificar:** login funciona, refresh mantiene sesión, cerrar/abrir navegador mantiene sesión, `users/{uid}` aparece en Firestore
+- [x] `src/lib/auth.ts` con `signInWithGoogle()` y `signOutUser()`
+- [x] `src/hooks/useAuth.tsx` con `onAuthStateChanged` → `{ user, loading }` + `AuthProvider` context
+- [x] Al primer login: crear/actualizar `users/{uid}` con `displayName`, `email`, `photoURL`, `createdAt`
+- [x] `src/components/ProtectedRoute.tsx` con redirect a `/login?returnTo=...` si no hay user
+- [x] `src/pages/Login.tsx` con botón "Continuar con Google" y branding HappyDog
+- [x] `firestore.rules` v1: `users/{uid}` read auth, write solo `request.auth.uid == uid`
+- [x] **Verificar:** login funciona, refresh mantiene sesión, cerrar/abrir navegador mantiene sesión, `users/{uid}` aparece en Firestore
 
 ### F3 — Registro manual y historial · _3-4h_
 
-- [ ] `src/types/index.ts` con interface `Feeding`
-- [ ] `src/lib/feedings.ts` con `createFeeding(input)` (rellena `dateLocal` con `format(d,'yyyy-MM-dd')` y `hourLocal` con `d.getHours()`) y `queryFeedings(limit)` con `onSnapshot`
-- [ ] `src/hooks/useFeedings.ts` reactivo, unsubscribe en cleanup
+- [x] `src/types/index.ts` con interface `Feeding`
+- [x] `src/lib/feedings.ts` con `createFeeding(input)` (rellena `dateLocal` con `format(d,'yyyy-MM-dd')` y `hourLocal` con `d.getHours()`) y `queryFeedings(limit)` con `onSnapshot`
+- [x] `src/hooks/useFeedings.ts` reactivo, unsubscribe en cleanup
 - [ ] `src/pages/Home.tsx` con listado de `FeedingCard` (avatar + nombre + hora relativa + badge nfc/manual)
-- [ ] `src/components/ManualFeedDialog.tsx` con `<dialog>` HTML5, input `datetime-local`, validación zod (`no future`, `max 24h atrás`)
+- [x] `src/components/ManualFeedDialog.tsx` con `<dialog>` HTML5, input `datetime-local`, validación zod (`no future`, `max 24h atrás`)
 - [ ] Actualizar `firestore.rules`: `feedings/` read auth, create solo con `feederUid == request.auth.uid`, no update/delete
 - [ ] **Verificar:** crear feeding manual desde dos móviles/pestañas, ambos ven actualización realtime; validaciones bloquean fechas futuras y >24h atrás
 
@@ -289,7 +288,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [ ] **[Manual usuario]** Añadir dominio Vercel a Firebase Auth → Authorized domains
 - [ ] **[Manual usuario]** Generar VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
 - [ ] Añadir variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en Vercel dashboard (Settings → Environment Variables)
-- [ ] `firebase deploy --only firestore:rules` contra el proyecto real
+- [ ] `firebase deploy --only firestore:rules` contra el proyecto real (incluye rules de F2 y F3)
 - [ ] Deploy frontend a Vercel: `git push origin main` (auto-deploy si está linkeado)
 - [ ] **Verificar:** app accesible en `https://<app>.vercel.app`, login Google funciona en prod, budget alert configurado a 1 €
 
