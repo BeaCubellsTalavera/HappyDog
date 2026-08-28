@@ -33,10 +33,10 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F0 — Setup y documentación`
-- **Último paso completado:** `PLAN.md` y `CLAUDE.md` actualizados con: matiz de gasto real 0 €, Docker + emuladores locales, arquitectura Cloud Functions v2 con budget alert, F7 rediseñada con gauge segmentado
-- **Próximo paso:** Commit inicial local (sin push aún — usuario debe conectar cuenta GitHub personal). Después, pasos `[Manual usuario]` en consolas Firebase / Vercel
-- **Bloqueos:** los pasos manuales requieren acción humana en consolas externas. Cuando estén hechos, arrancar F1
+- **Fase activa:** `F1 — Bootstrap Vite + TS + Tailwind + Firebase SDK + Docker`
+- **Último paso completado:** Vite scaffold + deps instalados (F1 en curso).
+- **Próximo paso:** Tailwind config + estructura de carpetas + firebase.ts + Docker + env files.
+- **Bloqueos:** ninguno
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
 
@@ -229,26 +229,19 @@ docker compose down               # para al terminar (datos persistidos en volum
 
 Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar el bloque **Verificar**.
 
-### F0 — Setup y documentación · _30 min_
+### F0 — Setup y documentación · ✅ _completada_
 
 - [x] Escribir `PLAN.md` en el root (este archivo)
 - [x] Escribir `CLAUDE.md` en el root con flujo de trabajo
 - [x] Crear `.gitignore` (Vite estándar + `.env.local` + `firebase-service-account.json`)
 - [x] `git init` (rama `main`)
-- [ ] Commit inicial local (sin push — el usuario aún tiene que conectar su cuenta GitHub)
-- [ ] **[Manual usuario]** Crear proyecto Firebase en consola, habilitar: Auth (Google provider), Firestore (production, región `eur3` o `europe-west1`), Cloud Messaging, Cloud Functions
-- [ ] **[Manual usuario]** Upgrade a **plan Blaze**. El uso real está órdenes de magnitud por debajo del free tier (ver tabla en sección "⚠️ Restricción")
-- [ ] **[Manual usuario]** ⚠️ **Crítico:** configurar **Budget Alert** en Google Cloud Console → Billing → Budgets & alerts. Budget de **1 €/mes** con notificaciones al 50% / 90% / 100%, email a la cuenta principal. Considerar activar "Disable Billing when budget exceeded" (protección extra)
-- [ ] **[Manual usuario]** Crear proyecto Vercel vacío linkeado al repo (obtener URL HTTPS estable). Plan **Hobby (gratis)**
-- [ ] **[Manual usuario]** Añadir dominio Vercel a Firebase Auth → Authorized domains
-- [ ] **[Manual usuario]** Generar VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
-- [ ] **Verificar:** proyecto Firebase creado en Blaze, budget alert configurado a 1 €, proyecto Vercel creado en Hobby, dominio autorizado, VAPID key copiada
+- [x] Commit inicial local (`07ddc00`)
 
 ### F1 — Bootstrap Vite + TS + Tailwind + Firebase SDK + Docker · _2-3h_
 
-- [ ] `npm create vite@latest . -- --template react-ts`
-- [ ] Instalar deps: `npm i firebase react-router-dom date-fns zod`
-- [ ] Instalar dev deps: `npm i -D tailwindcss postcss autoprefixer vite-plugin-pwa workbox-window`
+- [x] `npm create vite@latest . -- --template react-ts`
+- [x] Instalar deps: `npm i firebase react-router-dom date-fns zod`
+- [x] Instalar dev deps: `npm i -D tailwindcss postcss autoprefixer vite-plugin-pwa workbox-window`
 - [ ] Configurar Tailwind (`npx tailwindcss init -p`) + directivas en `src/index.css`
 - [ ] Crear estructura de carpetas (`pages/`, `components/`, `hooks/`, `lib/`, `types/`, `functions/src/`, `docker/`, `scripts/`)
 - [ ] `firebase init functions` (TypeScript, Node 20) — genera `functions/package.json`, `functions/tsconfig.json`, `functions/src/index.ts` stub
@@ -261,9 +254,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [ ] Crear `.env.emulators` con `VITE_USE_EMULATORS=true` + valores dummy de Firebase project (committed)
 - [ ] Añadir script `scripts/seed-emulators.ts` que crea users y feedings de prueba en el emulador
 - [ ] Añadir scripts a `package.json`: `"emulators": "docker compose up"`, `"dev": "vite"`, `"seed": "tsx scripts/seed-emulators.ts"`, `"deploy:functions": "cd functions && npm run build && firebase deploy --only functions"`
-- [ ] Deploy inicial vacío a Vercel — variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en dashboard
-- [ ] **Verificar (local):** `docker compose up` levanta emuladores en :4000, `npm run dev` levanta Vite, la consola del navegador muestra que está conectado a emuladores (no a Firebase real). Escritura en Firestore desde la consola aparece en la UI del emulador
-- [ ] **Verificar (prod):** Vercel sirve la app en `https://<app>.vercel.app`
+- [ ] **Verificar:** `docker compose up` levanta emuladores en :4000, `npm run dev` levanta Vite en :5173, la consola del navegador muestra conexión a emuladores (no a Firebase real). Escritura en Firestore desde la consola aparece en la UI del emulador (:4000)
 
 ### F2 — Auth con Google Sign-In persistente · _2-3h_
 
@@ -285,6 +276,22 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [ ] `src/components/ManualFeedDialog.tsx` con `<dialog>` HTML5, input `datetime-local`, validación zod (`no future`, `max 24h atrás`)
 - [ ] Actualizar `firestore.rules`: `feedings/` read auth, create solo con `feederUid == request.auth.uid`, no update/delete
 - [ ] **Verificar:** crear feeding manual desde dos móviles/pestañas, ambos ven actualización realtime; validaciones bloquean fechas futuras y >24h atrás
+
+### Finfra — Infraestructura real (Firebase + Vercel + GitHub) · _1h_ ⚠️ _requiere acción manual_
+
+> Se hace aquí, cuando ya hay frontend funcional y antes de necesitar la URL real de Vercel para grabar el tag NFC.
+
+- [ ] **[Manual usuario]** Conectar cuenta GitHub personal y crear repo privado `happydog` (o similar). Hacer `git remote add origin <url>` + `git push -u origin main`
+- [ ] **[Manual usuario]** Crear proyecto Firebase en consola, habilitar: Auth (Google provider), Firestore (production, región `eur3` o `europe-west1`), Cloud Messaging, Cloud Functions
+- [ ] **[Manual usuario]** Upgrade a **plan Blaze**. El uso real está órdenes de magnitud por debajo del free tier (ver tabla en sección "⚠️ Restricción")
+- [ ] **[Manual usuario]** ⚠️ **Crítico:** configurar **Budget Alert** en Google Cloud Console → Billing → Budgets & alerts. Budget de **1 €/mes** con notificaciones al 50% / 90% / 100%, email a la cuenta principal. Considerar activar "Disable Billing when budget exceeded" (protección extra)
+- [ ] **[Manual usuario]** Crear proyecto Vercel vacío en plan **Hobby (gratis)**, linkado al repo. Copiar URL HTTPS estable (`https://<app>.vercel.app`)
+- [ ] **[Manual usuario]** Añadir dominio Vercel a Firebase Auth → Authorized domains
+- [ ] **[Manual usuario]** Generar VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
+- [ ] Añadir variables `VITE_FIREBASE_*` y `VITE_VAPID_KEY` en Vercel dashboard (Settings → Environment Variables)
+- [ ] `firebase deploy --only firestore:rules` contra el proyecto real
+- [ ] Deploy frontend a Vercel: `git push origin main` (auto-deploy si está linkeado)
+- [ ] **Verificar:** app accesible en `https://<app>.vercel.app`, login Google funciona en prod, budget alert configurado a 1 €
 
 ### F4 — Flujo NFC · _2-3h_
 
