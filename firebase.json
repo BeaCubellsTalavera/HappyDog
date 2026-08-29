@@ -6,6 +6,7 @@
     {
       "source": "functions",
       "codebase": "default",
+      "predeploy": ["npm --prefix functions run build"],
       "ignore": [
         "node_modules",
         ".git",
