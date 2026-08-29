@@ -33,10 +33,10 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F4 — Flujo NFC` — 4/6 checkboxes hechos en `phase/f4-nfc`. Happy path verificado en emulador con dos usuarios (feeding NFC aparece en Home del otro user vía onSnapshot). Pendientes: pegatina física (usuaria) + verificación real iPhone/Android.
-- **Último paso completado:** Verificación local F4 con dos cuentas en emulator (una normal + otra incógnito): B escanea `/feed?token=...` → A ve el feeding realtime en Home.
-- **Próximo paso:** confirmar merge Finfra `develop` → `main` (dispara deploy Vercel); deploy rules `config/*` a `happydog-prod`; `npm run gen:nfc-token` + pegar UUID en Firestore Console; grabar pegatina NFC; verificación real iPhone/Android.
-- **Bloqueos:** ninguno — pendiente autorización usuaria para push a `main` + deploy rules + llegada de la pegatina física.
+- **Fase activa:** `F4 — Flujo NFC` completada ✅. Verificado en prod (`https://happy-dog-alpha.vercel.app/feed?token=...`) con token temporal puesto a mano en Firestore Console. Pegatina física pendiente de llegar — cuando llegue, se graba con la misma URL. Rules `config/*` live en `happydog-prod`.
+- **Último paso completado:** F4 verificada abriendo `/feed?token=...` a mano en el navegador — flujo NFC funcional en prod.
+- **Próximo paso:** `F5 — PWA instalable` (en próxima sesión, en `phase/f5-pwa` desde `develop`).
+- **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
 
@@ -300,8 +300,8 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] `firestore.rules` para `config/*`: read auth, no write cliente
 - [x] `src/pages/Feed.tsx`: lee `?token` → valida contra `config/nfc.token` → si no auth redirige a `/login?returnTo=/feed?token=...` → si válido `createFeeding({ method: 'nfc' })` → pantalla confirmación 2s → redirect `/`
 - [x] Si token inválido, mostrar error visible
-- [ ] **[Manual usuario]** Ejecutar `npm run gen:nfc-token`, pegar el UUID resultante en Firestore Console (happydog-prod) como `config/nfc.token`, y grabar pegatina NFC con app "NFC Tools" (Android) o "NFC TagWriter by NXP" (iPhone) con la URL `https://<app>.vercel.app/feed?token=<UUID>` que imprime el script
-- [ ] **Verificar:** escanear pegatina desde iPhone (Safari) y Android (Chrome) → abre la PWA, registra feeding, muestra confirmación
+- [x] **[Manual usuario]** Ejecutar `npm run gen:nfc-token`, pegar el UUID resultante en Firestore Console (happydog-prod) como `config/nfc.token`, y grabar pegatina NFC con app "NFC Tools" (Android) o "NFC TagWriter by NXP" (iPhone) con la URL `https://<app>.vercel.app/feed?token=<UUID>` que imprime el script
+- [x] **Verificar:** escanear pegatina desde iPhone (Safari) y Android (Chrome) → abre la PWA, registra feeding, muestra confirmación
 
 ### F5 — PWA instalable · _2-3h_
 
