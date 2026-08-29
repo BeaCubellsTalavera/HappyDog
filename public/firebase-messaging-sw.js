@@ -15,17 +15,21 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// El badge hay que subirlo desde el evento `push` nativo, no desde
+// onBackgroundMessage: en iOS el callback de Firebase no está en el
+// contexto de evento que iOS requiere para setAppBadge.
+self.addEventListener('push', () => {
+  if ('setAppBadge' in self.navigator) {
+    self.navigator.setAppBadge(1).catch(() => {});
+  }
+});
+
 messaging.onBackgroundMessage((payload) => {
   // El mensaje se envía como data-only (sin campo notification) para que el
   // navegador no muestre una notificación automáticamente además de esta.
   // Si el SDK auto-mostrase por el campo notification tendríamos el doble.
   const title = payload.data?.title ?? 'HappyDog';
   const body = payload.data?.body ?? '';
-
-  // Badge en el icono de la app (Android Chrome 81+ / iOS 16.4+ PWA instalada)
-  if ('setAppBadge' in self.navigator) {
-    self.navigator.setAppBadge(1).catch(() => {});
-  }
 
   self.registration.showNotification(title, {
     body,
