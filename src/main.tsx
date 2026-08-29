@@ -9,17 +9,32 @@ import './hooks/useInstallPrompt';
 import './hooks/useToast';
 
 // Cuando la app recupera el foco: cerrar notificaciones pendientes + limpiar badge.
-// Así el badge del icono desaparece al abrir la app sin tener que tocar cada notif.
-if ('serviceWorker' in navigator) {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible') return;
-    navigator.serviceWorker.ready
-      .then((reg) => reg.getNotifications({ tag: 'happydog-feeding' }))
-      .then((ns) => ns.forEach((n) => n.close()))
-      .catch(() => {});
-    if ('clearAppBadge' in navigator) (navigator as Navigator & { clearAppBadge(): Promise<void> }).clearAppBadge().catch(() => {});
-  });
+// Así el badge desaparece al abrir la app sin tener que tocar cada notif.
+async function clearHappydogNotifications() {
+  if (!('serviceWorker' in navigator)) return;
+  // Recorrer TODAS las registraciones: las notificaciones las muestra el SW de
+  // FCM (scope /firebase-cloud-messaging-push-scope), no el SW de Workbox (/).
+  // navigator.serviceWorker.ready solo devuelve el SW controlador, que es Workbox.
+  const regs = await navigator.serviceWorker.getRegistrations().catch(() => []);
+  await Promise.all(
+    regs.map((reg) =>
+      reg.getNotifications({ tag: 'happydog-feeding' })
+        .then((ns) => ns.forEach((n) => n.close()))
+        .catch(() => {})
+    )
+  );
+  if ('clearAppBadge' in navigator) {
+    (navigator as Navigator & { clearAppBadge(): Promise<void> }).clearAppBadge().catch(() => {});
+  }
 }
+
+// visibilitychange (Android) + focus (iOS PWA no siempre dispara visibilitychange)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') clearHappydogNotifications();
+});
+window.addEventListener('focus', clearHappydogNotifications);
+// También al cargar (por si la app se abrió desde la notificación)
+clearHappydogNotifications();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
