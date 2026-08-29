@@ -62,16 +62,18 @@ export const sendPushOnFeeding = onDocumentCreated(
     }
 
     const methodLabel = feeding.method === 'nfc' ? '(NFC)' : '(manual)';
-    const title = '🐾 Han dado de comer';
-    const body = `${feeding.feederName} acaba de darles de comer ${methodLabel}`;
 
+    // Mensaje data-only: sin campo `notification` para que el navegador no muestre
+    // la notificación automáticamente además de la que muestra onBackgroundMessage.
+    // Con ambos activos el usuario recibe el doble.
     const response = await getMessaging().sendEachForMulticast({
       tokens: flatTokens,
-      notification: { title, body },
       data: {
         feedingId: event.params.id,
         feederUid: feeding.feederUid,
         method: feeding.method,
+        title: '🐾 Han dado de comer',
+        body: `${feeding.feederName} acaba de darles de comer ${methodLabel}`,
       },
     });
 
