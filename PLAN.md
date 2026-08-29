@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F5 — PWA instalable` en `phase/f5-pwa`. Código completo: manifest, workbox con navigateFallback + runtimeCaching NetworkFirst (Firestore/FCM), iconos placeholder (coral "HD" 192/512/512-maskable + apple-touch-icon 180), `InstallPrompt` con `beforeinstallprompt` + guía iOS integrado en Layout. `firebase-messaging-sw.js` explícitamente excluido del precache de Workbox (globIgnores + denylist).
-- **Último paso completado:** build & preview verificados — SW + manifest + iconos se sirven con 200; type-check limpio.
-- **Próximo paso:** verificación manual en móviles reales (iPhone + Android, checkbox 6 de F5). Después: merge de `phase/f5-pwa` en `develop` con la usuaria y planificación de `F6 — Push notifications`.
+- **Fase activa:** `F5 — PWA instalable` completada ✅ y en prod (`main`). Manifest HappyDog, workbox con navigateFallback + runtimeCaching FCM, iconos placeholder coral "HD" (192/512/512-maskable + apple-touch-icon 180), `InstallPrompt` (banner Android + guía iOS) con listener a nivel módulo vía store zustand, persistencia offline nativa de Firestore con `persistentLocalCache` (IndexedDB).
+- **Último paso completado:** F5 verificada en prod desde móvil — Android instala vía menú (banner con siguiente cold-start), iOS añade a pantalla de inicio, offline muestra historial cacheado.
+- **Próximo paso:** `F6 — Push notifications cross-device (Cloud Functions v2)` en `phase/f6-push` desde `develop`.
 - **Bloqueos:** ninguno técnico. Iconos son placeholder — sustituir por logo real (maskable.app) cuando haya branding definitivo.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -310,7 +310,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] `public/apple-touch-icon.png` (180×180, mismo diseño placeholder)
 - [x] `src/components/InstallPrompt.tsx`: escucha `beforeinstallprompt` (Android), detecta iOS y muestra guía visual "Compartir → Añadir a pantalla de inicio" — integrado en `Layout`, dismiss con TTL 7 días
 - [x] `npm run build && npm run preview` verifica: `sw.js` + `manifest.webmanifest` + iconos servidos con 200; `firebase-messaging-sw.js` excluido del precache de Workbox (globIgnores) — Lighthouse audit real se pasa desde Chrome DevTools en la verificación móvil
-- [ ] **Verificar (móviles reales):** iPhone → añadir a pantalla de inicio → abrir icono → standalone funciona. Android → prompt aparece / instala desde menú. Offline → historial cacheado visible
+- [x] **Verificar (móviles reales):** iPhone → añadir a pantalla de inicio → abrir icono → standalone funciona. Android → prompt aparece / instala desde menú (tras fix del listener a nivel módulo). Offline → historial cacheado visible (tras activar `persistentLocalCache` de Firestore)
 
 ### F6 — Push notifications cross-device (async, Cloud Functions v2) · _3-4h_
 
