@@ -33,10 +33,10 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F4 — Flujo NFC` — 4/6 checkboxes hechos en `phase/f4-nfc`. Pendientes: deploy rules `config/*` a prod, generación de token real, grabado pegatina y verificación end-to-end.
-- **Último paso completado:** F4: Feed.tsx con validación de token, redirect returnTo, error visible; rules Firestore para `config/*`; seed emulador con `config/nfc`; script `gen:nfc-token` para prod.
-- **Próximo paso:** confirmar merge Finfra `develop` → `main` (dispara deploy Vercel); luego deploy rules `config/*` a `happydog-prod` (`firebase deploy --only firestore:rules`); ejecutar `npm run gen:nfc-token`, pegar UUID en Firestore Console (`config/nfc.token`), grabar pegatina NFC, escanear desde iPhone y Android.
-- **Bloqueos:** ninguno — pendiente autorización usuaria para push a `main` + deploy rules.
+- **Fase activa:** `F4 — Flujo NFC` — 4/6 checkboxes hechos en `phase/f4-nfc`. Happy path verificado en emulador con dos usuarios (feeding NFC aparece en Home del otro user vía onSnapshot). Pendientes: pegatina física (usuaria) + verificación real iPhone/Android.
+- **Último paso completado:** Verificación local F4 con dos cuentas en emulator (una normal + otra incógnito): B escanea `/feed?token=...` → A ve el feeding realtime en Home.
+- **Próximo paso:** confirmar merge Finfra `develop` → `main` (dispara deploy Vercel); deploy rules `config/*` a `happydog-prod`; `npm run gen:nfc-token` + pegar UUID en Firestore Console; grabar pegatina NFC; verificación real iPhone/Android.
+- **Bloqueos:** ninguno — pendiente autorización usuaria para push a `main` + deploy rules + llegada de la pegatina física.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
 
