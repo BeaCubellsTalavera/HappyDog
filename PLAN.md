@@ -306,7 +306,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 ### F5 — PWA instalable · _2-3h_
 
 - [x] Configurar `vite-plugin-pwa` en `vite.config.ts`: `registerType: 'autoUpdate'`, manifest completo (`name: 'HappyDog'`, `short_name: 'HappyDog'`, `description: 'Registra cuándo comen los perros'`, theme_color, background_color, `display: 'standalone'`, `lang: 'es'`, `start_url: '/'`), workbox con `navigateFallback: '/index.html'`, runtimeCaching NetworkFirst para Firestore/FCM
-- [ ] Generar iconos (192, 512, 512 maskable) — usar [maskable.app](https://maskable.app) a partir del logo
+- [x] Generar iconos (192, 512, 512 maskable) — placeholders coral con "HD"; reemplazar por logo real vía [maskable.app](https://maskable.app) cuando haya branding
 - [ ] `public/apple-touch-icon.png`
 - [ ] `src/components/InstallPrompt.tsx`: escucha `beforeinstallprompt` (Android), detecta iOS y muestra guía visual "Compartir → Añadir a pantalla de inicio"
 - [ ] `npm run build && npm run preview` + Lighthouse PWA audit
