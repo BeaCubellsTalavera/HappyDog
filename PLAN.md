@@ -33,10 +33,10 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `Finfra` completada y verificada — pendiente merge a `develop` y luego a `main`.
-- **Último paso completado:** Finfra verificada — login Google OK en `https://happy-dog-alpha.vercel.app`, budget alert 1 €/mes activo, rules Firestore live en `happydog-prod`.
-- **Próximo paso:** merge `phase/finfra` → `develop` → `main`, y arrancar `F4 — Flujo NFC`.
-- **Bloqueos:** ninguno
+- **Fase activa:** `F4 — Flujo NFC` — 4/6 checkboxes hechos en `phase/f4-nfc`. Pendientes: deploy rules `config/*` a prod, generación de token real, grabado pegatina y verificación end-to-end.
+- **Último paso completado:** F4: Feed.tsx con validación de token, redirect returnTo, error visible; rules Firestore para `config/*`; seed emulador con `config/nfc`; script `gen:nfc-token` para prod.
+- **Próximo paso:** confirmar merge Finfra `develop` → `main` (dispara deploy Vercel); luego deploy rules `config/*` a `happydog-prod` (`firebase deploy --only firestore:rules`); ejecutar `npm run gen:nfc-token`, pegar UUID en Firestore Console (`config/nfc.token`), grabar pegatina NFC, escanear desde iPhone y Android.
+- **Bloqueos:** ninguno — pendiente autorización usuaria para push a `main` + deploy rules.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
 
