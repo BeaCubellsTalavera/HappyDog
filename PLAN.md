@@ -33,10 +33,10 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F4 — Flujo NFC` completada ✅. Verificado en prod (`https://happy-dog-alpha.vercel.app/feed?token=...`) con token temporal puesto a mano en Firestore Console. Pegatina física pendiente de llegar — cuando llegue, se graba con la misma URL. Rules `config/*` live en `happydog-prod`.
-- **Último paso completado:** F4 verificada abriendo `/feed?token=...` a mano en el navegador — flujo NFC funcional en prod.
-- **Próximo paso:** `F5 — PWA instalable` (en próxima sesión, en `phase/f5-pwa` desde `develop`).
-- **Bloqueos:** ninguno.
+- **Fase activa:** `F5 — PWA instalable` en `phase/f5-pwa`. Código completo: manifest, workbox con navigateFallback + runtimeCaching NetworkFirst (Firestore/FCM), iconos placeholder (coral "HD" 192/512/512-maskable + apple-touch-icon 180), `InstallPrompt` con `beforeinstallprompt` + guía iOS integrado en Layout. `firebase-messaging-sw.js` explícitamente excluido del precache de Workbox (globIgnores + denylist).
+- **Último paso completado:** build & preview verificados — SW + manifest + iconos se sirven con 200; type-check limpio.
+- **Próximo paso:** verificación manual en móviles reales (iPhone + Android, checkbox 6 de F5). Después: merge de `phase/f5-pwa` en `develop` con la usuaria y planificación de `F6 — Push notifications`.
+- **Bloqueos:** ninguno técnico. Iconos son placeholder — sustituir por logo real (maskable.app) cuando haya branding definitivo.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
 
