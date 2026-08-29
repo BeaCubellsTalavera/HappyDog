@@ -297,7 +297,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 ### F4 — Flujo NFC · _2-3h_
 
 - [x] Crear doc `config/nfc` en Firestore con `token: <UUID random>` (seed en emulador con token dev fijo + script `npm run gen:nfc-token` para generar UUID de prod que se pega manualmente en Firestore Console)
-- [ ] `firestore.rules` para `config/*`: read auth, no write cliente
+- [x] `firestore.rules` para `config/*`: read auth, no write cliente
 - [ ] `src/pages/Feed.tsx`: lee `?token` → valida contra `config/nfc.token` → si no auth redirige a `/login?returnTo=/feed?token=...` → si válido `createFeeding({ method: 'nfc' })` → pantalla confirmación 2s → redirect `/`
 - [ ] Si token inválido, mostrar error visible
 - [ ] **[Manual usuario]** Ejecutar `npm run gen:nfc-token`, pegar el UUID resultante en Firestore Console (happydog-prod) como `config/nfc.token`, y grabar pegatina NFC con app "NFC Tools" (Android) o "NFC TagWriter by NXP" (iPhone) con la URL `https://<app>.vercel.app/feed?token=<UUID>` que imprime el script
