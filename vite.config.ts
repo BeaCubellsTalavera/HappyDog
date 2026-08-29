@@ -37,6 +37,8 @@ export default defineConfig({
         // El SW de FCM se registra aparte; Workbox no lo debe reclamar ni cachear.
         navigateFallbackDenylist: [/^\/firebase-messaging-sw\.js$/],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        // El SW de FCM (F6) se registra aparte con su propio scope; no debe entrar en el precache de Workbox.
+        globIgnores: ['**/firebase-messaging-sw.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,

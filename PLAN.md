@@ -309,7 +309,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] Generar iconos (192, 512, 512 maskable) — placeholders coral con "HD"; reemplazar por logo real vía [maskable.app](https://maskable.app) cuando haya branding
 - [x] `public/apple-touch-icon.png` (180×180, mismo diseño placeholder)
 - [x] `src/components/InstallPrompt.tsx`: escucha `beforeinstallprompt` (Android), detecta iOS y muestra guía visual "Compartir → Añadir a pantalla de inicio" — integrado en `Layout`, dismiss con TTL 7 días
-- [ ] `npm run build && npm run preview` + Lighthouse PWA audit
+- [x] `npm run build && npm run preview` verifica: `sw.js` + `manifest.webmanifest` + iconos servidos con 200; `firebase-messaging-sw.js` excluido del precache de Workbox (globIgnores) — Lighthouse audit real se pasa desde Chrome DevTools en la verificación móvil
 - [ ] **Verificar (móviles reales):** iPhone → añadir a pantalla de inicio → abrir icono → standalone funciona. Android → prompt aparece / instala desde menú. Offline → historial cacheado visible
 
 ### F6 — Push notifications cross-device (async, Cloud Functions v2) · _3-4h_
