@@ -3,12 +3,14 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Feeding } from '../types';
 import { lastOpenedAt } from '../lib/sessionMark';
+import { useAuth } from '../hooks/useAuth';
 
 interface Props {
   feeding: Feeding;
 }
 
 export function FeedingCard({ feeding }: Props) {
+  const currentUid = useAuth((s) => s.user?.uid);
   const [, tick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => tick((n) => n + 1), 60_000);
@@ -28,11 +30,13 @@ export function FeedingCard({ feeding }: Props) {
       ? 'justo ahora'
       : formatDistanceToNow(date, { addSuffix: true, locale: es });
 
-  // Nuevo si llegó después de la última apertura de la app (y hay sesión previa).
+  // Nuevo solo para otros usuarios: llegó después de la última apertura y no
+  // lo creó el usuario actual (quien lo crea ya sabe que lo acaba de apuntar).
   const isNew =
     lastOpenedAt > 0 &&
     feeding.createdAt != null &&
-    feeding.createdAt.toMillis() > lastOpenedAt;
+    feeding.createdAt.toMillis() > lastOpenedAt &&
+    feeding.feederUid !== currentUid;
 
   return (
     <div className={`flex items-center gap-3 bg-white rounded-xl p-4 shadow-sm transition-colors ${isNew ? 'ring-1 ring-orange-200' : ''}`}>

@@ -23,15 +23,11 @@ self.addEventListener('push', () => {
 });
 
 messaging.onBackgroundMessage((payload) => {
-  // Si el mensaje lleva payload.notification (enviado via webpush.notification en
-  // el servidor), el navegador ya mostró la notificación automáticamente.
-  // onBackgroundMessage sigue disparando — no llamamos a showNotification de nuevo
-  // o tendríamos el doble. Solo garantizamos que el badge esté puesto.
-  if (payload.notification) return;
-
-  // Fallback para mensajes data-only legacy (sin webpush.notification).
-  const title = payload.data?.title ?? 'HappyDog';
-  const body = payload.data?.body ?? '';
+  // El compat SDK SIEMPRE delega a este callback sin auto-mostrar nada.
+  // Leer de payload.notification (cuando se usa webpush.notification en el
+  // servidor) con fallback a payload.data (mensajes data-only legacy).
+  const title = payload.notification?.title ?? payload.data?.title ?? 'HappyDog';
+  const body = payload.notification?.body ?? payload.data?.body ?? '';
   self.registration.showNotification(title, {
     body,
     icon: '/icons/icon-192.png',
