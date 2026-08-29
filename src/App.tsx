@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import History from './pages/History';
 import Feed from './pages/Feed';
+import Settings from './pages/Settings';
 
 export default function App() {
   return (
@@ -24,6 +25,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <History />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />
