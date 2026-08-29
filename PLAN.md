@@ -315,7 +315,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 ### F6 — Push notifications cross-device (async, Cloud Functions v2) · _3-4h_
 
 - [x] `public/firebase-messaging-sw.js` con `onBackgroundMessage` mostrando notificación
-- [ ] `src/lib/messaging.ts` con `requestPermission()`, `getFcmToken(vapidKey)`, `onMessageForeground(cb)`
+- [x] `src/lib/messaging.ts` con `requestPermission()`, `getFcmToken(vapidKey)`, `onMessageForeground(cb)`
 - [ ] `src/hooks/useFcmToken.ts`: al montar tras login, si `Notification.permission === 'default'` mostrar CTA en `/settings`; al conceder → `getToken` → `arrayUnion` en `users/{uid}.fcmTokens`
 - [ ] Foreground: `onMessage` muestra toast in-app
 - [ ] `functions/src/send-push.ts` — worker independiente:
