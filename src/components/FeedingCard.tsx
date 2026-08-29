@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Feeding } from '../types';
+import { lastOpenedAt } from '../lib/sessionMark';
 
 interface Props {
   feeding: Feeding;
@@ -27,13 +28,26 @@ export function FeedingCard({ feeding }: Props) {
       ? 'justo ahora'
       : formatDistanceToNow(date, { addSuffix: true, locale: es });
 
+  // Nuevo si llegó después de la última apertura de la app (y hay sesión previa).
+  const isNew =
+    lastOpenedAt > 0 &&
+    feeding.createdAt != null &&
+    feeding.createdAt.toMillis() > lastOpenedAt;
+
   return (
-    <div className="flex items-center gap-3 bg-white rounded-xl p-4 shadow-sm">
+    <div className={`flex items-center gap-3 bg-white rounded-xl p-4 shadow-sm transition-colors ${isNew ? 'ring-1 ring-orange-200' : ''}`}>
       <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold text-sm shrink-0">
         {initials}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900 truncate">{feeding.feederName}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-gray-900 truncate">{feeding.feederName}</p>
+          {isNew && (
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-orange-500 text-white shrink-0">
+              Nuevo
+            </span>
+          )}
+        </div>
         <p className="text-sm text-gray-500">{relativeTime}</p>
       </div>
       <span

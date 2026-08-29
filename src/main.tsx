@@ -5,6 +5,7 @@ import App from './App.tsx';
 // Registrar el listener de beforeinstallprompt cuanto antes: Chrome dispara
 // el evento una sola vez y muy pronto en la carga.
 import './hooks/useInstallPrompt';
+import './lib/sessionMark';
 // Importar el store de toast para que el listener onMessage arranque al cargar.
 import './hooks/useToast';
 
