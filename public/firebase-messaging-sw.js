@@ -1,8 +1,7 @@
 // Service Worker para Firebase Cloud Messaging.
-// La config se pasa por query params al registrar el SW desde src/lib/messaging.ts,
-// para evitar hardcodear las credenciales Firebase en un archivo committeado.
-importScripts('https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/12.0.0/firebase-messaging-compat.js');
+// La config se pasa por query params al registrar el SW desde src/lib/messaging.ts.
+importScripts('https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.18.0/firebase-messaging-compat.js');
 
 const params = new URLSearchParams(self.location.search);
 
@@ -15,9 +14,8 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// El badge hay que subirlo desde el evento `push` nativo, no desde
-// onBackgroundMessage: en iOS el callback de Firebase no está en el
-// contexto de evento que iOS requiere para setAppBadge.
+// Badge en raw push event: es el único contexto donde iOS acepta setAppBadge
+// de forma fiable (dentro de callbacks Firebase el contexto puede no ser válido).
 self.addEventListener('push', () => {
   if ('setAppBadge' in self.navigator) {
     self.navigator.setAppBadge(1).catch(() => {});
@@ -25,12 +23,15 @@ self.addEventListener('push', () => {
 });
 
 messaging.onBackgroundMessage((payload) => {
-  // El mensaje se envía como data-only (sin campo notification) para que el
-  // navegador no muestre una notificación automáticamente además de esta.
-  // Si el SDK auto-mostrase por el campo notification tendríamos el doble.
+  // Si el mensaje lleva payload.notification (enviado via webpush.notification en
+  // el servidor), el navegador ya mostró la notificación automáticamente.
+  // onBackgroundMessage sigue disparando — no llamamos a showNotification de nuevo
+  // o tendríamos el doble. Solo garantizamos que el badge esté puesto.
+  if (payload.notification) return;
+
+  // Fallback para mensajes data-only legacy (sin webpush.notification).
   const title = payload.data?.title ?? 'HappyDog';
   const body = payload.data?.body ?? '';
-
   self.registration.showNotification(title, {
     body,
     icon: '/icons/icon-192.png',
@@ -45,7 +46,6 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   event.waitUntil(
-    // Cerrar todas las notificaciones del mismo tag + limpiar badge
     self.registration.getNotifications({ tag: 'happydog-feeding' })
       .then((ns) => {
         ns.forEach((n) => n.close());

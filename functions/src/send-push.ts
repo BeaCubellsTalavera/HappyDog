@@ -63,17 +63,26 @@ export const sendPushOnFeeding = onDocumentCreated(
 
     const methodLabel = feeding.method === 'nfc' ? '(NFC)' : '(manual)';
 
-    // Mensaje data-only: sin campo `notification` para que el navegador no muestre
-    // la notificación automáticamente además de la que muestra onBackgroundMessage.
-    // Con ambos activos el usuario recibe el doble.
+    // webpush.notification: el navegador muestra la notificación directamente
+    // (single codepath, sin duplicados). onBackgroundMessage sigue disparando
+    // pero ya no necesita llamar a showNotification — solo pone el badge.
+    // data: campos extra para el notificationclick handler en el SW.
     const response = await getMessaging().sendEachForMulticast({
       tokens: flatTokens,
+      webpush: {
+        notification: {
+          title: '🐾 Han dado de comer',
+          body: `${feeding.feederName} acaba de darles de comer ${methodLabel}`,
+          icon: '/icons/icon-192.png',
+          badge: '/icons/icon-192.png',
+          tag: 'happydog-feeding',
+          renotify: true,
+        },
+      },
       data: {
         feedingId: event.params.id,
         feederUid: feeding.feederUid,
         method: feeding.method,
-        title: '🐾 Han dado de comer',
-        body: `${feeding.feederName} acaba de darles de comer ${methodLabel}`,
       },
     });
 
