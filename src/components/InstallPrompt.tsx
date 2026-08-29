@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
 
 const DISMISS_KEY = 'happydog:install-dismissed-at';
 const DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -30,27 +26,14 @@ function isRecentlyDismissed(): boolean {
 }
 
 export function InstallPrompt() {
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
+  const deferred = useInstallPrompt((s) => s.deferred);
+  const setDeferred = useInstallPrompt((s) => s.setDeferred);
   const [iosVisible, setIosVisible] = useState(false);
   const [dismissed, setDismissed] = useState(() => isRecentlyDismissed());
 
   useEffect(() => {
     if (isStandalone()) return;
-
-    const onBefore = (e: Event) => {
-      e.preventDefault();
-      setDeferred(e as BeforeInstallPromptEvent);
-    };
-    const onInstalled = () => setDeferred(null);
-    window.addEventListener('beforeinstallprompt', onBefore);
-    window.addEventListener('appinstalled', onInstalled);
-
     if (isIos()) setIosVisible(true);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onBefore);
-      window.removeEventListener('appinstalled', onInstalled);
-    };
   }, []);
 
   if (dismissed) return null;
