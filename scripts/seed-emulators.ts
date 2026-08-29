@@ -54,7 +54,11 @@ async function seed() {
     });
   }
 
-  console.log('Seed completado: 2 usuarios, 5 feedings');
+  await db.collection('config').doc('nfc').set({
+    token: 'dev-nfc-token-happydog',
+  });
+
+  console.log('Seed completado: 2 usuarios, 5 feedings, config/nfc');
 }
 
 seed().catch(console.error);

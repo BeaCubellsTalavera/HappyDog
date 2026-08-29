@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "emulators": "docker compose up",
     "seed": "tsx scripts/seed-emulators.ts",
+    "gen:nfc-token": "node scripts/gen-nfc-token.mjs",
     "deploy:functions": "cd functions && npm run build && firebase deploy --only functions"
   },
   "dependencies": {
