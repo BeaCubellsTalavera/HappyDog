@@ -318,7 +318,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 - [x] `src/lib/messaging.ts` con `requestPermission()`, `getFcmToken(vapidKey)`, `onMessageForeground(cb)`
 - [x] `src/hooks/useFcmToken.ts`: al montar tras login, si `Notification.permission === 'default'` mostrar CTA en `/settings`; al conceder → `getToken` → `arrayUnion` en `users/{uid}.fcmTokens`
 - [x] Foreground: `onMessage` muestra toast in-app
-- [ ] `functions/src/send-push.ts` — worker independiente:
+- [x] `functions/src/send-push.ts` — worker independiente:
   ```ts
   export const sendPushOnFeeding = onDocumentCreated('feedings/{id}', async (event) => {
     const feeding = event.data?.data()
