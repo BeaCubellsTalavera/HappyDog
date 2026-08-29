@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithGoogle } from '../lib/auth';
 import { useAuth } from '../hooks/useAuth';
 
@@ -8,10 +8,15 @@ export default function Login() {
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
 
   useEffect(() => {
-    if (!loading && user) navigate('/', { replace: true });
-  }, [user, loading, navigate]);
+    if (!loading && user) {
+      const returnTo = params.get('returnTo');
+      const target = returnTo && returnTo.startsWith('/') ? returnTo : '/';
+      navigate(target, { replace: true });
+    }
+  }, [user, loading, navigate, params]);
 
   async function handleGoogleLogin() {
     setError(null);
