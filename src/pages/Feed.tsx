@@ -53,7 +53,7 @@ export default function Feed() {
     })();
   }, [authLoading, user, token, navigate]);
 
-  if (!token) return <FeedShell><p className="text-gray-500 text-sm">Enlace inválido.</p></FeedShell>;
+  if (!token) return <FeedError message="Enlace NFC inválido: falta el token." />;
 
   if (!authLoading && !user) {
     const returnTo = encodeURIComponent(location.pathname + location.search);
@@ -61,9 +61,8 @@ export default function Feed() {
   }
 
   if (authLoading || state === 'validating') return <FeedSpinner />;
-  if (state === 'invalid' || state === 'error') {
-    return <FeedShell><p className="text-gray-500 text-sm">Ha ocurrido un error.</p></FeedShell>;
-  }
+  if (state === 'invalid') return <FeedError message="Enlace NFC inválido o expirado." />;
+  if (state === 'error') return <FeedError message="No se pudo registrar la comida. Inténtalo de nuevo." />;
 
   return <FeedConfirmation saving={state === 'saving'} />;
 }
@@ -83,6 +82,22 @@ function FeedSpinner() {
     <FeedShell>
       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
       <p className="text-gray-500 text-sm">Validando…</p>
+    </FeedShell>
+  );
+}
+
+function FeedError({ message }: { message: string }) {
+  return (
+    <FeedShell>
+      <div className="text-6xl">⚠️</div>
+      <h1 className="text-2xl font-bold text-red-500">Vaya…</h1>
+      <p className="text-gray-600 text-sm">{message}</p>
+      <a
+        href="/"
+        className="mt-4 inline-block px-6 py-3 bg-orange-500 text-white font-medium rounded-2xl hover:bg-orange-600 active:bg-orange-700 transition-colors"
+      >
+        Volver a HappyDog
+      </a>
     </FeedShell>
   );
 }
