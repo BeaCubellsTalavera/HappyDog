@@ -12,6 +12,11 @@ services:
       - ./firebase.json:/app/firebase.json:ro
       - ./firestore.rules:/app/firestore.rules:ro
       - ./functions:/app/functions
+    environment:
+      # El mount Windows→Linux es lento para muchos archivos pequeños:
+      # cargar node_modules de firebase-functions tarda ~20s. Sin este flag
+      # el emulador aborta a los 10s con "Cannot determine backend specification".
+      FUNCTIONS_DISCOVERY_TIMEOUT: "60"
     command: >
       firebase emulators:start
       --project=demo-happydog

@@ -328,7 +328,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
   })
   ```
 - [x] `functions/src/index.ts` — re-export: `export { sendPushOnFeeding } from './send-push'`
-- [ ] Testear localmente contra emulador Functions: `docker compose up`, escribir un feeding vía Vite → ver log de la función ejecutándose en la UI del emulador (:4000)
+- [x] Testear localmente contra emulador Functions: `docker compose up`, escribir un feeding vía Vite → ver log de la función ejecutándose en la UI del emulador (:4000)
 - [ ] `cd functions && npm run build && firebase deploy --only functions`
 - [ ] **Verificar (dos móviles reales):** Móvil A registra → confirmación <300ms independiente del push → Móvil B recibe push background y foreground en 1-3s. iOS solo con PWA instalada. La función se ejecuta aunque el cliente cierre la app inmediatamente después del `addDoc` (at-least-once).
 
