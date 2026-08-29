@@ -40,16 +40,8 @@ export default defineConfig({
         // El SW de FCM (F6) se registra aparte con su propio scope; no debe entrar en el precache de Workbox.
         globIgnores: ['**/firebase-messaging-sw.js'],
         runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'firestore-api',
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
+          // Firestore lo gestiona el SDK vía IndexedDB (persistentLocalCache);
+          // no lo cachea Workbox porque son streams de long-polling / WebChannel.
           {
             urlPattern: /^https:\/\/fcmregistrations\.googleapis\.com\/.*/i,
             handler: 'NetworkFirst',
