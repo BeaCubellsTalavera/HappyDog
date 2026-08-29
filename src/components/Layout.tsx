@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { BottomNav } from './BottomNav';
 import { InstallPrompt } from './InstallPrompt';
+import { Toast } from './Toast';
 
 interface Props {
   children: ReactNode;
@@ -32,6 +33,7 @@ export function Layout({ children }: Props) {
       </header>
 
       <InstallPrompt />
+      <Toast />
 
       <main className="flex-1 flex flex-col min-h-0 px-4 max-w-md mx-auto w-full">
         {children}
