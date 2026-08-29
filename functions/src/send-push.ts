@@ -1,7 +1,7 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions';
 import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 
 if (getApps().length === 0) initializeApp();
@@ -10,6 +10,7 @@ interface FeedingDoc {
   feederUid: string;
   feederName: string;
   method: 'nfc' | 'manual';
+  timestamp: Timestamp;
 }
 
 interface UserTokens {
@@ -38,6 +39,18 @@ export const sendPushOnFeeding = onDocumentCreated(
     }
 
     const db = getFirestore();
+
+    // Solo notificar si este feeding es el más reciente: si ya existe alguno
+    // con timestamp posterior, es solo corrección de historial y no merece push.
+    const newerSnap = await db.collection('feedings')
+      .where('timestamp', '>', feeding.timestamp)
+      .limit(1)
+      .get();
+    if (!newerSnap.empty) {
+      logger.info('Existe feeding más reciente, no notificar', { feedingId: event.params.id });
+      return;
+    }
+
     const usersSnap = await db.collection('users').get();
 
     const targets: UserTokens[] = [];
