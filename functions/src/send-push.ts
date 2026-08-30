@@ -11,6 +11,7 @@ interface FeedingDoc {
   feederName: string;
   method: 'nfc' | 'manual';
   timestamp: Timestamp;
+  dateLocal: string;
 }
 
 interface UserTokens {
@@ -39,6 +40,14 @@ export const sendPushOnFeeding = onDocumentCreated(
     }
 
     const db = getFirestore();
+
+    // Solo notificar si el feeding es de hoy (hora de Madrid).
+    // Un feeding de ayer o antes es corrección de historial, no evento nuevo.
+    const todayMadrid = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Madrid' });
+    if (feeding.dateLocal !== todayMadrid) {
+      logger.info('Feeding no es de hoy, no notificar', { feedingId: event.params.id, dateLocal: feeding.dateLocal });
+      return;
+    }
 
     // Solo notificar si este feeding es el más reciente: si ya existe alguno
     // con timestamp posterior, es solo corrección de historial y no merece push.
