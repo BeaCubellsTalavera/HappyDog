@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { signInWithGoogle } from '../lib/auth';
+import { signInWithGoogle, checkRedirectResult } from '../lib/auth';
 import { useAuth } from '../hooks/useAuth';
 import { InstallPrompt } from '../components/InstallPrompt';
 
@@ -19,15 +19,22 @@ export default function Login() {
     }
   }, [user, loading, navigate, params]);
 
-  async function handleGoogleLogin() {
-    setError(null);
-    setSigningIn(true);
-    try {
-      await signInWithGoogle();
-    } catch {
+  // Al volver del redirect de Google, recoger errores si los hay.
+  useEffect(() => {
+    checkRedirectResult().catch(() => {
       setError('No se pudo iniciar sesión. Inténtalo de nuevo.');
       setSigningIn(false);
-    }
+    });
+  }, []);
+
+  function handleGoogleLogin() {
+    setError(null);
+    setSigningIn(true);
+    // signInWithRedirect navega la página a Google; no hay resultado aquí.
+    signInWithGoogle().catch(() => {
+      setError('No se pudo iniciar sesión. Inténtalo de nuevo.');
+      setSigningIn(false);
+    });
   }
 
   if (loading) {
