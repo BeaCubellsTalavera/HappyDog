@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithGoogle } from '../lib/auth';
 import { useAuth } from '../hooks/useAuth';
+import { InstallPrompt } from '../components/InstallPrompt';
 
 export default function Login() {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-orange-50 p-6">
+      <InstallPrompt />
       <div className="flex flex-col items-center gap-6 w-full max-w-sm">
         <div className="text-7xl select-none">🐾</div>
         <div className="text-center">

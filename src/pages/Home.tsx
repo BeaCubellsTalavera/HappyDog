@@ -11,7 +11,7 @@ import {
   type ManualFeedDialogHandle,
 } from '../components/ManualFeedDialog';
 
-type FeedState = 'idle' | 'saving' | 'done';
+type FeedState = 'idle' | 'done';
 
 export default function Home() {
   const { user } = useAuth();
@@ -35,21 +35,18 @@ export default function Home() {
     [feedings, today]
   );
 
-  async function handleFeedNow() {
+  function handleFeedNow() {
     if (feedState !== 'idle' || !user) return;
-    setFeedState('saving');
-    try {
-      await createFeeding({
-        timestamp: new Date(),
-        feederUid: user.uid,
-        feederName: user.displayName ?? user.email ?? 'Desconocido',
-        method: 'manual',
-      });
-      setFeedState('done');
-      setTimeout(() => setFeedState('idle'), 2000);
-    } catch {
-      setFeedState('idle');
-    }
+    // Optimista: persistentLocalCache escribe en IndexedDB al instante.
+    // No esperamos al servidor para no bloquearnos ante red lenta o reconexión.
+    createFeeding({
+      timestamp: new Date(),
+      feederUid: user.uid,
+      feederName: user.displayName ?? user.email ?? 'Desconocido',
+      method: 'manual',
+    }).catch(console.error);
+    setFeedState('done');
+    setTimeout(() => setFeedState('idle'), 2000);
   }
 
   return (
@@ -66,9 +63,6 @@ export default function Home() {
                 : 'bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-75'
             }`}
           >
-            {feedState === 'saving' && (
-              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 align-middle" />
-            )}
             {feedState === 'done' ? '✓ Anotado' : 'Dar de comer ahora'}
           </button>
 
