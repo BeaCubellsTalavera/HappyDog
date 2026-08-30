@@ -8,11 +8,11 @@ export const MEAL_SLOTS: MealSlot[] = [
   { id: 'night',     name: 'Cena',     label: 'NOCHE',    startHour: 20, endHour: 24, bg: '/meal-slots/night.png'     },
 ];
 
-export function getActiveSlotIndex(now: Date): number {
+export function getActiveSlotIndex(slots: MealSlot[], now: Date): number {
   const hour = now.getHours();
-  const idx = MEAL_SLOTS.findIndex((s) => hour >= s.startHour && hour < s.endHour);
+  const idx = slots.findIndex((s) => hour >= s.startHour && hour < s.endHour);
   if (idx !== -1) return idx;
-  return hour < MEAL_SLOTS[0].startHour ? 0 : MEAL_SLOTS.length - 1;
+  return hour < slots[0].startHour ? 0 : slots.length - 1;
 }
 
 export function deriveSlotStatus(
