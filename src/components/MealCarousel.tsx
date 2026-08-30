@@ -20,6 +20,13 @@ export function MealCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [viewingIndex, setViewingIndex] = useState(() => getActiveSlotIndex(new Date()));
 
+  const navigateTo = useCallback((idx: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.children[idx] as HTMLElement | undefined;
+    card?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+  }, []);
+
   // Auto-scroll to active slot on mount
   useEffect(() => {
     const el = scrollRef.current;
@@ -82,40 +89,62 @@ export function MealCarousel() {
         <StepIndicator statuses={statuses} viewingIndex={viewingIndex} />
       </div>
 
-      <div
-        ref={scrollRef}
-        className="flex flex-1 overflow-x-scroll snap-x snap-mandatory scroll-smooth hide-scrollbar"
-        style={{ scrollSnapType: 'x mandatory' }}
-      >
-        {MEAL_SLOTS.map((slot, i) => {
-          const today = new Date().toISOString().slice(0, 10);
-          const slotFeeding =
-            feedings.find(
-              (f) =>
-                f.dateLocal === today &&
-                f.hourLocal >= slot.startHour &&
-                f.hourLocal < slot.endHour
-            ) ?? null;
-          const slotSkip =
-            skips.find((s) => s.date === today && s.mealSlotId === slot.id) ?? null;
+      <div className="relative overflow-hidden flex-1">
+        {viewingIndex > 0 && (
+          <button
+            onClick={() => navigateTo(viewingIndex - 1)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-9 h-9 bg-white/70 backdrop-blur-sm rounded-full shadow flex items-center justify-center text-gray-700 text-lg leading-none"
+            aria-label="Anterior"
+          >
+            ‹
+          </button>
+        )}
 
-          return (
-            <div
-              key={slot.id}
-              className="flex-shrink-0 w-full h-full snap-start"
-            >
-              <MealCard
-                slot={slot}
-                status={statuses[i]}
-                feeding={slotFeeding}
-                skip={slotSkip}
-                onFeed={() => handleFeed(i)}
-                onSkip={() => handleSkip(i)}
-                onNavigateHistory={() => navigate('/history')}
-              />
-            </div>
-          );
-        })}
+        <div
+          ref={scrollRef}
+          className="flex h-full overflow-x-scroll snap-x snap-mandatory scroll-smooth hide-scrollbar px-5 gap-3"
+          style={{ scrollSnapType: 'x mandatory', scrollPaddingInline: '20px' }}
+        >
+          {MEAL_SLOTS.map((slot, i) => {
+            const today = new Date().toISOString().slice(0, 10);
+            const slotFeeding =
+              feedings.find(
+                (f) =>
+                  f.dateLocal === today &&
+                  f.hourLocal >= slot.startHour &&
+                  f.hourLocal < slot.endHour
+              ) ?? null;
+            const slotSkip =
+              skips.find((s) => s.date === today && s.mealSlotId === slot.id) ?? null;
+
+            return (
+              <div
+                key={slot.id}
+                className="flex-shrink-0 w-[calc(100%-2.5rem)] h-full snap-center"
+              >
+                <MealCard
+                  slot={slot}
+                  status={statuses[i]}
+                  feeding={slotFeeding}
+                  skip={slotSkip}
+                  onFeed={() => handleFeed(i)}
+                  onSkip={() => handleSkip(i)}
+                  onNavigateHistory={() => navigate('/history')}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {viewingIndex < MEAL_SLOTS.length - 1 && (
+          <button
+            onClick={() => navigateTo(viewingIndex + 1)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-9 h-9 bg-white/70 backdrop-blur-sm rounded-full shadow flex items-center justify-center text-gray-700 text-lg leading-none"
+            aria-label="Siguiente"
+          >
+            ›
+          </button>
+        )}
       </div>
     </div>
   );

@@ -402,7 +402,7 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 - [x] Crear `src/components/MealCarousel.tsx` (CSS scroll-snap, sin lib externa; `IntersectionObserver` para `viewingIndex`; auto-scroll al slot activo al montar)
 - [x] Actualizar `src/components/ManualFeedDialog.tsx`: prop opcional `slot?: MealSlot` — si se pasa, inicializa datetime a `startHour` del slot y restringe validación a la ventana
 - [x] Reemplazar contenido de `src/pages/Home.tsx` con `<MealCarousel />`
-- [ ] **Pulido visual del carrusel** (pendiente siguiente sesión):
+- [x] **Pulido visual del carrusel** (pendiente siguiente sesión):
   - `MealCard.tsx`: cambiar `rounded-none` → `rounded-3xl` (el `overflow-hidden` ya está)
   - `MealCarousel.tsx` — peek de tarjetas adyacentes:
     - Scroll container: añadir `px-5 gap-3` + `style={{ scrollPaddingInline: '20px' }}`

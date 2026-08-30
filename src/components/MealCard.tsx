@@ -62,7 +62,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, onNaviga
   const canAct = status === 'pending' || status === 'missed';
 
   return (
-    <div className="relative w-full h-full flex-shrink-0 snap-start overflow-hidden rounded-none">
+    <div className="relative w-full h-full flex-shrink-0 overflow-hidden rounded-3xl">
       {/* Background */}
       {hasBg ? (
         <img
