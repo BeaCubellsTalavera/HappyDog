@@ -20,8 +20,16 @@ export const useTodayFeedings = create<TodayFeedingsState>((set, get) => ({
   reload: async () => {
     const isFirstLoad = get().loading;
     const todayStr = today();
-    const feedings = await getTodayFeedings(todayStr);
-    set({ feedings, loading: false });
+    const fetched = await getTodayFeedings(todayStr);
+    // Merge: preserve any feedings injected optimistically while the query was in flight
+    set((s) => {
+      const extra = s.feedings.filter((f) => !fetched.some((ff) => ff.id === f.id));
+      const merged = [...fetched, ...extra].sort(
+        (a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()
+      );
+      return { feedings: merged, loading: false };
+    });
+    const feedings = useTodayFeedings.getState().feedings;
     syncTodayInHistory(todayStr, feedings);
     if (isFirstLoad) {
       useHistory.getState().load();
