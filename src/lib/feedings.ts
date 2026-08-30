@@ -11,12 +11,6 @@ import { format } from 'date-fns';
 import { db } from './firebase';
 import type { Feeding, NewFeeding } from '../types';
 
-// Evita duplicados si el usuario pulsa varias veces seguidas (red lenta, re-mount).
-// Solo aplica a feedings "de ahora" (NFC + botón inmediato), no a registros manuales
-// de horas pasadas — esos tienen timestamp > 60 s en el pasado.
-let lastImmediateFeedAt = 0;
-const IMMEDIATE_DEBOUNCE_MS = 15_000;
-
 type CreateFeedingInput = {
   timestamp: Date;
   feederUid: string;
@@ -26,14 +20,6 @@ type CreateFeedingInput = {
 
 export async function createFeeding(input: CreateFeedingInput): Promise<void> {
   const d = input.timestamp;
-  const now = Date.now();
-
-  const isImmediate = now - d.getTime() < 60_000;
-  if (isImmediate) {
-    if (now - lastImmediateFeedAt < IMMEDIATE_DEBOUNCE_MS) return;
-    lastImmediateFeedAt = now;
-  }
-
   const newDoc: NewFeeding = {
     timestamp: d,
     dateLocal: format(d, 'yyyy-MM-dd'),
