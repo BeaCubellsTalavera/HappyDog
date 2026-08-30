@@ -204,7 +204,12 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
         {/* Skipped: bloque SALTADA h-14, mismo tamaño y posición que DADA y NO REGISTRADO */}
         {status === 'skipped' && (
           <div className="flex-1 h-14 bg-amber-400/35 backdrop-blur-sm rounded-2xl px-5 flex flex-col justify-center">
-            <p className="text-white font-bold text-sm leading-tight">⏭ SALTADA</p>
+            <p className="text-white font-bold text-sm leading-tight flex items-center gap-1.5">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0">
+                <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
+              </svg>
+              SALTADA
+            </p>
             {skip && (
               <p className="text-white/80 text-xs leading-tight">{skip.skippedByName}</p>
             )}
