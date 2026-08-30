@@ -41,8 +41,8 @@ export const useToast = create<ToastState>((set) => ({
 if (typeof window !== 'undefined') {
   onMessageForeground((payload) => {
     useToast.getState().show({
-      title: payload.notification?.title ?? 'HappyDog',
-      body: payload.notification?.body ?? '',
+      title: payload.notification?.title ?? payload.data?.title ?? 'HappyDog',
+      body: payload.notification?.body ?? payload.data?.body ?? '',
     });
   }).catch(() => {
     // messaging no soportado en este navegador; no hay nada que mostrar.
