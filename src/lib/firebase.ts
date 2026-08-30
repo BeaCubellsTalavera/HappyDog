@@ -29,7 +29,7 @@ export const auth = getAuth(app);
 // entrega los datos cacheados de la sesión anterior. Sin esto la app arranca vacía.
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentSingleTabManager(),
+    tabManager: persistentSingleTabManager(undefined),
   }),
 });
 
