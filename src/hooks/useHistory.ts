@@ -38,6 +38,21 @@ function groupByDay(feedings: Feeding[]): DayGroup[] {
     .map((date) => ({ date, label: dayLabel(date), feedings: byDay[date] }));
 }
 
+// Llamado desde useTodayFeedings cada vez que los feedings de hoy cambian,
+// para mantener la sección "Hoy" de Historia sincronizada sin recargar todo.
+export function syncTodayInHistory(todayDate: string, feedings: Feeding[]) {
+  const { days } = useHistory.getState();
+  if (days.length === 0) return; // Historia aún no cargada; se incluirá al cargar
+  const otherDays = days.filter((d) => d.date !== todayDate);
+  if (feedings.length === 0) {
+    useHistory.setState({ days: otherDays });
+    return;
+  }
+  const sorted = [...feedings].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+  const todayGroup: DayGroup = { date: todayDate, label: 'Hoy', feedings: sorted };
+  useHistory.setState({ days: [todayGroup, ...otherDays] });
+}
+
 export const useHistory = create<HistoryState>((set, get) => ({
   days: [],
   loading: false,

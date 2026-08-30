@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { format } from 'date-fns';
 import type { Feeding } from '../types';
 import { getTodayFeedings } from '../lib/feedings';
-import { useHistory } from './useHistory';
+import { useHistory, syncTodayInHistory } from './useHistory';
 
 interface TodayFeedingsState {
   feedings: Feeding[];
@@ -17,10 +17,10 @@ export const useTodayFeedings = create<TodayFeedingsState>((set, get) => ({
   loading: true,
   reload: async () => {
     const isFirstLoad = get().loading;
-    const feedings = await getTodayFeedings(today());
+    const todayStr = today();
+    const feedings = await getTodayFeedings(todayStr);
     set({ feedings, loading: false });
-    // Prefetch history in background after the initial load so Historia tab
-    // is ready by the time the user navigates there.
+    syncTodayInHistory(todayStr, feedings);
     if (isFirstLoad) {
       useHistory.getState().load();
     }
@@ -31,11 +31,13 @@ export const useTodayFeedings = create<TodayFeedingsState>((set, get) => ({
 useTodayFeedings.getState().reload();
 
 export function injectTodayFeeding(feeding: Feeding) {
+  const todayStr = today();
+  if (feeding.dateLocal !== todayStr) return;
   const { feedings } = useTodayFeedings.getState();
   if (feedings.some((f) => f.id === feeding.id)) return;
-  if (feeding.dateLocal !== today()) return;
   const updated = [feeding, ...feedings].sort(
     (a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()
   );
   useTodayFeedings.setState({ feedings: updated });
+  syncTodayInHistory(todayStr, updated);
 }
