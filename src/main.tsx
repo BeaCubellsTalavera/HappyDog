@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { enableNetwork } from 'firebase/firestore';
+import { disableNetwork, enableNetwork } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import './index.css';
 import App from './App.tsx';
@@ -32,16 +32,22 @@ async function clearHappydogNotifications() {
 }
 
 // Al volver al primer plano: limpiar notificaciones + forzar reconexión de Firestore.
-// iOS Safari corta las conexiones WebSocket cuando la app está en background; sin
-// enableNetwork() el listener onSnapshot queda parado hasta que algo lo reactiva.
+// iOS corta la conexión WebSocket cuando la app está en background. enableNetwork()
+// sola es no-op si no hubo disableNetwork() previo — hay que hacer el ciclo completo.
 function onAppVisible() {
   clearHappydogNotifications();
-  enableNetwork(db).catch(() => {});
+  disableNetwork(db)
+    .then(() => enableNetwork(db))
+    .catch(() => {});
 }
 
+// visibilitychange: Android y Safari en pestaña de navegador.
+// pageshow con persisted: iOS PWA al volver desde background (bfcache restore).
+// focus: fallback adicional.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') onAppVisible();
 });
+window.addEventListener('pageshow', (e) => { if (e.persisted) onAppVisible(); });
 window.addEventListener('focus', onAppVisible);
 // También al cargar (por si la app se abrió desde la notificación)
 clearHappydogNotifications();
