@@ -1,5 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { enableNetwork } from 'firebase/firestore';
+import { db } from './lib/firebase';
 import './index.css';
 import App from './App.tsx';
 // Registrar el listener de beforeinstallprompt cuanto antes: Chrome dispara
@@ -29,11 +31,18 @@ async function clearHappydogNotifications() {
   }
 }
 
-// visibilitychange (Android) + focus (iOS PWA no siempre dispara visibilitychange)
+// Al volver al primer plano: limpiar notificaciones + forzar reconexión de Firestore.
+// iOS Safari corta las conexiones WebSocket cuando la app está en background; sin
+// enableNetwork() el listener onSnapshot queda parado hasta que algo lo reactiva.
+function onAppVisible() {
+  clearHappydogNotifications();
+  enableNetwork(db).catch(() => {});
+}
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') clearHappydogNotifications();
+  if (document.visibilityState === 'visible') onAppVisible();
 });
-window.addEventListener('focus', clearHappydogNotifications);
+window.addEventListener('focus', onAppVisible);
 // También al cargar (por si la app se abrió desde la notificación)
 clearHappydogNotifications();
 

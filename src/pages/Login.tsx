@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithGoogle } from '../lib/auth';
 import { useAuth } from '../hooks/useAuth';
 import { InstallPrompt } from '../components/InstallPrompt';
+import { HappyDogLogo } from '../components/HappyDogLogo';
 
 export default function Login() {
   const { user, loading } = useAuth();
@@ -41,10 +42,9 @@ export default function Login() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-orange-50 p-6">
       <InstallPrompt />
       <div className="flex flex-col items-center gap-6 w-full max-w-sm">
-        <div className="text-7xl select-none">🐾</div>
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-orange-500 tracking-tight">HappyDog</h1>
-          <p className="mt-2 text-gray-500 text-sm">¿Han comido ya los perretes?</p>
+          <h1><HappyDogLogo className="text-5xl" /></h1>
+          <p className="mt-3 text-gray-500 text-sm">¿Han comido ya los perretes?</p>
         </div>
 
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
