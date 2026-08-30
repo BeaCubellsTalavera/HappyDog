@@ -117,7 +117,7 @@ export function MealCarousel() {
             return (
               <div
                 key={slot.id}
-                className="flex-shrink-0 w-[calc(100%-2.5rem)] h-full snap-center"
+                className="flex-shrink-0 w-full h-full snap-center"
               >
                 <MealCard
                   slot={slot}
