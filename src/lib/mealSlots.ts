@@ -2,10 +2,10 @@ import { format } from 'date-fns';
 import type { Feeding, MealSlot, Skip, SlotStatus } from '../types';
 
 export const MEAL_SLOTS: MealSlot[] = [
-  { id: 'morning',   name: 'Desayuno', label: 'MAÑANA',   startHour: 8,  endHour: 13, bg: '/meal-slots/morning.jpg'   },
-  { id: 'midday',    name: 'Comida',   label: 'MEDIODÍA', startHour: 13, endHour: 18, bg: '/meal-slots/midday.jpg'    },
-  { id: 'afternoon', name: 'Merienda', label: 'TARDE',    startHour: 18, endHour: 20, bg: '/meal-slots/afternoon.jpg' },
-  { id: 'night',     name: 'Cena',     label: 'NOCHE',    startHour: 20, endHour: 24, bg: '/meal-slots/night.jpg'     },
+  { id: 'morning',   name: 'Desayuno', label: 'MAÑANA',   startHour: 8,  endHour: 13, bg: '/meal-slots/morning.png'   },
+  { id: 'midday',    name: 'Comida',   label: 'MEDIODÍA', startHour: 13, endHour: 18, bg: '/meal-slots/midday.png'    },
+  { id: 'afternoon', name: 'Merienda', label: 'TARDE',    startHour: 18, endHour: 20, bg: '/meal-slots/afternoon.png' },
+  { id: 'night',     name: 'Cena',     label: 'NOCHE',    startHour: 20, endHour: 24, bg: '/meal-slots/night.png'     },
 ];
 
 export function getActiveSlotIndex(now: Date): number {

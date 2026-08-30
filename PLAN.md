@@ -396,7 +396,7 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 - [x] Actualizar `firestore.rules`: colección `skips` — create si auth + `skippedBy == uid`, read auth
 - [x] Crear `src/hooks/useTodaySkips.ts`: Zustand store, carga `skips` donde `date == today`
 - [x] Crear `src/hooks/useMealStatus.ts`: hook React, deriva estado de 4 slots + `setInterval(60_000)` para re-derivar cada minuto
-- [ ] **[Manual usuaria]** Añadir 4 imágenes en `public/meal-slots/` (`morning.jpg`, `midday.jpg`, `afternoon.jpg`, `night.jpg`)
+- [x] **[Manual usuaria]** Añadir 4 imágenes en `public/meal-slots/` (añadidas como `.png`)
 - [x] Crear `src/components/StepIndicator.tsx`
 - [x] Crear `src/components/MealCard.tsx`
 - [x] Crear `src/components/MealCarousel.tsx` (CSS scroll-snap, sin lib externa; `IntersectionObserver` para `viewingIndex`; auto-scroll al slot activo al montar)
