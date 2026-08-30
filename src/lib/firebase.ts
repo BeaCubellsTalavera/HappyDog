@@ -8,7 +8,7 @@ import {
 import {
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager,
+  persistentSingleTabManager,
   connectFirestoreEmulator,
 } from 'firebase/firestore';
 import { getMessaging, isSupported } from 'firebase/messaging';
@@ -29,7 +29,7 @@ export const auth = getAuth(app);
 // entrega los datos cacheados de la sesión anterior. Sin esto la app arranca vacía.
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
+    tabManager: persistentSingleTabManager(),
   }),
 });
 
