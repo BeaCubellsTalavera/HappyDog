@@ -131,15 +131,15 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
         </div>
       )}
 
-      {/* Action area */}
-      <div className="absolute bottom-10 left-5 right-5 z-10">
+      {/* Action area — todos los bloques usan h-14 para ocupar el mismo espacio */}
+      <div className="absolute bottom-10 left-5 right-5 z-10 flex gap-3">
         {/* Pending: DAR + relojito */}
         {status === 'pending' && (
-          <div className="flex gap-3">
+          <>
             <button
               onClick={handleFeed}
               disabled={saving}
-              className="flex-1 py-4 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-60 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-colors"
+              className="flex-1 h-14 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-60 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-colors"
             >
               {saving ? (
                 <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -160,22 +160,19 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
             </button>
-          </div>
+          </>
         )}
 
-        {/* Missed: NO REGISTRADO block + relojito para registro retroactivo */}
+        {/* Missed: bloque NO REGISTRADO h-14 + relojito */}
         {status === 'missed' && (
-          <div className="flex gap-3 items-stretch">
-            <div className="flex-1 bg-red-500/35 backdrop-blur-sm rounded-2xl px-5 py-4">
-              <div className="flex items-center gap-2 text-white font-bold text-base">
-                <span>✕</span>
-                <span>NO REGISTRADO</span>
-              </div>
-              <p className="text-white/70 text-sm mt-1">Puedes añadirlo aún</p>
+          <>
+            <div className="flex-1 h-14 bg-red-500/35 backdrop-blur-sm rounded-2xl px-5 flex items-center gap-2">
+              <span className="text-white font-bold text-base">✕</span>
+              <span className="text-white font-bold text-base">NO REGISTRADO</span>
             </div>
             <button
               onClick={() => retroRef.current?.open()}
-              className="w-14 bg-white rounded-2xl shadow-lg flex items-center justify-center text-orange-500 hover:bg-orange-50 active:bg-orange-100 transition-colors"
+              className="w-14 h-14 bg-white rounded-2xl shadow-lg flex items-center justify-center text-orange-500 hover:bg-orange-50 active:bg-orange-100 transition-colors"
               aria-label="Registrar hora pasada"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
@@ -183,35 +180,34 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
             </button>
-          </div>
+          </>
         )}
 
-        {/* Not yet: DAR disabled */}
+        {/* Not yet: DAR deshabilitado h-14 */}
         {status === 'not-yet' && (
           <button
             disabled
-            className="w-full py-4 bg-white/15 text-white/40 font-bold rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
+            className="flex-1 h-14 bg-white/15 text-white/40 font-bold rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
           >
             <BowlIcon className="w-5 h-5" />
             DAR {slot.name.toUpperCase()}
           </button>
         )}
 
-        {/* Given: DADA block with feeder + time on separate lines */}
+        {/* Given: bloque DADA h-14 con feeder y hora en líneas separadas */}
         {status === 'given' && feeding && (
-          <div className="bg-green-500/35 backdrop-blur-sm rounded-2xl px-5 py-4">
-            <div className="flex items-center gap-2 text-white font-bold text-lg">
-              <span>✓</span>
-              <span>DADA</span>
-            </div>
-            <p className="text-white/85 text-sm mt-1">{feeding.feederName}</p>
-            <p className="text-white/70 text-sm">
+          <div className="flex-1 h-14 bg-green-500/35 backdrop-blur-sm rounded-2xl px-5 flex flex-col justify-center">
+            <p className="text-white font-bold text-sm leading-tight flex items-center gap-1.5">
+              <span>✓</span> DADA
+            </p>
+            <p className="text-white/85 text-xs leading-tight">{feeding.feederName}</p>
+            <p className="text-white/70 text-xs leading-tight">
               {format(feeding.timestamp.toDate(), 'HH:mm', { locale: es })}
             </p>
           </div>
         )}
 
-        {/* Skipped: badge already covers it, no button needed */}
+        {/* Skipped: sin botón, el badge cubre el estado */}
       </div>
 
       <ManualFeedDialog ref={retroRef} slot={slot} />

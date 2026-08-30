@@ -87,7 +87,7 @@ export function MealCarousel() {
         <StepIndicator statuses={statuses} viewingIndex={viewingIndex} />
       </div>
 
-      <div className="relative overflow-hidden flex-1">
+      <div className="relative overflow-hidden flex-1 py-3">
         {viewingIndex > 0 && (
           <button
             onClick={() => navigateTo(viewingIndex - 1)}
@@ -101,7 +101,6 @@ export function MealCarousel() {
         <div
           ref={scrollRef}
           className="flex h-full overflow-x-scroll snap-x snap-mandatory scroll-smooth hide-scrollbar px-5 gap-3"
-          style={{ scrollSnapType: 'x mandatory', scrollPaddingInline: '20px' }}
         >
           {MEAL_SLOTS.map((slot, i) => {
             const today = new Date().toISOString().slice(0, 10);
