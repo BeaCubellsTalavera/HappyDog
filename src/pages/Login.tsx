@@ -42,6 +42,7 @@ export default function Login() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-orange-50 p-6">
       <InstallPrompt />
       <div className="flex flex-col items-center gap-6 w-full max-w-sm">
+        <div className="text-7xl select-none">🐾</div>
         <div className="text-center">
           <h1><HappyDogLogo className="text-5xl" /></h1>
           <p className="mt-3 text-gray-500 text-sm">¿Han comido ya los perretes?</p>
