@@ -18,6 +18,11 @@ type CreateFeedingInput = {
   method: 'nfc' | 'manual';
 };
 
+// persistentLocalCache escribe en IndexedDB local y resuelve rápido (<300 ms).
+// Si supera este timeout es un problema de inicialización del SDK (multi-tab lock,
+// IndexedDB lento) — mejor fallar claro que colgar indefinidamente.
+const WRITE_TIMEOUT_MS = 4000;
+
 export async function createFeeding(input: CreateFeedingInput): Promise<void> {
   const d = input.timestamp;
   const newDoc: NewFeeding = {
@@ -29,7 +34,12 @@ export async function createFeeding(input: CreateFeedingInput): Promise<void> {
     method: input.method,
     createdAt: serverTimestamp(),
   };
-  await addDoc(collection(db, 'feedings'), newDoc);
+  await Promise.race([
+    addDoc(collection(db, 'feedings'), newDoc),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('TIMEOUT')), WRITE_TIMEOUT_MS)
+    ),
+  ]);
 }
 
 export function subscribeFeedings(
