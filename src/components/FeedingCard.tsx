@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Feeding } from '../types';
-import { lastOpenedAt } from '../lib/sessionMark';
+import { useSessionMark } from '../lib/sessionMark';
 import { useAuth } from '../hooks/useAuth';
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
 
 export function FeedingCard({ feeding }: Props) {
   const currentUid = useAuth((s) => s.user?.uid);
+  const seenAt = useSessionMark((s) => s.seenAt);
   const [, tick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => tick((n) => n + 1), 60_000);
@@ -33,9 +34,9 @@ export function FeedingCard({ feeding }: Props) {
   // Nuevo solo para otros usuarios: llegó después de la última apertura y no
   // lo creó el usuario actual (quien lo crea ya sabe que lo acaba de apuntar).
   const isNew =
-    lastOpenedAt > 0 &&
+    seenAt > 0 &&
     feeding.createdAt != null &&
-    feeding.createdAt.toMillis() > lastOpenedAt &&
+    feeding.createdAt.toMillis() > seenAt &&
     feeding.feederUid !== currentUid;
 
   return (
