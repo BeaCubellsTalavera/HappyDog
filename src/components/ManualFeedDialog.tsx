@@ -9,45 +9,63 @@ import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { createFeeding } from '../lib/feedings';
 import { injectTodayFeeding } from '../hooks/useFeedings';
+import type { MealSlot } from '../types';
 
 export interface ManualFeedDialogHandle {
   open: () => void;
 }
 
-const schema = z.object({
-  datetime: z
-    .string()
-    .refine(
-      (val) => {
-        const d = new Date(val);
-        return !isNaN(d.getTime()) && d <= new Date();
-      },
-      { message: 'No puede ser una fecha futura' }
-    )
-    .refine(
-      (val) => {
-        const d = new Date(val);
-        const limit = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        return d >= limit;
-      },
-      { message: 'No puede ser de hace más de 24 horas' }
-    ),
-});
-
-function nowLocal(): string {
-  return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+interface Props {
+  slot?: MealSlot;
 }
 
-export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle>((_props, ref) => {
+function slotDefault(slot: MealSlot | undefined): string {
+  if (!slot) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+  const d = new Date();
+  d.setHours(slot.startHour, 0, 0, 0);
+  // If startHour is in the future today, use now instead
+  if (d > new Date()) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+  return format(d, "yyyy-MM-dd'T'HH:mm");
+}
+
+function buildSchema(slot: MealSlot | undefined) {
+  return z.object({
+    datetime: z
+      .string()
+      .refine(
+        (val) => {
+          const d = new Date(val);
+          return !isNaN(d.getTime()) && d <= new Date();
+        },
+        { message: 'No puede ser una fecha futura' }
+      )
+      .refine(
+        (val) => {
+          if (!slot) {
+            const d = new Date(val);
+            return d >= new Date(Date.now() - 24 * 60 * 60 * 1000);
+          }
+          const hour = new Date(val).getHours();
+          const end = slot.endHour === 24 ? 24 : slot.endHour;
+          return hour >= slot.startHour && hour < end;
+        },
+        slot
+          ? { message: `Debe estar dentro de la ventana ${slot.startHour}:00–${slot.endHour === 24 ? '24:00' : slot.endHour + ':00'}` }
+          : { message: 'No puede ser de hace más de 24 horas' }
+      ),
+  });
+}
+
+export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(({ slot }, ref) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { user } = useAuth();
-  const [datetime, setDatetime] = useState(nowLocal);
+  const [datetime, setDatetime] = useState(() => slotDefault(slot));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useImperativeHandle(ref, () => ({
     open() {
-      setDatetime(nowLocal());
+      setDatetime(slotDefault(slot));
       setError(null);
       dialogRef.current?.showModal();
     },
@@ -59,7 +77,7 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle>((_props, ref)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const result = schema.safeParse({ datetime });
+    const result = buildSchema(slot).safeParse({ datetime });
     if (!result.success) {
       setError(result.error.issues[0].message);
       return;
@@ -92,7 +110,9 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle>((_props, ref)
       }}
     >
       <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-gray-900">Registrar comida</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          {slot ? `Registrar ${slot.name.toLowerCase()} olvidada` : 'Registrar comida'}
+        </h2>
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-700" htmlFor="feeding-datetime">
             ¿Cuándo?
