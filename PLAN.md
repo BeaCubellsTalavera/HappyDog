@@ -33,10 +33,10 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F6 — Push notifications` casi completa (solo queda verificación en dos móviles reales). `F7 — Nueva tab Inicio` planificada y lista para implementar.
-- **Último paso completado:** F6 código + deploy completo. Queda el checkbox de verificación en móviles reales.
-- **Próximo paso:** `F7 — Nueva tab Inicio (carrusel de tomas diarias)`. Crear branch `phase/f7-inicio` desde `develop`.
-- **Bloqueos:** para F7, la usuaria debe añadir 4 imágenes de fondo en `public/meal-slots/` (descritas en F7). Mientras tanto se usan gradientes CSS como fallback.
+- **Fase activa:** `F7 — Nueva tab Inicio` en `phase/f7-inicio`. Código implementado, pendiente pulido visual y verificación en browser.
+- **Último paso completado:** F7 código completo (tipos, lib, hooks, componentes, Home). Imágenes `.png` añadidas. Build limpio.
+- **Próximo paso:** pulido visual del carrusel (peek + flechas + `rounded-3xl`) — checkboxes detallados en F7 — luego verificación completa.
+- **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
 
@@ -402,15 +402,27 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 - [x] Crear `src/components/MealCarousel.tsx` (CSS scroll-snap, sin lib externa; `IntersectionObserver` para `viewingIndex`; auto-scroll al slot activo al montar)
 - [x] Actualizar `src/components/ManualFeedDialog.tsx`: prop opcional `slot?: MealSlot` — si se pasa, inicializa datetime a `startHour` del slot y restringe validación a la ventana
 - [x] Reemplazar contenido de `src/pages/Home.tsx` con `<MealCarousel />`
+- [ ] **Pulido visual del carrusel** (pendiente siguiente sesión):
+  - `MealCard.tsx`: cambiar `rounded-none` → `rounded-3xl` (el `overflow-hidden` ya está)
+  - `MealCarousel.tsx` — peek de tarjetas adyacentes:
+    - Scroll container: añadir `px-5 gap-3` + `style={{ scrollPaddingInline: '20px' }}`
+    - Wrappers de tarjeta: `w-[calc(100%-2.5rem)]` + `snap-center` (en vez de `w-full snap-start`)
+  - `MealCarousel.tsx` — flechas de navegación:
+    - Envolver scroll container en `div` `relative overflow-hidden flex-1`
+    - Función `navigateTo(idx)`: `scrollRef.current.children[idx].scrollIntoView({ behavior:'smooth', inline:'center' })`
+    - Flecha `‹` izquierda: `absolute left-2 top-1/2 -translate-y-1/2 z-30`, círculo `w-9 h-9 bg-white/70 backdrop-blur-sm rounded-full shadow` — **no renderizar** si `viewingIndex === 0`
+    - Flecha `›` derecha: igual — **no renderizar** si `viewingIndex === MEAL_SLOTS.length - 1`
 - [ ] **Verificar:**
   1. `docker compose up -d && npm run dev`
   2. Inicio muestra carrusel, auto-scroll al slot activo según hora del sistema
-  3. "DAR [toma]" → step verde, badge "DADA · [nombre] · [hora]"
-  4. ⋯ → Skip → step ámbar, badge "SALTADA"
-  5. Relojito → dialog con datetime inicializado a ventana del slot
-  6. Registro retroactivo → step verde aunque ventana haya pasado
-  7. Recargar → estado persiste desde Firestore
-  8. Slot cuya ventana pasó sin feeding → step rojo, badge "NO REGISTRADO"
+  3. Tarjetas con esquinas redondeadas y peek de ~20px de tarjetas adyacentes
+  4. Flechas visibles en laterales; desaparecen en primera/última tarjeta
+  5. "DAR [toma]" → step verde, badge "DADA · [nombre] · [hora]"
+  6. ⋯ → Skip → step ámbar, badge "SALTADA"
+  7. Relojito → dialog con datetime inicializado a ventana del slot
+  8. Registro retroactivo → step verde aunque ventana haya pasado
+  9. Recargar → estado persiste desde Firestore
+  10. Slot cuya ventana pasó sin feeding → step rojo, badge "NO REGISTRADO"
 
 ### F8 — Configuración de horarios de comida · _3-4h_
 - [ ] `/settings/schedule` CRUD de `config/schedule.meals`
