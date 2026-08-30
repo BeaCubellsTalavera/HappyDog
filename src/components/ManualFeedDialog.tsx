@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { createFeeding } from '../lib/feedings';
+import { injectTodayFeeding } from '../hooks/useFeedings';
 
 export interface ManualFeedDialogHandle {
   open: () => void;
@@ -66,12 +67,13 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle>((_props, ref)
     if (!user) return;
     setSaving(true);
     try {
-      await createFeeding({
+      const feeding = await createFeeding({
         timestamp: new Date(datetime),
         feederUid: user.uid,
         feederName: user.displayName ?? user.email ?? 'Desconocido',
         method: 'manual',
       });
+      injectTodayFeeding(feeding);
       close();
     } catch (err) {
       console.error('createFeeding error:', err);

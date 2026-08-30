@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useFcmToken } from './hooks/useFcmToken';
-import { reconnectFirestore } from './lib/firestoreReconnect';
+import { useTodayFeedings } from './hooks/useFeedings';
 import './index.css';
 import App from './App.tsx';
 // Registrar el listener de beforeinstallprompt cuanto antes: Chrome dispara
@@ -11,13 +11,8 @@ import './lib/sessionMark';
 // Importar el store de toast para que el listener onMessage arranque al cargar.
 import './hooks/useToast';
 
-// Cuando la app recupera el foco: cerrar notificaciones pendientes + limpiar badge.
-// Así el badge desaparece al abrir la app sin tener que tocar cada notif.
 async function clearHappydogNotifications() {
   if (!('serviceWorker' in navigator)) return;
-  // Recorrer TODAS las registraciones: las notificaciones las muestra el SW de
-  // FCM (scope /firebase-cloud-messaging-push-scope), no el SW de Workbox (/).
-  // navigator.serviceWorker.ready solo devuelve el SW controlador, que es Workbox.
   const regs = await navigator.serviceWorker.getRegistrations().catch(() => []);
   await Promise.all(
     regs.map((reg) =>
@@ -47,19 +42,15 @@ function maybeRefreshFcmToken() {
 
 function onAppVisible() {
   clearHappydogNotifications();
-  reconnectFirestore();
+  useTodayFeedings.getState().reload();
   maybeRefreshFcmToken();
 }
 
-// visibilitychange: Android y Safari en pestaña.
-// pageshow persisted: iOS PWA vuelve desde background (bfcache restore).
-// online: red vuelve tras corte (cubre foreground con red inestable).
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') onAppVisible();
 });
 window.addEventListener('pageshow', (e) => { if (e.persisted) onAppVisible(); });
-window.addEventListener('online', () => reconnectFirestore());
-// También al cargar (por si la app se abrió desde la notificación)
+window.addEventListener('online', () => useTodayFeedings.getState().reload());
 clearHappydogNotifications();
 
 createRoot(document.getElementById('root')!).render(

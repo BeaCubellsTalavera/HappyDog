@@ -1,7 +1,6 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { useRef, useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useFeedings } from '../hooks/useFeedings';
+import { useTodayFeedings, injectTodayFeeding } from '../hooks/useFeedings';
 import { createFeeding } from '../lib/feedings';
 import { useSessionMark } from '../lib/sessionMark';
 import { FeedingCard } from '../components/FeedingCard';
@@ -15,7 +14,7 @@ type FeedState = 'idle' | 'saving' | 'done' | 'error';
 
 export default function Home() {
   const { user } = useAuth();
-  const { feedings, loading } = useFeedings();
+  const { feedings: todayFeedings, loading } = useTodayFeedings();
   const markSeen = useSessionMark((s) => s.markSeen);
 
   useEffect(() => {
@@ -29,22 +28,17 @@ export default function Home() {
   const dialogRef = useRef<ManualFeedDialogHandle>(null);
   const [feedState, setFeedState] = useState<FeedState>('idle');
 
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const todayFeedings = useMemo(
-    () => feedings.filter((f) => f.dateLocal === today),
-    [feedings, today]
-  );
-
   async function handleFeedNow() {
     if (feedState !== 'idle' || !user) return;
     setFeedState('saving');
     try {
-      await createFeeding({
+      const feeding = await createFeeding({
         timestamp: new Date(),
         feederUid: user.uid,
         feederName: user.displayName ?? user.email ?? 'Desconocido',
         method: 'manual',
       });
+      injectTodayFeeding(feeding);
       setFeedState('done');
       setTimeout(() => setFeedState('idle'), 2000);
     } catch {

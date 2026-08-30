@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { onMessageForeground } from '../lib/messaging';
-import { reconnectFirestore } from '../lib/firestoreReconnect';
-import { getFeeding } from '../lib/feedings';
-import { injectFeeding } from './useFeedings';
+import { useTodayFeedings } from './useFeedings';
 
 interface ToastPayload {
   title: string;
@@ -37,24 +35,14 @@ export const useToast = create<ToastState>((set) => ({
   },
 }));
 
-// Listener a nivel módulo para no depender del mount de un componente. La promise
-// interna espera a que `messaging.isSupported()` resuelva; hasta entonces no hay
-// suscripción activa, pero tampoco perdemos ningún mensaje (FCM foreground exige
-// que el listener esté conectado en el momento del message, no antes).
 if (typeof window !== 'undefined') {
   onMessageForeground((payload) => {
     useToast.getState().show({
       title: payload.notification?.title ?? payload.data?.title ?? 'HappyDog',
       body: payload.notification?.body ?? payload.data?.body ?? '',
     });
-    // Fetch directo del feeding por ID: actualiza la lista sin esperar al WebSocket.
-    // El reconnect como red de seguridad por si el WebSocket sigue dormido.
-    const feedingId = payload.data?.feedingId;
-    if (feedingId) {
-      getFeeding(feedingId).then((f) => { if (f) injectFeeding(f); }).catch(() => {});
-    }
-    reconnectFirestore(2_000);
-  }).catch(() => {
-    // messaging no soportado en este navegador; no hay nada que mostrar.
-  });
+    // Recargar feedings de hoy: captura el feeding notificado y cualquier otro
+    // que no tuviera push propio (por existir uno más reciente cuando la CF ejecutó).
+    useTodayFeedings.getState().reload();
+  }).catch(() => {});
 }

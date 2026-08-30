@@ -1,70 +1,71 @@
-import { useMemo } from 'react';
-import { format, parseISO, isToday, isYesterday } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { useFeedings } from '../hooks/useFeedings';
+import { useEffect, useRef } from 'react';
+import { format } from 'date-fns';
+import { useHistory } from '../hooks/useHistory';
 import { Layout } from '../components/Layout';
-import type { Feeding } from '../types';
-
-function dayLabel(dateLocal: string): string {
-  const d = parseISO(dateLocal);
-  if (isToday(d)) return 'Hoy';
-  if (isYesterday(d)) return 'Ayer';
-  return format(d, "EEEE, d 'de' MMMM", { locale: es });
-}
 
 export default function History() {
-  const { feedings, loading } = useFeedings();
+  const { days, loading, hasMore, load, loadMore } = useHistory();
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const days = useMemo(() => {
-    const byDay = feedings.reduce<Record<string, Feeding[]>>((acc, f) => {
-      (acc[f.dateLocal] ??= []).push(f);
-      return acc;
-    }, {});
-    return Object.keys(byDay)
-      .sort()
-      .reverse()
-      .map((date) => ({ date, label: dayLabel(date), feedings: byDay[date] }));
-  }, [feedings]);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Infinite scroll: cuando el sentinel entra en viewport, carga más.
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && hasMore && !loading) loadMore(); },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadMore]);
 
   return (
     <Layout>
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-6">
-        {loading ? (
+        {loading && days.length === 0 ? (
           <p className="text-center text-gray-400 py-8">Cargando…</p>
         ) : days.length === 0 ? (
           <p className="text-center text-gray-400 py-8">Aún no hay registros</p>
         ) : (
-          days.map(({ date, label, feedings }, i) => (
-            <section key={date} className={i === 0 ? '' : 'mt-6'}>
-              <h2 className="sticky top-0 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-2 capitalize z-10">
-                {label}
-              </h2>
-              <div className="flex flex-col gap-2">
-                {feedings.map((f) => (
-                  <div
-                    key={f.id}
-                    className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm"
-                  >
-                    <span className="text-sm font-medium text-gray-500 w-12 shrink-0 tabular-nums">
-                      {format(f.timestamp.toDate(), 'HH:mm')}
-                    </span>
-                    <span className="flex-1 text-sm text-gray-900 truncate">
-                      {f.feederName}
-                    </span>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
-                        f.method === 'nfc'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
+          <>
+            {days.map(({ date, label, feedings }, i) => (
+              <section key={date} className={i === 0 ? '' : 'mt-6'}>
+                <h2 className="sticky top-0 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-2 capitalize z-10">
+                  {label}
+                </h2>
+                <div className="flex flex-col gap-2">
+                  {feedings.map((f) => (
+                    <div
+                      key={f.id}
+                      className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm"
                     >
-                      {f.method === 'nfc' ? 'NFC' : 'Manual'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))
+                      <span className="text-sm font-medium text-gray-500 w-12 shrink-0 tabular-nums">
+                        {format(f.timestamp.toDate(), 'HH:mm')}
+                      </span>
+                      <span className="flex-1 text-sm text-gray-900 truncate">
+                        {f.feederName}
+                      </span>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                          f.method === 'nfc'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {f.method === 'nfc' ? 'NFC' : 'Manual'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+            <div ref={sentinelRef} className="py-4 text-center">
+              {loading && <span className="text-sm text-gray-400">Cargando…</span>}
+            </div>
+          </>
         )}
       </div>
     </Layout>
