@@ -33,10 +33,10 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F5 — PWA instalable` completada ✅ y en prod (`main`). Manifest HappyDog, workbox con navigateFallback + runtimeCaching FCM, iconos placeholder coral "HD" (192/512/512-maskable + apple-touch-icon 180), `InstallPrompt` (banner Android + guía iOS) con listener a nivel módulo vía store zustand, persistencia offline nativa de Firestore con `persistentLocalCache` (IndexedDB).
-- **Último paso completado:** F5 verificada en prod desde móvil — Android instala vía menú (banner con siguiente cold-start), iOS añade a pantalla de inicio, offline muestra historial cacheado.
-- **Próximo paso:** `F6 — Push notifications cross-device (Cloud Functions v2)` en `phase/f6-push` desde `develop`.
-- **Bloqueos:** ninguno técnico. Iconos son placeholder — sustituir por logo real (maskable.app) cuando haya branding definitivo.
+- **Fase activa:** `F6 — Push notifications` casi completa (solo queda verificación en dos móviles reales). `F7 — Nueva tab Inicio` planificada y lista para implementar.
+- **Último paso completado:** F6 código + deploy completo. Queda el checkbox de verificación en móviles reales.
+- **Próximo paso:** `F7 — Nueva tab Inicio (carrusel de tomas diarias)`. Crear branch `phase/f7-inicio` desde `develop`.
+- **Bloqueos:** para F7, la usuaria debe añadir 4 imágenes de fondo en `public/meal-slots/` (descritas en F7). Mientras tanto se usan gradientes CSS como fallback.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
 
@@ -85,6 +85,9 @@ feedings/{autoId}
 
 config/nfc
   token: string
+
+skips/{autoId}                               # (F7) skip explícito de una toma
+  date, mealSlotId, skippedBy, skippedByName, skippedAt
 
 config/schedule                              # (futuro F8)
   meals: [{ id, label, startHour, endHour }], timezone
@@ -338,41 +341,76 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 
 No abordar hasta que MVP (F0-F6) esté verificado en producción.
 
-### F7 — Home mejorada con "comidas de hoy" (gauge segmentado) · _3-4h_
+### F7 — Nueva tab Inicio: carrusel de tomas diarias · _4-5h_
 
-Depende de F8 estar hecho (necesita `config/schedule.meals` para saber cuántos segmentos pintar). Si se aborda antes que F8, hardcodear temporalmente `meals: 2` (desayuno + cena).
+> Reemplaza el diseño de gauge anterior. Implementa 4 franjas horarias fijas con carrusel de tarjetas. Los horarios serán configurables en F8.
 
-**Diseño visual** (inspirado en la referencia dada por el usuario):
+**Diseño de referencia:** `Propuesta Inicio.png` (repo) + mockup de WhatsApp (imagen de la sesión de planificación).
 
-Un **gauge circular grande** en la parte superior de la Home. Círculo completo dividido en **N segmentos** (N = `config/schedule.meals.length`, típicamente 2-3). Cada segmento representa una comida del día. Los segmentos correspondientes a comidas ya suministradas van coloreados (rojo/coral de la marca); los pendientes en gris oscuro / vacío.
+#### Ventanas horarias (hardcoded en `MEAL_SLOTS`, configurables en F8)
 
-En el centro del círculo, **un número muy grande** = comidas completadas hoy (`0`, `1`, `2`…). Debajo un label pequeño: `"de X hoy"` o `"comidas de hoy"`.
+| id          | name     | label    | startHour | endHour |
+|-------------|----------|----------|-----------|---------|
+| `morning`   | Desayuno | MAÑANA   | 8         | 13      |
+| `midday`    | Comida   | MEDIODÍA | 13        | 18      |
+| `afternoon` | Merienda | TARDE    | 18        | 20      |
+| `night`     | Cena     | NOCHE    | 20        | 24      |
 
-```
-        ╭──────────────╮
-       ╱ ▓▓▓▓▓  ░░░░░░  ╲       segmento 1 (desayuno)  ✓ cumplido → rojo
-      │                  │      segmento 2 (cena)      ✗ pendiente → gris
-      │       2          │
-      │   comidas hoy    │
-       ╲                ╱
-        ╰──────────────╯
-```
+#### Estados de cada slot
 
-**Implementación:**
+- `not-yet`: hora actual < `startHour` — ventana aún no ha empezado (gris)
+- `pending`: `startHour` ≤ hora < `endHour`, sin feeding → naranja (activo ahora)
+- `given`: hay feeding con `hourLocal` en `[startHour, endHour)` y `dateLocal == hoy` → verde
+- `missed`: hora ≥ `endHour`, sin feeding → rojo (se olvidaron)
+- `skipped`: skip explícito para `date + slotId` → ámbar (distinto al rojo, es intencional)
 
-- [ ] `src/components/TodayGauge.tsx` — SVG puro (no chart lib) por control total y peso mínimo:
-  - Prop `segments: Array<{mealId, label, completed: boolean, feedingId?: string}>`
-  - Renderiza N arcos con `<path>` usando la fórmula de arco polar. Gap pequeño entre segmentos (~4°) para separación visual
-  - Cada segmento con transición CSS al cambiar `completed` (fade-in del color)
-  - Número grande en `<text>` centrado, `font-size` responsivo con `clamp()`
-  - Accesibilidad: `role="img"` + `aria-label="2 de 3 comidas hoy: desayuno completado, comida completada, cena pendiente"`
-- [ ] Hook `useTodayFeedings` — combina `useFeedings` filtrado por `dateLocal === today` con `config/schedule.meals`. Devuelve `{ segments, totalCompleted, totalMeals }`
-  - Cada feeding se asigna al meal cuyo rango `[startHour, endHour]` contiene el `hourLocal` del feeding
-  - Si hay más feedings que meals en un rango (ej: comieron 2 veces en el rango de desayuno) → el segmento queda "completed", los feedings extra se cuentan pero no repintan
-  - Si un feeding cae fuera de todos los rangos (ej: 15h, snack no configurado) → cuenta en el número central pero no ocupa segmento
-- [ ] Integrar `TodayGauge` en `pages/Home.tsx` arriba del listado
-- [ ] Estado especial cuando `totalMeals === 0` (no hay schedule configurado): mostrar número simple sin gauge, más CTA "Configurar horarios" que lleva a `/settings/schedule`
-- [ ] **Verificar:** con 0 feedings hoy → todos segmentos grises, número `0`. Con 1 feeding en rango desayuno → 1 segmento rojo, número `1`. Con 3 feedings (2 dentro de rango, 1 fuera) → 2 segmentos rojos, número `3`. Al escanear NFC ahora, gauge se actualiza en realtime vía onSnapshot
+El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `mealSlotId` a `Feeding`**.
+
+#### StepIndicator — dos dimensiones independientes
+
+**Color/icono** (estado del slot, basado en hora del sistema):
+- `pending` → naranja + icono comedero
+- `given` → verde + ✓
+- `missed` → rojo + ✗
+- `skipped` → ámbar + icono skip
+- `not-yet` → gris ○
+
+**Tamaño** (cuál card estás viendo, cambia al deslizar):
+- Card visible actualmente → círculo más grande
+- Resto → tamaño normal
+
+#### MealCard — acciones por estado
+
+- Fondo: imagen de paisaje de su franja (`public/meal-slots/morning.jpg` etc). Fallback: gradiente CSS.
+- `pending` / `missed` → botón naranja "DAR [name]" + botón relojito (retroactivo)
+- `given` / `skipped` / `not-yet` → botón secundario "VER HISTORIAL"
+- Menú ⋯ → "Skip" (solo en `pending`/`missed`). "Editar" fuera de scope (oculto).
+- Tras "DAR": badge cambia a `given` con feeder + hora. Step se pone verde.
+- Relojito: abre `ManualFeedDialog` con `slot` prop → datetime inicializado a `startHour` del slot, validación acotada a la ventana.
+
+#### Checkboxes
+
+- [x] Añadir tipos a `src/types/index.ts`: `MealSlotId`, `MealSlot`, `SlotStatus`, `Skip`
+- [x] Crear `src/lib/mealSlots.ts`: `MEAL_SLOTS` + `getActiveSlotIndex(now)` + `deriveSlotStatus(slot, feedings, skips, now)`
+- [x] Crear `src/lib/skips.ts`: `createSkip({ date, mealSlotId, skippedBy, skippedByName })` → `addDoc('skips')`
+- [x] Actualizar `firestore.rules`: colección `skips` — create si auth + `skippedBy == uid`, read auth
+- [x] Crear `src/hooks/useTodaySkips.ts`: Zustand store, carga `skips` donde `date == today`
+- [x] Crear `src/hooks/useMealStatus.ts`: hook React, deriva estado de 4 slots + `setInterval(60_000)` para re-derivar cada minuto
+- [ ] **[Manual usuaria]** Añadir 4 imágenes en `public/meal-slots/` (`morning.jpg`, `midday.jpg`, `afternoon.jpg`, `night.jpg`)
+- [x] Crear `src/components/StepIndicator.tsx`
+- [x] Crear `src/components/MealCard.tsx`
+- [x] Crear `src/components/MealCarousel.tsx` (CSS scroll-snap, sin lib externa; `IntersectionObserver` para `viewingIndex`; auto-scroll al slot activo al montar)
+- [x] Actualizar `src/components/ManualFeedDialog.tsx`: prop opcional `slot?: MealSlot` — si se pasa, inicializa datetime a `startHour` del slot y restringe validación a la ventana
+- [x] Reemplazar contenido de `src/pages/Home.tsx` con `<MealCarousel />`
+- [ ] **Verificar:**
+  1. `docker compose up -d && npm run dev`
+  2. Inicio muestra carrusel, auto-scroll al slot activo según hora del sistema
+  3. "DAR [toma]" → step verde, badge "DADA · [nombre] · [hora]"
+  4. ⋯ → Skip → step ámbar, badge "SALTADA"
+  5. Relojito → dialog con datetime inicializado a ventana del slot
+  6. Registro retroactivo → step verde aunque ventana haya pasado
+  7. Recargar → estado persiste desde Firestore
+  8. Slot cuya ventana pasó sin feeding → step rojo, badge "NO REGISTRADO"
 
 ### F8 — Configuración de horarios de comida · _3-4h_
 - [ ] `/settings/schedule` CRUD de `config/schedule.meals`
