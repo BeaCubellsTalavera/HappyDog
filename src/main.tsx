@@ -1,8 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { disableNetwork, enableNetwork } from 'firebase/firestore';
-import { db } from './lib/firebase';
 import { useFcmToken } from './hooks/useFcmToken';
+import { reconnectFirestore } from './lib/firestoreReconnect';
 import './index.css';
 import App from './App.tsx';
 // Registrar el listener de beforeinstallprompt cuanto antes: Chrome dispara
@@ -32,17 +31,6 @@ async function clearHappydogNotifications() {
   }
 }
 
-// Reconexión de Firestore: iOS corta WebSocket en background y a veces en foreground
-// con red inestable. El ciclo disable+enable fuerza una reconexión limpia.
-// Cooldown de 10 s para no romper la conexión si focus/online disparan seguidos.
-let lastReconnect = 0;
-function reconnectFirestore() {
-  const now = Date.now();
-  if (now - lastReconnect < 10_000) return;
-  lastReconnect = now;
-  disableNetwork(db).then(() => enableNetwork(db)).catch(() => {});
-}
-
 // Refresco de token FCM: si la Cloud Function borró el token por error transitorio,
 // el próximo onAppVisible lo recupera sin esperar a que el usuario vuelva a hacer login.
 // Cooldown de 5 min para no spamear Firestore.
@@ -70,7 +58,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') onAppVisible();
 });
 window.addEventListener('pageshow', (e) => { if (e.persisted) onAppVisible(); });
-window.addEventListener('online', reconnectFirestore);
+window.addEventListener('online', () => reconnectFirestore());
 // También al cargar (por si la app se abrió desde la notificación)
 clearHappydogNotifications();
 

@@ -1,6 +1,8 @@
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -40,6 +42,12 @@ export async function createFeeding(input: CreateFeedingInput): Promise<void> {
       setTimeout(() => reject(new Error('TIMEOUT')), WRITE_TIMEOUT_MS)
     ),
   ]);
+}
+
+export async function getFeeding(id: string): Promise<Feeding | null> {
+  const snap = await getDoc(doc(db, 'feedings', id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as Feeding;
 }
 
 export function subscribeFeedings(

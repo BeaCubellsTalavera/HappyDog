@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { onMessageForeground } from '../lib/messaging';
+import { reconnectFirestore } from '../lib/firestoreReconnect';
+import { getFeeding } from '../lib/feedings';
+import { injectFeeding } from './useFeedings';
 
 interface ToastPayload {
   title: string;
@@ -44,6 +47,13 @@ if (typeof window !== 'undefined') {
       title: payload.notification?.title ?? payload.data?.title ?? 'HappyDog',
       body: payload.notification?.body ?? payload.data?.body ?? '',
     });
+    // Fetch directo del feeding por ID: actualiza la lista sin esperar al WebSocket.
+    // El reconnect como red de seguridad por si el WebSocket sigue dormido.
+    const feedingId = payload.data?.feedingId;
+    if (feedingId) {
+      getFeeding(feedingId).then((f) => { if (f) injectFeeding(f); }).catch(() => {});
+    }
+    reconnectFirestore(2_000);
   }).catch(() => {
     // messaging no soportado en este navegador; no hay nada que mostrar.
   });
