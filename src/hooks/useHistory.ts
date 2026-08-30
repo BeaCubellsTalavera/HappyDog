@@ -53,6 +53,28 @@ export function syncTodayInHistory(todayDate: string, feedings: Feeding[]) {
   useHistory.setState({ days: [todayGroup, ...otherDays] });
 }
 
+export function injectHistoryFeeding(feeding: Feeding) {
+  const { days } = useHistory.getState();
+  if (days.length === 0) {
+    useHistory.getState().load();
+    return;
+  }
+  const dateStr = feeding.dateLocal;
+  const existing = days.find((d) => d.date === dateStr);
+  if (existing) {
+    const updatedFeedings = [...existing.feedings, feeding].sort(
+      (a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()
+    );
+    useHistory.setState({
+      days: days.map((d) => (d.date === dateStr ? { ...d, feedings: updatedFeedings } : d)),
+    });
+  } else {
+    const newDay: DayGroup = { date: dateStr, label: dayLabel(dateStr), feedings: [feeding] };
+    const sorted = [...days, newDay].sort((a, b) => b.date.localeCompare(a.date));
+    useHistory.setState({ days: sorted });
+  }
+}
+
 export const useHistory = create<HistoryState>((set, get) => ({
   days: [],
   loading: false,

@@ -2,10 +2,12 @@ import { useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { useHistory } from '../hooks/useHistory';
 import { Layout } from '../components/Layout';
+import { ManualFeedDialog, type ManualFeedDialogHandle } from '../components/ManualFeedDialog';
 
 export default function History() {
   const { days, loading, hasMore, load, loadMore } = useHistory();
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const pastDialogRef = useRef<ManualFeedDialogHandle>(null);
 
   useEffect(() => {
     load();
@@ -25,6 +27,17 @@ export default function History() {
   return (
     <Layout>
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-6">
+        <div className="flex items-center justify-between py-3 sticky top-0 bg-gray-50 z-10">
+          <h2 className="text-lg font-semibold text-gray-800">Historial</h2>
+          <button
+            onClick={() => pastDialogRef.current?.open()}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-medium rounded-xl transition-colors"
+          >
+            <span className="text-base leading-none">+</span>
+            Registrar
+          </button>
+        </div>
+
         {loading && days.length === 0 ? (
           <p className="text-center text-gray-400 py-8">Cargando…</p>
         ) : days.length === 0 ? (
@@ -33,7 +46,7 @@ export default function History() {
           <>
             {days.map(({ date, label, feedings }, i) => (
               <section key={date} className={i === 0 ? '' : 'mt-6'}>
-                <h2 className="sticky top-0 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-2 capitalize z-10">
+                <h2 className="sticky top-12 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-2 capitalize z-10">
                   {label}
                 </h2>
                 <div className="flex flex-col gap-2">
@@ -68,6 +81,8 @@ export default function History() {
           </>
         )}
       </div>
+
+      <ManualFeedDialog ref={pastDialogRef} pastMode />
     </Layout>
   );
 }

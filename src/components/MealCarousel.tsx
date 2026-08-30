@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { useTodayFeedings, injectTodayFeeding } from '../hooks/useFeedings';
 import { useTodaySkips } from '../hooks/useTodaySkips';
@@ -106,7 +107,7 @@ export function MealCarousel() {
           className="flex h-full overflow-x-scroll snap-x snap-mandatory scroll-smooth hide-scrollbar px-7 gap-3"
         >
           {slots.map((slot, i) => {
-            const today = new Date().toISOString().slice(0, 10);
+            const today = format(new Date(), 'yyyy-MM-dd');
             const slotFeeding =
               feedings.find(
                 (f) =>
