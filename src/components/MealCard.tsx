@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Feeding, MealSlot, Skip, SlotStatus } from '../types';
@@ -44,6 +44,23 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
   const [menuOpen, setMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const retroRef = useRef<ManualFeedDialogHandle>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    function onScroll() { setMenuOpen(false); }
+    document.addEventListener('click', onClickOutside);
+    document.addEventListener('scroll', onScroll, { capture: true });
+    return () => {
+      document.removeEventListener('click', onClickOutside);
+      document.removeEventListener('scroll', onScroll, { capture: true });
+    };
+  }, [menuOpen]);
 
   async function handleFeed() {
     if (saving) return;
@@ -76,7 +93,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
 
       {/* Three-dots menu — solo cuando hay opciones */}
       {(status === 'pending' || status === 'missed') && (
-        <div className="absolute top-4 right-4 z-20">
+        <div ref={menuRef} className="absolute top-4 right-4 z-20">
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
@@ -85,20 +102,17 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
             ···
           </button>
           {menuOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-11 z-20 bg-white rounded-xl shadow-lg overflow-hidden min-w-[140px]">
-                <button
-                  onClick={handleSkip}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0">
-                    <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
-                  </svg>
-                  Skip
-                </button>
-              </div>
-            </>
+            <div className="absolute right-0 top-11 z-20 bg-white rounded-xl shadow-lg overflow-hidden min-w-[140px]">
+              <button
+                onClick={handleSkip}
+                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0">
+                  <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
+                </svg>
+                Skip
+              </button>
+            </div>
           )}
         </div>
       )}

@@ -1,5 +1,4 @@
 import { Link, useLocation } from 'react-router-dom';
-import { signOutUser } from '../lib/auth';
 
 function IconHome({ active }: { active: boolean }) {
   return (
@@ -20,16 +19,6 @@ function IconHistory({ active }: { active: boolean }) {
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="9" fill={active ? 'currentColor' : 'none'} fillOpacity={active ? 0.12 : 0} />
       <polyline points="12 7 12 12 15.5 14" />
-    </svg>
-  );
-}
-
-function IconLogout() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   );
 }
@@ -62,13 +51,6 @@ export function BottomNav() {
             </Link>
           );
         })}
-        <button
-          onClick={signOutUser}
-          className="flex flex-col items-center gap-1 px-5 py-1.5 rounded-2xl text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <IconLogout />
-          <span className="text-xs font-medium">Salir</span>
-        </button>
       </div>
     </nav>
   );
