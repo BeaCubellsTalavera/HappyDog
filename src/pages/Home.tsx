@@ -11,7 +11,7 @@ import {
   type ManualFeedDialogHandle,
 } from '../components/ManualFeedDialog';
 
-type FeedState = 'idle' | 'done';
+type FeedState = 'idle' | 'saving' | 'done' | 'error';
 
 export default function Home() {
   const { user } = useAuth();
@@ -35,18 +35,22 @@ export default function Home() {
     [feedings, today]
   );
 
-  function handleFeedNow() {
+  async function handleFeedNow() {
     if (feedState !== 'idle' || !user) return;
-    // Optimista: persistentLocalCache escribe en IndexedDB al instante.
-    // No esperamos al servidor para no bloquearnos ante red lenta o reconexión.
-    createFeeding({
-      timestamp: new Date(),
-      feederUid: user.uid,
-      feederName: user.displayName ?? user.email ?? 'Desconocido',
-      method: 'manual',
-    }).catch(console.error);
-    setFeedState('done');
-    setTimeout(() => setFeedState('idle'), 2000);
+    setFeedState('saving');
+    try {
+      await createFeeding({
+        timestamp: new Date(),
+        feederUid: user.uid,
+        feederName: user.displayName ?? user.email ?? 'Desconocido',
+        method: 'manual',
+      });
+      setFeedState('done');
+      setTimeout(() => setFeedState('idle'), 2000);
+    } catch {
+      setFeedState('error');
+      setTimeout(() => setFeedState('idle'), 3000);
+    }
   }
 
   return (
@@ -60,10 +64,19 @@ export default function Home() {
             className={`w-full py-4 text-white font-semibold rounded-2xl shadow-sm transition-all ${
               feedState === 'done'
                 ? 'bg-green-500'
+                : feedState === 'error'
+                ? 'bg-red-500'
                 : 'bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-75'
             }`}
           >
-            {feedState === 'done' ? '✓ Anotado' : 'Dar de comer ahora'}
+            {feedState === 'saving' && (
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 align-middle" />
+            )}
+            {feedState === 'done'
+              ? '✓ Anotado'
+              : feedState === 'error'
+              ? 'Error, inténtalo de nuevo'
+              : 'Dar de comer ahora'}
           </button>
 
           <button
