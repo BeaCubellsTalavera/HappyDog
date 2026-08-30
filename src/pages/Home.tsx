@@ -1,8 +1,9 @@
-import { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { useFeedings } from '../hooks/useFeedings';
 import { createFeeding } from '../lib/feedings';
+import { useSessionMark } from '../lib/sessionMark';
 import { FeedingCard } from '../components/FeedingCard';
 import { Layout } from '../components/Layout';
 import {
@@ -15,6 +16,16 @@ type FeedState = 'idle' | 'saving' | 'done';
 export default function Home() {
   const { user } = useAuth();
   const { feedings, loading } = useFeedings();
+  const markSeen = useSessionMark((s) => s.markSeen);
+
+  useEffect(() => {
+    const onVisibility = () => { if (document.visibilityState === 'hidden') markSeen(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      markSeen();
+    };
+  }, [markSeen]);
   const dialogRef = useRef<ManualFeedDialogHandle>(null);
   const [feedState, setFeedState] = useState<FeedState>('idle');
 
