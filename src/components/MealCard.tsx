@@ -60,15 +60,6 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
 
   const gradient = GRADIENTS[slot.id] ?? GRADIENTS.morning;
 
-  // Badge solo para pending y not-yet; el resto tiene bloque en el área de acción
-  const badgeConfig: { bg: string; text: string; icon: string } | null = {
-    pending:  { bg: 'bg-orange-500/55', text: 'PENDIENTE',   icon: '🕐' },
-    'not-yet':{ bg: 'bg-gray-400/50',   text: 'NO TOCA AÚN', icon: '○'  },
-    skipped:  null,
-    given:    null,
-    missed:   null,
-  }[status] ?? null;
-
   return (
     <div className="relative w-full h-full flex-shrink-0 overflow-hidden rounded-3xl">
       {/* Background image with gradient fallback */}
@@ -83,33 +74,34 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
       {/* Dark overlay for legibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 
-      {/* Three-dots menu */}
-      <div className="absolute top-4 right-4 z-20">
-        <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
-          aria-label="Opciones"
-        >
-          ···
-        </button>
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-11 z-20 bg-white rounded-xl shadow-lg overflow-hidden min-w-[140px]">
-              {status === 'pending' ? (
+      {/* Three-dots menu — solo cuando hay opciones */}
+      {(status === 'pending' || status === 'missed') && (
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
+            aria-label="Opciones"
+          >
+            ···
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-11 z-20 bg-white rounded-xl shadow-lg overflow-hidden min-w-[140px]">
                 <button
                   onClick={handleSkip}
                   className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                 >
-                  <span>⏭</span> Skip
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0">
+                    <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
+                  </svg>
+                  Skip
                 </button>
-              ) : (
-                <p className="px-4 py-3 text-sm text-gray-400">Sin opciones</p>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Header */}
       <div className="absolute top-4 left-4 z-10">
@@ -117,16 +109,6 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
         <p className="text-white text-2xl font-bold leading-tight">{slot.name.toUpperCase()}</p>
         <p className="text-white/70 text-sm">{windowLabel(slot)}</p>
       </div>
-
-      {/* Status badge — not shown when given (handled by the block below) */}
-      {badgeConfig && (
-        <div className="absolute bottom-28 left-0 right-0 flex justify-center z-10">
-          <div className={`${badgeConfig.bg} backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2`}>
-            <span className="text-white text-sm">{badgeConfig.icon}</span>
-            <span className="text-white text-sm font-semibold tracking-wide">{badgeConfig.text}</span>
-          </div>
-        </div>
-      )}
 
       {/* Action area — todos los bloques usan h-14 para ocupar el mismo espacio */}
       <div className="absolute bottom-10 left-5 right-5 z-10 flex gap-3">

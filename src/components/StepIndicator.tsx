@@ -65,9 +65,7 @@ export function StepIndicator({ statuses, viewingIndex }: Props) {
             <StepCircle status={statuses[i]} isViewing={i === viewingIndex} />
           </div>
           {i < MEAL_SLOTS.length - 1 && (
-            <div className={`h-0.5 w-6 flex-shrink-0 transition-colors duration-200 ${
-              statuses[i] === 'given' ? 'bg-green-400' : 'bg-gray-200'
-            }`} />
+            <div className="h-0.5 w-6 flex-shrink-0 bg-gray-200" />
           )}
         </Fragment>
       ))}

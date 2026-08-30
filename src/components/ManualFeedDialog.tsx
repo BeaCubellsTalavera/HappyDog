@@ -104,14 +104,14 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(({ slo
   return (
     <dialog
       ref={dialogRef}
-      className="rounded-2xl shadow-xl p-0 max-w-sm w-full mx-4 my-auto backdrop:bg-black/50"
+      className="rounded-2xl shadow-xl p-0 w-full max-w-[min(24rem,calc(100%-2rem))] mx-auto my-auto backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) close();
       }}
     >
       <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-gray-900">
-          {slot ? `Registrar ${slot.name.toLowerCase()} olvidada` : 'Registrar comida'}
+          {'Registrar'}
         </h2>
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-700" htmlFor="feeding-datetime">
