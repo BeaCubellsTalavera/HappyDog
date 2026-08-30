@@ -24,6 +24,7 @@ async function clearHappydogNotifications() {
   if ('clearAppBadge' in navigator) {
     (navigator as Navigator & { clearAppBadge(): Promise<void> }).clearAppBadge().catch(() => {});
   }
+  navigator.serviceWorker?.controller?.postMessage({ type: 'CLEAR_BADGE' });
 }
 
 // Refresco de token FCM: si la Cloud Function borró el token por error transitorio,

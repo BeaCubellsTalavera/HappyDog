@@ -14,11 +14,55 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Badge counter persisted in IDB (Badging API has no getter).
+function openBadgeDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('happydog-badge', 1);
+    req.onupgradeneeded = (e) => e.target.result.createObjectStore('counter');
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = reject;
+  });
+}
+function incrementBadge() {
+  return openBadgeDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction('counter', 'readwrite');
+    const store = tx.objectStore('counter');
+    const get = store.get('count');
+    get.onsuccess = () => {
+      const next = (get.result ?? 0) + 1;
+      store.put(next, 'count');
+      tx.oncomplete = () => resolve(next);
+    };
+    get.onerror = reject;
+  }));
+}
+function resetBadge() {
+  return openBadgeDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction('counter', 'readwrite');
+    tx.objectStore('counter').put(0, 'count');
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  }));
+}
+
 // Badge en raw push event: es el único contexto donde iOS acepta setAppBadge
 // de forma fiable (dentro de callbacks Firebase el contexto puede no ser válido).
-self.addEventListener('push', () => {
-  if ('setAppBadge' in self.navigator) {
-    self.navigator.setAppBadge(1).catch(() => {});
+self.addEventListener('push', (event) => {
+  event.waitUntil(
+    incrementBadge().then((count) => {
+      if ('setAppBadge' in self.navigator) {
+        self.navigator.setAppBadge(count).catch(() => {});
+      }
+    })
+  );
+});
+
+// La app envía CLEAR_BADGE al abrirse para resetear el contador.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'CLEAR_BADGE') {
+    resetBadge().then(() => {
+      if ('clearAppBadge' in self.navigator) self.navigator.clearAppBadge().catch(() => {});
+    });
   }
 });
 
@@ -31,7 +75,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title, {
     body,
     icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    badge: '/icons/badge-96.svg',
     tag: 'happydog-feeding',
     renotify: true,
     data: payload.data ?? {},
@@ -45,7 +89,9 @@ self.addEventListener('notificationclick', (event) => {
     self.registration.getNotifications({ tag: 'happydog-feeding' })
       .then((ns) => {
         ns.forEach((n) => n.close());
-        if ('clearAppBadge' in self.navigator) return self.navigator.clearAppBadge();
+        return resetBadge().then(() => {
+          if ('clearAppBadge' in self.navigator) self.navigator.clearAppBadge().catch(() => {});
+        });
       })
       .then(() =>
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
