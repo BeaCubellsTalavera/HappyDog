@@ -31,24 +31,30 @@ async function clearHappydogNotifications() {
   }
 }
 
-// Al volver al primer plano: limpiar notificaciones + forzar reconexión de Firestore.
-// iOS corta la conexión WebSocket cuando la app está en background. enableNetwork()
-// sola es no-op si no hubo disableNetwork() previo — hay que hacer el ciclo completo.
-function onAppVisible() {
-  clearHappydogNotifications();
-  disableNetwork(db)
-    .then(() => enableNetwork(db))
-    .catch(() => {});
+// Reconexión de Firestore: iOS corta WebSocket en background y a veces en foreground
+// con red inestable. El ciclo disable+enable fuerza una reconexión limpia.
+// Cooldown de 10 s para no romper la conexión si focus/online disparan seguidos.
+let lastReconnect = 0;
+function reconnectFirestore() {
+  const now = Date.now();
+  if (now - lastReconnect < 10_000) return;
+  lastReconnect = now;
+  disableNetwork(db).then(() => enableNetwork(db)).catch(() => {});
 }
 
-// visibilitychange: Android y Safari en pestaña de navegador.
-// pageshow con persisted: iOS PWA al volver desde background (bfcache restore).
-// focus: fallback adicional.
+function onAppVisible() {
+  clearHappydogNotifications();
+  reconnectFirestore();
+}
+
+// visibilitychange: Android y Safari en pestaña.
+// pageshow persisted: iOS PWA vuelve desde background (bfcache restore).
+// online: red vuelve tras corte (cubre foreground con red inestable).
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') onAppVisible();
 });
 window.addEventListener('pageshow', (e) => { if (e.persisted) onAppVisible(); });
-window.addEventListener('focus', onAppVisible);
+window.addEventListener('online', reconnectFirestore);
 // También al cargar (por si la app se abrió desde la notificación)
 clearHappydogNotifications();
 

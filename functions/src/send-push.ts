@@ -21,7 +21,7 @@ interface UserTokens {
 const DEAD_TOKEN_CODES = new Set([
   'messaging/registration-token-not-registered',
   'messaging/invalid-registration-token',
-  'messaging/invalid-argument',
+  // 'messaging/invalid-argument' excluido: es error transitorio de FCM, no token muerto.
 ]);
 
 export const sendPushOnFeeding = onDocumentCreated(

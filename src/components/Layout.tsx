@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useFcmToken } from '../hooks/useFcmToken';
 import { BottomNav } from './BottomNav';
 import { HappyDogLogo } from './HappyDogLogo';
 import { InstallPrompt } from './InstallPrompt';
@@ -12,6 +13,16 @@ interface Props {
 
 export function Layout({ children }: Props) {
   const { user } = useAuth();
+  const { permission, enabled, enableNotifications } = useFcmToken();
+
+  // Si el usuario ya había concedido permiso, refrescar el token FCM al entrar.
+  // Cubre el caso de token eliminado por limpieza de muertos en la Cloud Function.
+  useEffect(() => {
+    if (user && permission === 'granted' && enabled) {
+      enableNotifications();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
 
   const initials = (user?.displayName ?? user?.email ?? '?')
     .split(' ')
