@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { useFcmToken } from '../hooks/useFcmToken';
 import { useMealConfig } from '../hooks/useMealConfig';
@@ -21,19 +22,26 @@ export default function Settings() {
   const enableNotifications = useFcmToken((s) => s.enableNotifications);
   const disableNotifications = useFcmToken((s) => s.disableNotifications);
 
-  const mealEnabled = useMealConfig((s) => s.enabled);
-  const toggleMeal = useMealConfig((s) => s.toggle);
+  const draft = useMealConfig((s) => s.draft);
+  const isDirty = useMealConfig((s) => s.isDirty);
+  const saving = useMealConfig((s) => s.loading);
+  const toggle = useMealConfig((s) => s.toggle);
+  const save = useMealConfig((s) => s.save);
+  const discard = useMealConfig((s) => s.discard);
 
-  const enabledCount = Object.values(mealEnabled).filter(Boolean).length;
+  // Al salir de Settings sin guardar, descartar cambios pendientes
+  useEffect(() => () => { discard(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleToggleMeal(id: MealSlotId) {
-    if (mealEnabled[id] && enabledCount === 1) return;
-    toggleMeal(id);
+  const draftEnabledCount = Object.values(draft).filter(Boolean).length;
+
+  function handleToggle(id: MealSlotId) {
+    if (draft[id] && draftEnabledCount === 1) return;
+    toggle(id);
   }
 
   return (
     <Layout>
-      <section className="pt-6 pb-4 flex flex-col gap-4">
+      <section className="pt-6 pb-24 flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-gray-800">Ajustes</h2>
 
         {/* Notificaciones */}
@@ -99,10 +107,11 @@ export default function Settings() {
               Activa o desactiva las tomas que aplican a tus perros.
             </p>
           </div>
+
           <ul>
             {MEAL_SLOTS.map((slot, i) => {
-              const isOn = mealEnabled[slot.id];
-              const isLast = isOn && enabledCount === 1;
+              const isOn = draft[slot.id];
+              const isLast = isOn && draftEnabledCount === 1;
               return (
                 <li
                   key={slot.id}
@@ -121,7 +130,7 @@ export default function Settings() {
                     role="switch"
                     aria-checked={isOn}
                     disabled={isLast}
-                    onClick={() => handleToggleMeal(slot.id)}
+                    onClick={() => handleToggle(slot.id)}
                     title={isLast ? 'Debe haber al menos una toma activa' : undefined}
                     className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-40 ${
                       isOn ? 'bg-orange-500' : 'bg-gray-200'
@@ -137,6 +146,24 @@ export default function Settings() {
               );
             })}
           </ul>
+
+          {isDirty && (
+            <div className="px-4 pb-4 pt-3 flex gap-3 border-t border-gray-100">
+              <button
+                onClick={discard}
+                className="flex-1 py-2.5 rounded-2xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                Descartar
+              </button>
+              <button
+                onClick={save}
+                disabled={saving}
+                className="flex-1 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              >
+                {saving ? 'Guardando…' : 'Guardar'}
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </Layout>

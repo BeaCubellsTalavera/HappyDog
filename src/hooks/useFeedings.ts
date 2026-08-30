@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { format } from 'date-fns';
+import { onAuthStateChanged } from 'firebase/auth';
 import type { Feeding } from '../types';
 import { getTodayFeedings } from '../lib/feedings';
 import { useHistory, syncTodayInHistory } from './useHistory';
+import { auth } from '../lib/firebase';
 
 interface TodayFeedingsState {
   feedings: Feeding[];
@@ -27,8 +29,10 @@ export const useTodayFeedings = create<TodayFeedingsState>((set, get) => ({
   },
 }));
 
-// Trigger initial load as soon as this module is imported.
-useTodayFeedings.getState().reload();
+// Cargar solo cuando Firebase confirma que hay usuario autenticado
+onAuthStateChanged(auth, (user) => {
+  if (user) useTodayFeedings.getState().reload();
+});
 
 export function injectTodayFeeding(feeding: Feeding) {
   const todayStr = today();

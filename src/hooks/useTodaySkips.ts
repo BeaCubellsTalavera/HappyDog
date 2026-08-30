@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '../lib/firebase';
 import { createSkip as createSkipDoc } from '../lib/skips';
 import { todayString } from '../lib/mealSlots';
 import type { Skip, MealSlotId } from '../types';
@@ -20,8 +21,6 @@ export const useTodaySkips = create<TodaySkipsState>((set, get) => {
     set({ skips, loading: false });
   }
 
-  reload();
-
   return {
     skips: [],
     loading: true,
@@ -31,4 +30,9 @@ export const useTodaySkips = create<TodaySkipsState>((set, get) => {
       await get().reload();
     },
   };
+});
+
+// Cargar solo cuando Firebase confirma que hay usuario autenticado
+onAuthStateChanged(auth, (user) => {
+  if (user) useTodaySkips.getState().reload();
 });
