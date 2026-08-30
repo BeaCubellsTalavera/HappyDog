@@ -16,3 +16,25 @@ export type NewFeeding = Omit<Feeding, 'id' | 'createdAt' | 'timestamp'> & {
   timestamp: Date;
   createdAt: FieldValue;
 };
+
+export type MealSlotId = 'morning' | 'midday' | 'afternoon' | 'night';
+
+export interface MealSlot {
+  id: MealSlotId;
+  name: string;
+  label: string;
+  startHour: number;
+  endHour: number;
+  bg: string;
+}
+
+export type SlotStatus = 'not-yet' | 'pending' | 'given' | 'missed' | 'skipped';
+
+export interface Skip {
+  id: string;
+  date: string;
+  mealSlotId: MealSlotId;
+  skippedBy: string;
+  skippedByName: string;
+  skippedAt: Timestamp;
+}
