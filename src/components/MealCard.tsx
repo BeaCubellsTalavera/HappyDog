@@ -60,11 +60,11 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
 
   const gradient = GRADIENTS[slot.id] ?? GRADIENTS.morning;
 
-  // Badge only for statuses where we don't have a bottom block
+  // Badge solo para pending y not-yet; el resto tiene bloque en el área de acción
   const badgeConfig: { bg: string; text: string; icon: string } | null = {
     pending:  { bg: 'bg-orange-500/55', text: 'PENDIENTE',   icon: '🕐' },
     'not-yet':{ bg: 'bg-gray-400/50',   text: 'NO TOCA AÚN', icon: '○'  },
-    skipped:  { bg: 'bg-amber-400/55',  text: 'SALTADA',     icon: '⏭'  },
+    skipped:  null,
     given:    null,
     missed:   null,
   }[status] ?? null;
@@ -124,9 +124,6 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
           <div className={`${badgeConfig.bg} backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2`}>
             <span className="text-white text-sm">{badgeConfig.icon}</span>
             <span className="text-white text-sm font-semibold tracking-wide">{badgeConfig.text}</span>
-            {status === 'skipped' && skip && (
-              <span className="text-white/80 text-xs ml-1">· {skip.skippedByName}</span>
-            )}
           </div>
         </div>
       )}
@@ -194,20 +191,25 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
           </button>
         )}
 
-        {/* Given: bloque DADA h-14 con feeder y hora en líneas separadas */}
+        {/* Given: bloque DADA h-14 — feeder y hora en la misma línea */}
         {status === 'given' && feeding && (
           <div className="flex-1 h-14 bg-green-500/35 backdrop-blur-sm rounded-2xl px-5 flex flex-col justify-center">
-            <p className="text-white font-bold text-sm leading-tight flex items-center gap-1.5">
-              <span>✓</span> DADA
-            </p>
-            <p className="text-white/85 text-xs leading-tight">{feeding.feederName}</p>
-            <p className="text-white/70 text-xs leading-tight">
-              {format(feeding.timestamp.toDate(), 'HH:mm', { locale: es })}
+            <p className="text-white font-bold text-sm leading-tight">✓ DADA</p>
+            <p className="text-white/80 text-xs leading-tight">
+              {feeding.feederName} · {format(feeding.timestamp.toDate(), 'HH:mm', { locale: es })}
             </p>
           </div>
         )}
 
-        {/* Skipped: sin botón, el badge cubre el estado */}
+        {/* Skipped: bloque SALTADA h-14, mismo tamaño y posición que DADA y NO REGISTRADO */}
+        {status === 'skipped' && (
+          <div className="flex-1 h-14 bg-amber-400/35 backdrop-blur-sm rounded-2xl px-5 flex flex-col justify-center">
+            <p className="text-white font-bold text-sm leading-tight">⏭ SALTADA</p>
+            {skip && (
+              <p className="text-white/80 text-xs leading-tight">{skip.skippedByName}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <ManualFeedDialog ref={retroRef} slot={slot} />
