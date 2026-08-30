@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { disableNetwork, enableNetwork } from 'firebase/firestore';
 import { db } from './lib/firebase';
+import { useFcmToken } from './hooks/useFcmToken';
 import './index.css';
 import App from './App.tsx';
 // Registrar el listener de beforeinstallprompt cuanto antes: Chrome dispara
@@ -42,9 +43,24 @@ function reconnectFirestore() {
   disableNetwork(db).then(() => enableNetwork(db)).catch(() => {});
 }
 
+// Refresco de token FCM: si la Cloud Function borró el token por error transitorio,
+// el próximo onAppVisible lo recupera sin esperar a que el usuario vuelva a hacer login.
+// Cooldown de 5 min para no spamear Firestore.
+let lastTokenRefresh = 0;
+function maybeRefreshFcmToken() {
+  const now = Date.now();
+  if (now - lastTokenRefresh < 5 * 60_000) return;
+  lastTokenRefresh = now;
+  const { permission, enabled, loading, enableNotifications } = useFcmToken.getState();
+  if (permission === 'granted' && enabled && !loading) {
+    enableNotifications();
+  }
+}
+
 function onAppVisible() {
   clearHappydogNotifications();
   reconnectFirestore();
+  maybeRefreshFcmToken();
 }
 
 // visibilitychange: Android y Safari en pestaña.
