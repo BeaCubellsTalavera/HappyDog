@@ -1,5 +1,4 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTodayFeedings, injectTodayFeeding } from '../hooks/useFeedings';
 import { useTodaySkips } from '../hooks/useTodaySkips';
@@ -15,7 +14,6 @@ export function MealCarousel() {
   const skips = useTodaySkips((s) => s.skips);
   const { createSkip } = useTodaySkips();
   const statuses = useMealStatus();
-  const navigate = useNavigate();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [viewingIndex, setViewingIndex] = useState(() => getActiveSlotIndex(new Date()));
@@ -33,7 +31,7 @@ export function MealCarousel() {
     if (!el) return;
     const activeIdx = getActiveSlotIndex(new Date());
     const card = el.children[activeIdx] as HTMLElement | undefined;
-    card?.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'start' });
+    card?.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
     setViewingIndex(activeIdx);
   }, []);
 
@@ -129,7 +127,6 @@ export function MealCarousel() {
                   skip={slotSkip}
                   onFeed={() => handleFeed(i)}
                   onSkip={() => handleSkip(i)}
-                  onNavigateHistory={() => navigate('/history')}
                 />
               </div>
             );

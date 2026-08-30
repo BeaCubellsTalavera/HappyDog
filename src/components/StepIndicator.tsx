@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { SlotStatus } from '../types';
 import { MEAL_SLOTS } from '../lib/mealSlots';
 
@@ -6,33 +7,39 @@ interface Props {
   viewingIndex: number;
 }
 
-function StepDot({ status, label, isViewing }: { status: SlotStatus; label: string; isViewing: boolean }) {
-  const base = 'flex items-center justify-center rounded-full transition-all duration-200 border-2';
-  const size = isViewing ? 'w-9 h-9' : 'w-7 h-7';
+const statusBg: Record<SlotStatus, string> = {
+  pending:   'bg-orange-500',
+  given:     'bg-green-500',
+  missed:    'bg-red-500',
+  skipped:   'bg-amber-400',
+  'not-yet': 'bg-white border-2 border-gray-300',
+};
 
-  const colorMap: Record<SlotStatus, string> = {
-    pending:  'bg-orange-500 border-orange-500 text-white',
-    given:    'bg-green-500  border-green-500  text-white',
-    missed:   'bg-red-500    border-red-500    text-white',
-    skipped:  'bg-amber-400  border-amber-400  text-white',
-    'not-yet':'bg-white      border-gray-300   text-gray-400',
-  };
+function BowlIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 500 500" fill="currentColor" className={className}>
+      <path
+        fillRule="evenodd"
+        d="M 250,110 A 150,70 0 0,0 100,180 L 60,320 C 60,410 440,410 440,320 L 400,180 A 150,70 0 0,0 250,110 Z M 250,130 A 130,50 0 0,1 380,180 A 130,50 0 0,1 250,230 A 130,50 0 0,1 120,180 A 130,50 0 0,1 250,130 Z"
+      />
+    </svg>
+  );
+}
+
+function StepCircle({ status, isViewing }: { status: SlotStatus; isViewing: boolean }) {
+  const innerSize = isViewing ? 'w-9 h-9' : 'w-7 h-7';
+  const iconSize  = isViewing ? 'w-5 h-5' : 'w-4 h-4';
+  const textSize  = isViewing ? 'text-base' : 'text-sm';
+  const textColor = status === 'not-yet' ? 'text-gray-400' : 'text-white';
 
   function Icon() {
-    if (status === 'pending') {
-      // Bowl icon (simplified SVG)
-      return (
-        <svg viewBox="0 0 24 24" fill="currentColor" className={isViewing ? 'w-5 h-5' : 'w-4 h-4'}>
-          <path d="M4 11h16a1 1 0 0 1 .97 1.24C19.84 16.31 16.28 19 12 19s-7.84-2.69-8.97-6.76A1 1 0 0 1 4 11zm2.1 2a7.02 7.02 0 0 0 11.8 0H6.1zM3 9a1 1 0 0 1 1-1h16a1 1 0 0 1 0 2H4a1 1 0 0 1-1-1z"/>
-        </svg>
-      );
-    }
-    if (status === 'given') return <span className={isViewing ? 'text-base' : 'text-sm'}>✓</span>;
-    if (status === 'missed') return <span className={isViewing ? 'text-base' : 'text-sm'}>✕</span>;
+    if (status === 'pending')  return <BowlIcon className={iconSize} />;
+    if (status === 'given')    return <span className={textSize}>✓</span>;
+    if (status === 'missed')   return <span className={textSize}>✕</span>;
     if (status === 'skipped') {
       return (
-        <svg viewBox="0 0 24 24" fill="currentColor" className={isViewing ? 'w-5 h-5' : 'w-4 h-4'}>
-          <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z"/>
+        <svg viewBox="0 0 24 24" fill="currentColor" className={iconSize}>
+          <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
         </svg>
       );
     }
@@ -40,33 +47,29 @@ function StepDot({ status, label, isViewing }: { status: SlotStatus; label: stri
   }
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className={`${base} ${size} ${colorMap[status]}`}>
+    // Fixed outer h-9 keeps every circle's center at the same height → lines stay aligned
+    <div className="w-9 h-9 flex items-center justify-center">
+      <div className={`${innerSize} rounded-full flex items-center justify-center transition-all duration-200 ${statusBg[status]} ${textColor}`}>
         <Icon />
       </div>
-      {isViewing && (
-        <span className="text-[10px] font-medium text-gray-600 tracking-wide">{label}</span>
-      )}
     </div>
   );
 }
 
 export function StepIndicator({ statuses, viewingIndex }: Props) {
   return (
-    <div className="flex items-center justify-center gap-1 px-4 py-2">
+    <div className="flex items-center px-6 py-3">
       {MEAL_SLOTS.map((slot, i) => (
-        <div key={slot.id} className="flex items-center">
-          <StepDot
-            status={statuses[i]}
-            label={slot.label}
-            isViewing={i === viewingIndex}
-          />
+        <Fragment key={slot.id}>
+          <div className="flex-1 flex justify-center">
+            <StepCircle status={statuses[i]} isViewing={i === viewingIndex} />
+          </div>
           {i < MEAL_SLOTS.length - 1 && (
-            <div className={`h-0.5 mx-1 transition-all duration-200 ${
-              i < viewingIndex ? 'w-6' : 'w-4'
-            } ${statuses[i] === 'given' ? 'bg-green-400' : 'bg-gray-200'}`} />
+            <div className={`h-0.5 w-6 flex-shrink-0 transition-colors duration-200 ${
+              statuses[i] === 'given' ? 'bg-green-400' : 'bg-gray-200'
+            }`} />
           )}
-        </div>
+        </Fragment>
       ))}
     </div>
   );

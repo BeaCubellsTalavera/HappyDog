@@ -104,7 +104,7 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(({ slo
   return (
     <dialog
       ref={dialogRef}
-      className="rounded-2xl shadow-xl p-0 max-w-sm w-full m-auto backdrop:bg-black/50"
+      className="rounded-2xl shadow-xl p-0 max-w-sm w-full mx-4 my-auto backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) close();
       }}

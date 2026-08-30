@@ -11,7 +11,17 @@ interface Props {
   skip: Skip | null;
   onFeed: () => Promise<void>;
   onSkip: () => Promise<void>;
-  onNavigateHistory: () => void;
+}
+
+function BowlIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 500 500" fill="currentColor" className={className}>
+      <path
+        fillRule="evenodd"
+        d="M 250,110 A 150,70 0 0,0 100,180 L 60,320 C 60,410 440,410 440,320 L 400,180 A 150,70 0 0,0 250,110 Z M 250,130 A 130,50 0 0,1 380,180 A 130,50 0 0,1 250,230 A 130,50 0 0,1 120,180 A 130,50 0 0,1 250,130 Z"
+      />
+    </svg>
+  );
 }
 
 const GRADIENTS: Record<string, string> = {
@@ -30,7 +40,7 @@ function windowLabel(slot: MealSlot) {
   return `${pad(slot.startHour)}:00 – ${end}`;
 }
 
-export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, onNavigateHistory }: Props) {
+export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const retroRef = useRef<ManualFeedDialogHandle>(null);
@@ -48,33 +58,29 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, onNaviga
     try { await onSkip(); } finally { setSaving(false); }
   }
 
-  const hasBg = true; // always attempt; onerror will fall back to gradient
   const gradient = GRADIENTS[slot.id] ?? GRADIENTS.morning;
 
-  const badgeConfig = {
-    pending:  { bg: 'bg-orange-500/90',  text: 'PENDIENTE',      icon: '🕐' },
-    given:    { bg: 'bg-green-500/90',   text: 'DADA',           icon: '✓'  },
-    missed:   { bg: 'bg-red-500/90',     text: 'NO REGISTRADO',  icon: '✕'  },
-    skipped:  { bg: 'bg-amber-400/90',   text: 'SALTADA',        icon: '⏭'  },
-    'not-yet':{ bg: 'bg-gray-400/80',    text: 'NO TOCA AÚN',    icon: '○'  },
-  }[status];
-
-  const canAct = status === 'pending' || status === 'missed';
+  // Badge only for statuses where we don't have a bottom block
+  const badgeConfig: { bg: string; text: string; icon: string } | null = {
+    pending:  { bg: 'bg-orange-500/55', text: 'PENDIENTE',   icon: '🕐' },
+    'not-yet':{ bg: 'bg-gray-400/50',   text: 'NO TOCA AÚN', icon: '○'  },
+    skipped:  { bg: 'bg-amber-400/55',  text: 'SALTADA',     icon: '⏭'  },
+    given:    null,
+    missed:   null,
+  }[status] ?? null;
 
   return (
     <div className="relative w-full h-full flex-shrink-0 overflow-hidden rounded-3xl">
-      {/* Background */}
-      {hasBg ? (
-        <img
-          src={slot.bg}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-        />
-      ) : null}
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} style={{ zIndex: hasBg ? -1 : 0 }} />
+      {/* Background image with gradient fallback */}
+      <img
+        src={slot.bg}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+      />
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} style={{ zIndex: -1 }} />
 
-      {/* Dark overlay at bottom for legibility */}
+      {/* Dark overlay for legibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 
       {/* Three-dots menu */}
@@ -90,15 +96,14 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, onNaviga
           <>
             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
             <div className="absolute right-0 top-11 z-20 bg-white rounded-xl shadow-lg overflow-hidden min-w-[140px]">
-              {canAct && (
+              {status === 'pending' ? (
                 <button
                   onClick={handleSkip}
                   className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                 >
                   <span>⏭</span> Skip
                 </button>
-              )}
-              {!canAct && (
+              ) : (
                 <p className="px-4 py-3 text-sm text-gray-400">Sin opciones</p>
               )}
             </div>
@@ -113,26 +118,24 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, onNaviga
         <p className="text-white/70 text-sm">{windowLabel(slot)}</p>
       </div>
 
-      {/* Status badge */}
-      <div className="absolute bottom-32 left-0 right-0 flex justify-center z-10">
-        <div className={`${badgeConfig.bg} backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2`}>
-          <span className="text-white text-sm">{badgeConfig.icon}</span>
-          <span className="text-white text-sm font-semibold tracking-wide">{badgeConfig.text}</span>
-          {status === 'given' && feeding && (
-            <span className="text-white/80 text-xs ml-1">
-              · {feeding.feederName} · {format(feeding.timestamp.toDate(), 'HH:mm', { locale: es })}
-            </span>
-          )}
-          {status === 'skipped' && skip && (
-            <span className="text-white/80 text-xs ml-1">· {skip.skippedByName}</span>
-          )}
+      {/* Status badge — not shown when given (handled by the block below) */}
+      {badgeConfig && (
+        <div className="absolute bottom-28 left-0 right-0 flex justify-center z-10">
+          <div className={`${badgeConfig.bg} backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2`}>
+            <span className="text-white text-sm">{badgeConfig.icon}</span>
+            <span className="text-white text-sm font-semibold tracking-wide">{badgeConfig.text}</span>
+            {status === 'skipped' && skip && (
+              <span className="text-white/80 text-xs ml-1">· {skip.skippedByName}</span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Action buttons */}
-      <div className="absolute bottom-6 left-4 right-4 z-10 flex gap-3">
-        {canAct ? (
-          <>
+      {/* Action area */}
+      <div className="absolute bottom-10 left-5 right-5 z-10">
+        {/* Pending: DAR + relojito */}
+        {status === 'pending' && (
+          <div className="flex gap-3">
             <button
               onClick={handleFeed}
               disabled={saving}
@@ -142,9 +145,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, onNaviga
                 <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path d="M4 11h16a1 1 0 0 1 .97 1.24C19.84 16.31 16.28 19 12 19s-7.84-2.69-8.97-6.76A1 1 0 0 1 4 11zm2.1 2a7.02 7.02 0 0 0 11.8 0H6.1zM3 9a1 1 0 0 1 1-1h16a1 1 0 0 1 0 2H4a1 1 0 0 1-1-1z"/>
-                  </svg>
+                  <BowlIcon className="w-5 h-5" />
                   DAR {slot.name.toUpperCase()}
                 </>
               )}
@@ -159,21 +160,58 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, onNaviga
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
             </button>
-          </>
-        ) : (
+          </div>
+        )}
+
+        {/* Missed: NO REGISTRADO block + relojito para registro retroactivo */}
+        {status === 'missed' && (
+          <div className="flex gap-3 items-stretch">
+            <div className="flex-1 bg-red-500/35 backdrop-blur-sm rounded-2xl px-5 py-4">
+              <div className="flex items-center gap-2 text-white font-bold text-base">
+                <span>✕</span>
+                <span>NO REGISTRADO</span>
+              </div>
+              <p className="text-white/70 text-sm mt-1">Puedes añadirlo aún</p>
+            </div>
+            <button
+              onClick={() => retroRef.current?.open()}
+              className="w-14 bg-white rounded-2xl shadow-lg flex items-center justify-center text-orange-500 hover:bg-orange-50 active:bg-orange-100 transition-colors"
+              aria-label="Registrar hora pasada"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
+                <circle cx="12" cy="12" r="9"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Not yet: DAR disabled */}
+        {status === 'not-yet' && (
           <button
-            onClick={onNavigateHistory}
-            className="flex-1 py-4 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors"
+            disabled
+            className="w-full py-4 bg-white/15 text-white/40 font-bold rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-              <rect x="9" y="3" width="6" height="4" rx="1"/>
-              <line x1="9" y1="12" x2="15" y2="12"/>
-              <line x1="9" y1="16" x2="13" y2="16"/>
-            </svg>
-            VER HISTORIAL
+            <BowlIcon className="w-5 h-5" />
+            DAR {slot.name.toUpperCase()}
           </button>
         )}
+
+        {/* Given: DADA block with feeder + time on separate lines */}
+        {status === 'given' && feeding && (
+          <div className="bg-green-500/35 backdrop-blur-sm rounded-2xl px-5 py-4">
+            <div className="flex items-center gap-2 text-white font-bold text-lg">
+              <span>✓</span>
+              <span>DADA</span>
+            </div>
+            <p className="text-white/85 text-sm mt-1">{feeding.feederName}</p>
+            <p className="text-white/70 text-sm">
+              {format(feeding.timestamp.toDate(), 'HH:mm', { locale: es })}
+            </p>
+          </div>
+        )}
+
+        {/* Skipped: badge already covers it, no button needed */}
       </div>
 
       <ManualFeedDialog ref={retroRef} slot={slot} />
