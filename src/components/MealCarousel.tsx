@@ -51,7 +51,7 @@ export function MealCarousel() {
   }, []);
 
   const handleFeed = useCallback(
-    async (slotIndex: number) => {
+    async (_slotIndex: number) => {
       if (!user) return;
       const feeding = await createFeeding({
         timestamp: new Date(),
