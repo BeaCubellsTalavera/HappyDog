@@ -9,7 +9,7 @@ if (getApps().length === 0) initializeApp();
 interface FeedingDoc {
   feederUid: string;
   feederName: string;
-  method: 'nfc' | 'manual';
+  method: 'nfc' | 'manual' | 'skipped';
   timestamp: Timestamp;
   dateLocal: string;
 }
@@ -83,7 +83,12 @@ export const sendPushOnFeeding = onDocumentCreated(
       }
     }
 
+    const isSkip = feeding.method === 'skipped';
     const methodLabel = feeding.method === 'nfc' ? '(NFC)' : '(manual)';
+    const pushTitle = isSkip ? '🐾 Han saltado una toma' : '🐾 Han dado de comer';
+    const pushBody = isSkip
+      ? `${feeding.feederName} ha saltado una toma`
+      : `${feeding.feederName} acaba de darles de comer ${methodLabel}`;
 
     // Mensaje data-only: el navegador nunca auto-muestra nada.
     // onBackgroundMessage en el SW es el único punto que llama a showNotification
@@ -94,8 +99,8 @@ export const sendPushOnFeeding = onDocumentCreated(
         feedingId: event.params.id,
         feederUid: feeding.feederUid,
         method: feeding.method,
-        title: '🐾 Han dado de comer',
-        body: `${feeding.feederName} acaba de darles de comer ${methodLabel}`,
+        title: pushTitle,
+        body: pushBody,
       },
     });
 
