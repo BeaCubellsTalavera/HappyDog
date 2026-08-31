@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Feeding, MealSlot, Skip, SlotStatus } from '../types';
+import type { Feeding, MealSlot, SlotStatus } from '../types';
 import { ManualFeedDialog, type ManualFeedDialogHandle } from './ManualFeedDialog';
 
 interface Props {
   slot: MealSlot;
   status: SlotStatus;
   feeding: Feeding | null;
-  skip: Skip | null;
+  skip: Feeding | null;
   onFeed: () => Promise<void>;
   onSkip: () => Promise<void>;
   isLoading?: boolean;
@@ -213,7 +213,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
               SALTADA
             </p>
             {skip && (
-              <p className="text-white/80 text-xs leading-tight">{skip.skippedByName}</p>
+              <p className="text-white/80 text-xs leading-tight">{skip.feederName}</p>
             )}
           </div>
         )}
