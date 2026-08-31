@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F7 — Nueva tab Inicio` en `phase/f7-inicio`. Código implementado, pendiente pulido visual y verificación en browser.
-- **Último paso completado:** F7 código completo (tipos, lib, hooks, componentes, Home). Imágenes `.png` añadidas. Build limpio.
-- **Próximo paso:** pulido visual del carrusel (peek + flechas + `rounded-3xl`) — checkboxes detallados en F7 — luego verificación completa.
+- **Fase activa:** `F7 — Nueva tab Inicio` en `phase/f7-inicio`. Código implementado, pendiente verificación en browser.
+- **Último paso completado:** migración skips → feedings (`method: 'skipped'`); colección `skips` eliminada; badge "Saltada" en Historial.
+- **Próximo paso:** verificación completa F7.
 - **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -82,12 +82,11 @@ users/{uid}
 
 feedings/{autoId}
   timestamp, dateLocal, hourLocal, feederUid, feederName, method, createdAt
+  # method: 'nfc' | 'manual' | 'skipped'
+  # Para skips: timestamp = inicio del slot (hourLocal = slot.startHour). No hay mealSlotId.
 
 config/nfc
   token: string
-
-skips/{autoId}                               # (F7) skip explícito de una toma
-  date, mealSlotId, skippedBy, skippedByName, skippedAt
 
 config/schedule                              # (futuro F8)
   meals: [{ id, label, startHour, endHour }], timezone
@@ -362,7 +361,7 @@ No abordar hasta que MVP (F0-F6) esté verificado en producción.
 - `pending`: `startHour` ≤ hora < `endHour`, sin feeding → naranja (activo ahora)
 - `given`: hay feeding con `hourLocal` en `[startHour, endHour)` y `dateLocal == hoy` → verde
 - `missed`: hora ≥ `endHour`, sin feeding → rojo (se olvidaron)
-- `skipped`: skip explícito para `date + slotId` → ámbar (distinto al rojo, es intencional)
+- `skipped`: feeding con `method: 'skipped'` y `hourLocal == slot.startHour` → ámbar (intencional, distinto al rojo)
 
 El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `mealSlotId` a `Feeding`**.
 
@@ -390,11 +389,10 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 
 #### Checkboxes
 
-- [x] Añadir tipos a `src/types/index.ts`: `MealSlotId`, `MealSlot`, `SlotStatus`, `Skip`
-- [x] Crear `src/lib/mealSlots.ts`: `MEAL_SLOTS` + `getActiveSlotIndex(now)` + `deriveSlotStatus(slot, feedings, skips, now)`
-- [x] Crear `src/lib/skips.ts`: `createSkip({ date, mealSlotId, skippedBy, skippedByName })` → `addDoc('skips')`
-- [x] Actualizar `firestore.rules`: colección `skips` — create si auth + `skippedBy == uid`, read auth
-- [x] Crear `src/hooks/useTodaySkips.ts`: Zustand store, carga `skips` donde `date == today`
+- [x] Añadir tipos a `src/types/index.ts`: `MealSlotId`, `MealSlot`, `SlotStatus`
+- [x] Crear `src/lib/mealSlots.ts`: `MEAL_SLOTS` + `getActiveSlotIndex(now)` + `deriveSlotStatus(slot, feedings, today, now)` (skips derivados del mismo array de feedings por `method === 'skipped'`)
+- [x] Crear `src/lib/skips.ts`: `createSkip({ date, mealSlotId, uid, name })` → `createFeeding({ method: 'skipped', timestamp: inicio del slot, ... })`
+- [x] `src/hooks/useTodaySkips.ts`: solo acción `createSkip()`, sin store propio (skips se leen de `useTodayFeedings`)
 - [x] Crear `src/hooks/useMealStatus.ts`: hook React, deriva estado de 4 slots + `setInterval(60_000)` para re-derivar cada minuto
 - [x] **[Manual usuaria]** Añadir 4 imágenes en `public/meal-slots/` (añadidas como `.png`)
 - [x] Crear `src/components/StepIndicator.tsx`
