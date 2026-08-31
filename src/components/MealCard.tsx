@@ -11,6 +11,7 @@ interface Props {
   skip: Skip | null;
   onFeed: () => Promise<void>;
   onSkip: () => Promise<void>;
+  isLoading?: boolean;
 }
 
 function BowlIcon({ className }: { className?: string }) {
@@ -40,7 +41,7 @@ function windowLabel(slot: MealSlot) {
   return `${pad(slot.startHour)}:00 – ${end}`;
 }
 
-export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props) {
+export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoading }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const retroRef = useRef<ManualFeedDialogHandle>(null);
@@ -91,8 +92,8 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
       {/* Dark overlay for legibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 
-      {/* Three-dots menu — solo cuando hay opciones */}
-      {(status === 'pending' || status === 'missed') && (
+      {/* Three-dots menu — solo cuando hay opciones y ya cargaron los datos */}
+      {!isLoading && (status === 'pending' || status === 'missed') && (
         <div ref={menuRef} className="absolute top-4 right-4 z-20">
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -126,8 +127,13 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
 
       {/* Action area — todos los bloques usan h-14 para ocupar el mismo espacio */}
       <div className="absolute bottom-10 left-5 right-5 z-10 flex gap-3">
+        {/* Loading: placeholder neutro mientras se cargan los datos */}
+        {isLoading && (
+          <div className="flex-1 h-14 bg-white/15 rounded-2xl animate-pulse" />
+        )}
+
         {/* Pending: DAR + relojito */}
-        {status === 'pending' && (
+        {!isLoading && status === 'pending' && (
           <>
             <button
               onClick={handleFeed}
@@ -157,7 +163,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
         )}
 
         {/* Missed: bloque NO REGISTRADO h-14 + relojito */}
-        {status === 'missed' && (
+        {!isLoading && status === 'missed' && (
           <>
             <div className="flex-1 h-14 bg-red-500/35 backdrop-blur-sm rounded-2xl px-5 flex items-center gap-2">
               <span className="text-white font-bold text-base">✕</span>
@@ -177,7 +183,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
         )}
 
         {/* Not yet: DAR deshabilitado h-14 */}
-        {status === 'not-yet' && (
+        {!isLoading && status === 'not-yet' && (
           <button
             disabled
             className="flex-1 h-14 bg-white/15 text-white/40 font-bold rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
@@ -188,7 +194,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
         )}
 
         {/* Given: bloque DADA h-14 — feeder y hora en la misma línea */}
-        {status === 'given' && feeding && (
+        {!isLoading && status === 'given' && feeding && (
           <div className="flex-1 h-14 bg-green-500/35 backdrop-blur-sm rounded-2xl px-5 flex flex-col justify-center">
             <p className="text-white font-bold text-sm leading-tight">✓ DADA</p>
             <p className="text-white/80 text-xs leading-tight">
@@ -198,7 +204,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip }: Props)
         )}
 
         {/* Skipped: bloque SALTADA h-14, mismo tamaño y posición que DADA y NO REGISTRADO */}
-        {status === 'skipped' && (
+        {!isLoading && status === 'skipped' && (
           <div className="flex-1 h-14 bg-amber-400/35 backdrop-blur-sm rounded-2xl px-5 flex flex-col justify-center">
             <p className="text-white font-bold text-sm leading-tight flex items-center gap-1.5">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0">

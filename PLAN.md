@@ -412,6 +412,35 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
     - Función `navigateTo(idx)`: `scrollRef.current.children[idx].scrollIntoView({ behavior:'smooth', inline:'center' })`
     - Flecha `‹` izquierda: `absolute left-2 top-1/2 -translate-y-1/2 z-30`, círculo `w-9 h-9 bg-white/70 backdrop-blur-sm rounded-full shadow` — **no renderizar** si `viewingIndex === 0`
     - Flecha `›` derecha: igual — **no renderizar** si `viewingIndex === MEAL_SLOTS.length - 1`
+#### Configuración de tomas habilitadas (Settings)
+
+- [x] `src/hooks/useMealConfig.ts` — Zustand + Firestore `onSnapshot` en `config/schedule`. Estado global de qué slots están habilitados. Draft/Save: los cambios solo se publican al pulsar "Guardar"; salir sin guardar descarta. Sincroniza entre dispositivos via `onSnapshot`.
+- [x] `src/pages/Settings.tsx` — sección "Comidas" con toggle por slot (naranja=ON, gris=OFF). Botones "Guardar"/"Descartar" solo cuando hay cambios sin guardar. `useEffect` descarta el draft al desmontar.
+- [x] `firestore.rules` — `config/schedule` write permitido si auth (añadido a la regla `config/{doc}`)
+- [x] `src/hooks/useMealStatus.ts` — devuelve `{ slots, statuses }` (slots filtrados por los habilitados en `useMealConfig`)
+- [x] `src/lib/mealSlots.ts` — `getActiveSlotIndex(slots, now)` acepta array filtrado en lugar de usar `MEAL_SLOTS` global
+- [x] `src/components/StepIndicator.tsx` — número variable de steps según slots habilitados; conectores solo entre pasos (`i < statuses.length - 1`); `justify-center gap-3` para espaciado consistente
+- [x] `src/components/MealCarousel.tsx` — usa `{ slots, statuses }` de `useMealStatus` en lugar de `MEAL_SLOTS`
+
+#### Registro retroactivo desde Historial
+
+- [x] `src/pages/History.tsx` — sticky header con botón "Registrar" que abre `ManualFeedDialog` en `pastMode`
+- [x] `src/components/ManualFeedDialog.tsx` — modo `pastMode`: `datetime-local`, rango ayer–7 días atrás (bloquea futuro y >7 días). Modo slot (relojito de Inicio): `type="time"`, solo hora, siempre es hoy.
+- [x] `src/hooks/useHistory.ts` — `injectHistoryFeeding(feeding)` actualiza el historial optimísticamente al registrar toma pasada
+
+#### Carga rápida y sin flash en Inicio
+
+- [x] `src/hooks/useAuth.tsx` — init síncrono: `user: auth.currentUser, loading: auth.currentUser === null` → elimina pantalla de carga larga en refresh
+- [x] `src/hooks/useFeedings.ts` — localStorage sync (`happydog:feedings-YYYY-MM-DD`, Timestamps serializados): preview síncrono en el primer render → cero flash "DAR X". `reload()` reemplaza el state completamente con la respuesta de `getDocs` (sin merge → si algo fue borrado en Firestore, desaparece). `saveToLS` actualiza localStorage tras cada respuesta de red.
+- [x] `src/hooks/useTodaySkips.ts` — carga inmediata si `auth.currentUser` ya está disponible al arrancar el módulo
+- [x] `src/components/MealCard.tsx` — prop `isLoading?: boolean`: mientras carga, muestra placeholder pulsante en lugar de mostrar un estado incorrecto ("DAR X" o "DADA" falso)
+- [x] `src/components/MealCarousel.tsx` — pasa `isLoading={feedingsLoading}` a cada `MealCard`. `handleFeed`: espera confirmación de Firestore (`createFeeding` resuelve) antes de llamar `reload()` — nunca muestra "DADA" sin confirmación del servidor.
+
+#### Pendiente antes de verificar F7
+
+- [x] `src/hooks/useFeedings.ts` y `src/lib/feedings.ts` — eliminar el paso explícito `getTodayFeedingsFromCache` (el SDK de Firestore ya gestiona IndexedDB automáticamente offline; no hace falta llamarlo explícitamente)
+- [x] Cuando se registra una nueva entrada en Historia no hace push al resto de devices y no están realtime. Arreglarlo de la misma manera que las comidas y los registros de Inicio.
+
 - [ ] **Verificar:**
   1. `docker compose up -d && npm run dev`
   2. Inicio muestra carrusel, auto-scroll al slot activo según hora del sistema
@@ -419,10 +448,12 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
   4. Flechas visibles en laterales; desaparecen en primera/última tarjeta
   5. "DAR [toma]" → step verde, badge "DADA · [nombre] · [hora]"
   6. ⋯ → Skip → step ámbar, badge "SALTADA"
-  7. Relojito → dialog con datetime inicializado a ventana del slot
-  8. Registro retroactivo → step verde aunque ventana haya pasado
-  9. Recargar → estado persiste desde Firestore
+  7. Relojito → dialog con hora inicializada a ventana del slot; picker solo de hora
+  8. Registro retroactivo desde Inicio → step verde aunque ventana haya pasado
+  9. Refresh → estado de hoy aparece instantáneamente (localStorage), sin flash "DAR X"
   10. Slot cuya ventana pasó sin feeding → step rojo, badge "NO REGISTRADO"
+  11. Settings → Comidas: desactivar un slot → carrusel muestra 3 tarjetas, StepIndicator 3 círculos. Salir sin guardar → cambio descartado. Guardar → persiste en todos los dispositivos.
+  12. History → "Registrar" → dialog permite elegir fecha de ayer hasta hace 7 días; bloquea hoy y >7 días
 
 ### F8 — Configuración de horarios de comida · _3-4h_
 - [ ] `/settings/schedule` CRUD de `config/schedule.meals`
