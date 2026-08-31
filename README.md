@@ -176,7 +176,7 @@ App sin conexión
 
 | Trigger | Cuándo dispara | Qué hace |
 |---|---|---|
-| `onDocumentCreated('feedings/{id}')` | Cada `addDoc` en la colección `feedings` (tomas reales y skips) | Envía push data-only a todos los miembros menos al feeder; solo si el feeding es de hoy, no es un skip (`method != 'skipped'`) y es el más reciente |
+| `onDocumentCreated('feedings/{id}')` | Cada `addDoc` en la colección `feedings` (tomas reales y skips) | Envía push data-only a todos los miembros menos al feeder; solo si el feeding es de hoy y es el más reciente |
 | `onMessage` (FCM foreground) | Push recibido con la app abierta | Toast in-app + `getDocs` reload de feedings de hoy |
 | `onBackgroundMessage` (Service Worker) | Push recibido con la app en background | `showNotification(...)` + `setAppBadge(1)` |
 | `visibilitychange` / `pageshow` / `online` | App vuelve a primer plano o recupera red | `getDocs` reload de feedings de hoy + refresco de token FCM (cooldown 5 min) |
