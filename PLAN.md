@@ -439,7 +439,7 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 #### Pendiente antes de verificar F7
 
 - [x] `src/hooks/useFeedings.ts` y `src/lib/feedings.ts` — eliminar el paso explícito `getTodayFeedingsFromCache` (el SDK de Firestore ya gestiona IndexedDB automáticamente offline; no hace falta llamarlo explícitamente)
-- [ ] Cuando se registra una nueva entrada en Historia no hace push al resto de devices y no están realtime. Arreglarlo de la misma manera que las comidas y los registros de Inicio.
+- [x] Cuando se registra una nueva entrada en Historia no hace push al resto de devices y no están realtime. Arreglarlo de la misma manera que las comidas y los registros de Inicio.
 
 - [ ] **Verificar:**
   1. `docker compose up -d && npm run dev`
