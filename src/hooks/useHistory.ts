@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { parseISO, isToday, isYesterday, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { DocumentSnapshot } from 'firebase/firestore';
+import { collection, limit, onSnapshot, orderBy, query, type DocumentSnapshot } from 'firebase/firestore';
 import type { Feeding } from '../types';
+import { db } from '../lib/firebase';
 import { getHistoryPage } from '../lib/feedings';
 
 export interface DayGroup {
@@ -16,7 +17,7 @@ interface HistoryState {
   loading: boolean;
   hasMore: boolean;
   cursor: DocumentSnapshot | null;
-  load: () => Promise<void>;
+  load: () => void;
   loadMore: () => Promise<void>;
 }
 
@@ -38,41 +39,53 @@ function groupByDay(feedings: Feeding[]): DayGroup[] {
     .map((date) => ({ date, label: dayLabel(date), feedings: byDay[date] }));
 }
 
+const PAGE_SIZE = 60;
+
+// Módulo: estado de la suscripción y las páginas adicionales
+let _unsub: (() => void) | null = null;
+let _snapshotDays: DayGroup[] = [];   // primera "página" viva vía onSnapshot
+let _extraFeedings: Feeding[] = [];   // páginas extra cargadas con loadMore
+
+function rebuildDays(): DayGroup[] {
+  const snapshotDates = new Set(_snapshotDays.map((d) => d.date));
+  const filteredExtra = _extraFeedings.filter((f) => !snapshotDates.has(f.dateLocal));
+  return [..._snapshotDays, ...groupByDay(filteredExtra)];
+}
+
 // Llamado desde useTodayFeedings cada vez que los feedings de hoy cambian,
 // para mantener la sección "Hoy" de Historia sincronizada sin recargar todo.
 export function syncTodayInHistory(todayDate: string, feedings: Feeding[]) {
-  const { days } = useHistory.getState();
-  if (days.length === 0) return; // Historia aún no cargada; se incluirá al cargar
-  const otherDays = days.filter((d) => d.date !== todayDate);
+  if (_snapshotDays.length === 0 && useHistory.getState().days.length === 0) return;
+  const otherDays = _snapshotDays.filter((d) => d.date !== todayDate);
   if (feedings.length === 0) {
-    useHistory.setState({ days: otherDays });
-    return;
+    _snapshotDays = otherDays;
+  } else {
+    const sorted = [...feedings].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+    _snapshotDays = [{ date: todayDate, label: 'Hoy', feedings: sorted }, ...otherDays];
   }
-  const sorted = [...feedings].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
-  const todayGroup: DayGroup = { date: todayDate, label: 'Hoy', feedings: sorted };
-  useHistory.setState({ days: [todayGroup, ...otherDays] });
+  useHistory.setState({ days: rebuildDays() });
 }
 
 export function injectHistoryFeeding(feeding: Feeding) {
-  const { days } = useHistory.getState();
-  if (days.length === 0) {
+  if (_snapshotDays.length === 0 && useHistory.getState().days.length === 0) {
     useHistory.getState().load();
     return;
   }
   const dateStr = feeding.dateLocal;
-  const existing = days.find((d) => d.date === dateStr);
-  if (existing) {
-    const updatedFeedings = [...existing.feedings, feeding].sort(
+  const snapshotDay = _snapshotDays.find((d) => d.date === dateStr);
+  if (snapshotDay) {
+    const updated = [...snapshotDay.feedings, feeding].sort(
       (a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()
     );
-    useHistory.setState({
-      days: days.map((d) => (d.date === dateStr ? { ...d, feedings: updatedFeedings } : d)),
-    });
+    _snapshotDays = _snapshotDays.map((d) => (d.date === dateStr ? { ...d, feedings: updated } : d));
+  } else if (_extraFeedings.some((f) => f.dateLocal === dateStr)) {
+    _extraFeedings = [..._extraFeedings, feeding];
   } else {
+    // Fecha no vista aún — añadir al snapshot (onSnapshot corregirá si hace falta)
     const newDay: DayGroup = { date: dateStr, label: dayLabel(dateStr), feedings: [feeding] };
-    const sorted = [...days, newDay].sort((a, b) => b.date.localeCompare(a.date));
-    useHistory.setState({ days: sorted });
+    _snapshotDays = [newDay, ..._snapshotDays].sort((a, b) => b.date.localeCompare(a.date));
   }
+  useHistory.setState({ days: rebuildDays() });
 }
 
 export const useHistory = create<HistoryState>((set, get) => ({
@@ -81,25 +94,33 @@ export const useHistory = create<HistoryState>((set, get) => ({
   hasMore: false,
   cursor: null,
 
-  load: async () => {
-    if (get().days.length > 0) return;
+  load: () => {
+    if (_unsub) return; // Ya suscrito
     set({ loading: true });
-    try {
-      const { feedings, lastDoc } = await getHistoryPage(null);
-      set({ days: groupByDay(feedings), cursor: lastDoc, hasMore: lastDoc !== null, loading: false });
-    } catch {
-      set({ loading: false });
-    }
+    const q = query(collection(db, 'feedings'), orderBy('timestamp', 'desc'), limit(PAGE_SIZE));
+    _unsub = onSnapshot(
+      q,
+      (snap) => {
+        const snapshotFeedings = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Feeding[];
+        const lastDoc = snap.docs.length < PAGE_SIZE ? null : (snap.docs[snap.docs.length - 1] ?? null);
+        _snapshotDays = groupByDay(snapshotFeedings);
+        // Eliminar de extra los días que ya cubre el snapshot
+        const snapshotDates = new Set(_snapshotDays.map((d) => d.date));
+        _extraFeedings = _extraFeedings.filter((f) => !snapshotDates.has(f.dateLocal));
+        set({ days: rebuildDays(), cursor: lastDoc, hasMore: lastDoc !== null, loading: false });
+      },
+      () => set({ loading: false }),
+    );
   },
 
   loadMore: async () => {
-    const { cursor, days, loading } = get();
+    const { cursor, loading } = get();
     if (!cursor || loading) return;
     set({ loading: true });
     try {
       const { feedings, lastDoc } = await getHistoryPage(cursor);
-      const allFeedings = days.flatMap((d) => d.feedings).concat(feedings);
-      set({ days: groupByDay(allFeedings), cursor: lastDoc, hasMore: lastDoc !== null, loading: false });
+      _extraFeedings = [..._extraFeedings, ...feedings];
+      set({ days: rebuildDays(), cursor: lastDoc, hasMore: lastDoc !== null, loading: false });
     } catch {
       set({ loading: false });
     }
