@@ -8,9 +8,11 @@ interface AuthState {
   loading: boolean;
 }
 
+// auth.currentUser se popula síncronamente desde localStorage (browserLocalPersistence).
+// Si ya hay sesión, saltamos el estado loading para evitar la pantalla de carga.
 export const useAuth = create<AuthState>(() => ({
-  user: null,
-  loading: true,
+  user: auth.currentUser,
+  loading: auth.currentUser === null,
 }));
 
 onAuthStateChanged(auth, (firebaseUser) => {

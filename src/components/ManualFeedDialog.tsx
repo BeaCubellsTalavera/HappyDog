@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { createFeeding } from '../lib/feedings';
-import { injectTodayFeeding } from '../hooks/useFeedings';
+import { useTodayFeedings } from '../hooks/useFeedings';
 import { injectHistoryFeeding } from '../hooks/useHistory';
 import type { MealSlot } from '../types';
 
@@ -128,7 +128,7 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
         if (pastMode) {
           injectHistoryFeeding(feeding);
         } else {
-          injectTodayFeeding(feeding);
+          await useTodayFeedings.getState().reload();
         }
         close();
       } catch (err) {

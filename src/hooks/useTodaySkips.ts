@@ -32,7 +32,7 @@ export const useTodaySkips = create<TodaySkipsState>((set, get) => {
   };
 });
 
-// Cargar solo cuando Firebase confirma que hay usuario autenticado
+if (auth.currentUser) useTodaySkips.getState().reload();
 onAuthStateChanged(auth, (user) => {
   if (user) useTodaySkips.getState().reload();
 });
