@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
-import { useTodayFeedings, injectTodayFeeding } from '../hooks/useFeedings';
+import { useTodayFeedings } from '../hooks/useFeedings';
 import { useTodaySkips } from '../hooks/useTodaySkips';
 import { useMealStatus } from '../hooks/useMealStatus';
 import { getActiveSlotIndex } from '../lib/mealSlots';
@@ -12,6 +12,7 @@ import { MealCard } from './MealCard';
 export function MealCarousel() {
   const { user } = useAuth();
   const feedings = useTodayFeedings((s) => s.feedings);
+  const feedingsLoading = useTodayFeedings((s) => s.loading);
   const skips = useTodaySkips((s) => s.skips);
   const { createSkip } = useTodaySkips();
   const { slots, statuses } = useMealStatus();
@@ -62,13 +63,13 @@ export function MealCarousel() {
   const handleFeed = useCallback(
     async (_slotIndex: number) => {
       if (!user) return;
-      const feeding = await createFeeding({
+      await createFeeding({
         timestamp: new Date(),
         feederUid: user.uid,
         feederName: user.displayName ?? user.email ?? 'Desconocido',
         method: 'manual',
       });
-      injectTodayFeeding(feeding);
+      await useTodayFeedings.getState().reload();
     },
     [user]
   );
@@ -130,6 +131,7 @@ export function MealCarousel() {
                   skip={slotSkip}
                   onFeed={() => handleFeed(i)}
                   onSkip={() => handleSkip(i)}
+                  isLoading={feedingsLoading}
                 />
               </div>
             );
