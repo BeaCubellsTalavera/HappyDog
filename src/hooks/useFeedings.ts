@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import type { Feeding } from '../types';
-import { getTodayFeedings, getTodayFeedingsFromCache } from '../lib/feedings';
+import { getTodayFeedings } from '../lib/feedings';
 import { useHistory, syncTodayInHistory } from './useHistory';
 import { auth } from '../lib/firebase';
 
@@ -67,20 +67,6 @@ export const useTodayFeedings = create<TodayFeedingsState>((set, get) => ({
   reload: async () => {
     const isFirstLoad = get().loading;
     const todayStr = today();
-
-    // Servir desde IndexedDB solo si localStorage estaba vacío (primera carga sin historial previo)
-    if (get().loading) {
-      try {
-        const cached = await getTodayFeedingsFromCache(todayStr);
-        if (cached.length > 0) {
-          set({ feedings: cached, loading: false });
-          saveToLS(cached);
-          syncTodayInHistory(todayStr, cached);
-        }
-      } catch {
-        // Sin caché disponible aún — se espera a la red
-      }
-    }
 
     // El network response es fuente de verdad — reemplaza el state completamente
     const fetched = await getTodayFeedings(todayStr);

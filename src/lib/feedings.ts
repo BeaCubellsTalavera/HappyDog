@@ -2,7 +2,6 @@ import {
   addDoc,
   collection,
   getDocs,
-  getDocsFromCache,
   orderBy,
   query,
   serverTimestamp,
@@ -53,13 +52,6 @@ export async function createFeeding(input: CreateFeedingInput): Promise<Feeding>
     method: input.method,
     createdAt: Timestamp.now(),
   };
-}
-
-export async function getTodayFeedingsFromCache(today: string): Promise<Feeding[]> {
-  const q = query(collection(db, 'feedings'), where('dateLocal', '==', today));
-  const snap = await getDocsFromCache(q);
-  return (snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Feeding[])
-    .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
 }
 
 export async function getTodayFeedings(today: string): Promise<Feeding[]> {
