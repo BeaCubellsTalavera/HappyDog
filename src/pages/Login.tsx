@@ -1,24 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { signInWithGoogle } from '../lib/auth';
 import { useAuth } from '../hooks/useAuth';
 import { InstallPrompt } from '../components/InstallPrompt';
 import { HappyDogLogo } from '../components/HappyDogLogo';
+import { AppSplash } from '../components/AppSplash';
 
 export default function Login() {
   const { user, loading } = useAuth();
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [params] = useSearchParams();
 
   useEffect(() => {
-    if (!loading && user) {
-      const returnTo = params.get('returnTo');
-      const target = returnTo && returnTo.startsWith('/') ? returnTo : '/';
-      navigate(target, { replace: true });
-    }
-  }, [user, loading, navigate, params]);
+    if (!loading && user) navigate('/', { replace: true });
+  }, [user, loading, navigate]);
 
   function handleGoogleLogin() {
     setError(null);
@@ -30,13 +26,7 @@ export default function Login() {
     });
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
-      </div>
-    );
-  }
+  if (loading) return <AppSplash />;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-orange-50 p-6">
