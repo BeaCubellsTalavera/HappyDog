@@ -9,14 +9,22 @@ if (getApps().length === 0) initializeApp();
 interface FeedingDoc {
   feederUid: string;
   feederName: string;
-  method: 'nfc' | 'manual';
+  method: 'nfc' | 'manual' | 'skipped';
   timestamp: Timestamp;
   dateLocal: string;
+  hourLocal: number;
 }
 
 interface UserTokens {
   uid: string;
   tokens: string[];
+}
+
+function slotName(hourLocal: number): string {
+  if (hourLocal < 13) return 'Desayuno';
+  if (hourLocal < 18) return 'Comida';
+  if (hourLocal < 20) return 'Merienda';
+  return 'Cena';
 }
 
 const DEAD_TOKEN_CODES = new Set([
@@ -83,7 +91,15 @@ export const sendPushOnFeeding = onDocumentCreated(
       }
     }
 
-    const methodLabel = feeding.method === 'nfc' ? '(NFC)' : '(manual)';
+    const isSkip = feeding.method === 'skipped';
+    const slot = slotName(feeding.hourLocal);
+    const methodLabel = feeding.method === 'nfc' ? 'NFC' : 'Manual';
+    const pushTitle = isSkip
+      ? `🐾 Han saltado una toma (${slot})`
+      : `🐾 Han dado de comer (${slot})`;
+    const pushBody = isSkip
+      ? `${feeding.feederName} ha saltado una toma`
+      : `${feeding.feederName} ha dado de comer (${methodLabel})`;
 
     // Mensaje data-only: el navegador nunca auto-muestra nada.
     // onBackgroundMessage en el SW es el único punto que llama a showNotification
@@ -94,8 +110,8 @@ export const sendPushOnFeeding = onDocumentCreated(
         feedingId: event.params.id,
         feederUid: feeding.feederUid,
         method: feeding.method,
-        title: '🐾 Han dado de comer',
-        body: `${feeding.feederName} acaba de darles de comer ${methodLabel}`,
+        title: pushTitle,
+        body: pushBody,
       },
     });
 

@@ -20,7 +20,7 @@ type CreateFeedingInput = {
   timestamp: Date;
   feederUid: string;
   feederName: string;
-  method: 'nfc' | 'manual';
+  method: 'nfc' | 'manual' | 'skipped';
 };
 
 const WRITE_TIMEOUT_MS = 4000;
