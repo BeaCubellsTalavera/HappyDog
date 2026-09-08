@@ -13,7 +13,6 @@ export function MealCarousel() {
   const { user } = useAuth();
   const feedings = useTodayFeedings((s) => s.feedings);
   const feedingsLoading = useTodayFeedings((s) => s.loading);
-  const skips = useTodaySkips((s) => s.skips);
   const { createSkip } = useTodaySkips();
   const { slots, statuses } = useMealStatus();
 
@@ -113,11 +112,17 @@ export function MealCarousel() {
               feedings.find(
                 (f) =>
                   f.dateLocal === today &&
+                  f.method !== 'skipped' &&
                   f.hourLocal >= slot.startHour &&
                   f.hourLocal < slot.endHour
               ) ?? null;
             const slotSkip =
-              skips.find((s) => s.date === today && s.mealSlotId === slot.id) ?? null;
+              feedings.find(
+                (f) =>
+                  f.dateLocal === today &&
+                  f.method === 'skipped' &&
+                  f.hourLocal === slot.startHour
+              ) ?? null;
 
             return (
               <div

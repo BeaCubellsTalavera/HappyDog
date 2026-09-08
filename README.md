@@ -176,7 +176,7 @@ App sin conexión
 
 | Trigger | Cuándo dispara | Qué hace |
 |---|---|---|
-| `onDocumentCreated('feedings/{id}')` | Cada `addDoc` en la colección `feedings` | Envía push data-only a todos los miembros menos al feeder; solo si el feeding es de hoy y es el más reciente |
+| `onDocumentCreated('feedings/{id}')` | Cada `addDoc` en la colección `feedings` (tomas reales y skips) | Envía push data-only a todos los miembros menos al feeder; solo si el feeding es de hoy y es el más reciente |
 | `onMessage` (FCM foreground) | Push recibido con la app abierta | Toast in-app + `getDocs` reload de feedings de hoy |
 | `onBackgroundMessage` (Service Worker) | Push recibido con la app en background | `showNotification(...)` + `setAppBadge(1)` |
 | `visibilitychange` / `pageshow` / `online` | App vuelve a primer plano o recupera red | `getDocs` reload de feedings de hoy + refresco de token FCM (cooldown 5 min) |
@@ -198,11 +198,13 @@ users/{uid}
 
 feedings/{autoId}
   timestamp: Timestamp    ← cuándo ocurrió la comida (puede ser pasado)
+                            para skips: timestamp = inicio del slot saltado
   dateLocal: string       ← "YYYY-MM-DD" (para agrupar por día sin UTC hell)
-  hourLocal: number       ← 0-23 (para stats futuras por franja horaria)
+  hourLocal: number       ← 0-23 (para stats futuras y para derivar el slot)
   feederUid: string
   feederName: string
-  method: "nfc" | "manual"
+  method: "nfc" | "manual" | "skipped"
+                            "skipped" = slot saltado a propósito; timestamp = slot.startHour
   createdAt: Timestamp    ← serverTimestamp(), cuándo se escribió el doc
 
 config/nfc

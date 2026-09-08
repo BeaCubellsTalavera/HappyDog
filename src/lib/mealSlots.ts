@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import type { Feeding, MealSlot, Skip, SlotStatus } from '../types';
+import type { Feeding, MealSlot, SlotStatus } from '../types';
 
 export const MEAL_SLOTS: MealSlot[] = [
   { id: 'morning',   name: 'Desayuno', label: 'MAÑANA',   startHour: 0,  endHour: 13, bg: '/meal-slots/morning.png'   },
@@ -18,18 +18,19 @@ export function getActiveSlotIndex(slots: MealSlot[], now: Date): number {
 export function deriveSlotStatus(
   slot: MealSlot,
   feedings: Feeding[],
-  skips: Skip[],
   today: string,
   now: Date
 ): SlotStatus {
   const hour = now.getHours();
 
   const hasFeed = feedings.some(
-    (f) => f.dateLocal === today && f.hourLocal >= slot.startHour && f.hourLocal < slot.endHour
+    (f) => f.dateLocal === today && f.method !== 'skipped' && f.hourLocal >= slot.startHour && f.hourLocal < slot.endHour
   );
   if (hasFeed) return 'given';
 
-  const hasSkip = skips.some((s) => s.date === today && s.mealSlotId === slot.id);
+  const hasSkip = feedings.some(
+    (f) => f.dateLocal === today && f.method === 'skipped' && f.hourLocal === slot.startHour
+  );
   if (hasSkip) return 'skipped';
 
   if (hour < slot.startHour) return 'not-yet';

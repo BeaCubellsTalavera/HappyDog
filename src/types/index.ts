@@ -7,7 +7,7 @@ export interface Feeding {
   hourLocal: number;
   feederUid: string;
   feederName: string;
-  method: 'nfc' | 'manual';
+  method: 'nfc' | 'manual' | 'skipped';
   createdAt: Timestamp;
 }
 
@@ -30,11 +30,3 @@ export interface MealSlot {
 
 export type SlotStatus = 'not-yet' | 'pending' | 'given' | 'missed' | 'skipped';
 
-export interface Skip {
-  id: string;
-  date: string;
-  mealSlotId: MealSlotId;
-  skippedBy: string;
-  skippedByName: string;
-  skippedAt: Timestamp;
-}

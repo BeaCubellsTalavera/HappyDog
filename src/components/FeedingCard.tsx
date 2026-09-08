@@ -59,10 +59,12 @@ export function FeedingCard({ feeding }: Props) {
         className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
           feeding.method === 'nfc'
             ? 'bg-blue-100 text-blue-700'
+            : feeding.method === 'skipped'
+            ? 'bg-amber-100 text-amber-700'
             : 'bg-gray-100 text-gray-600'
         }`}
       >
-        {feeding.method === 'nfc' ? 'NFC' : 'Manual'}
+        {feeding.method === 'nfc' ? 'NFC' : feeding.method === 'skipped' ? 'Saltada' : 'Manual'}
       </span>
     </div>
   );

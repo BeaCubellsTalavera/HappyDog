@@ -65,10 +65,12 @@ export default function History() {
                         className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
                           f.method === 'nfc'
                             ? 'bg-blue-100 text-blue-700'
+                            : f.method === 'skipped'
+                            ? 'bg-amber-100 text-amber-700'
                             : 'bg-gray-100 text-gray-600'
                         }`}
                       >
-                        {f.method === 'nfc' ? 'NFC' : 'Manual'}
+                        {f.method === 'nfc' ? 'NFC' : f.method === 'skipped' ? 'Saltada' : 'Manual'}
                       </span>
                     </div>
                   ))}
