@@ -453,6 +453,90 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
   11. Settings → Comidas: desactivar un slot → carrusel muestra 3 tarjetas, StepIndicator 3 círculos. Salir sin guardar → cambio descartado. Guardar → persiste en todos los dispositivos.
   12. History → "Registrar" → dialog permite elegir fecha de ayer hasta hace 7 días; bloquea hoy y >7 días
 
+### F7b — Gráfico de densidad en Historial · _2-3h_
+
+> Toggle Lista/Gráficos en la pestaña Historial. Vista Gráficos muestra un gráfico de densidad KDE con una curva por slot habilitado, donde el eje X son las horas y el eje Y la densidad (normalizada). El número de series es dinámico según `useMealConfig`.
+>
+> **Imagen de referencia:** `docs/design/f7b-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
+
+#### Checkboxes
+
+- [ ] Instalar `recharts` (`npm i recharts`)
+- [ ] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
+- [ ] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
+- [ ] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
+- [ ] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
+- [ ] `src/pages/History.tsx` — toggle Lista/Gráficos, pill segmentado, render condicional; la vista Gráficos es un scroll vertical donde se apilan los gráficos: primero `<DensityChart />` y luego `{/* TODO F7c: segundo gráfico */}`
+- [ ] _(por definir en F7c)_ **Segundo gráfico en vista Gráficos** — tipo y detalle a concretar en próxima sesión. Comparte vista, datos (`useStatsFeedings`) y colores (`SLOT_COLORS`) con el gráfico de densidad.
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Abrir Historial → toggle "Lista | Gráficos" visible en la cabecera
+3. "Lista" funciona igual que antes
+4. "Gráficos" → spinner breve → aparece gráfico con una curva por slot habilitado
+5. Las curvas están centradas aproximadamente en las horas esperadas (según datos de seed)
+6. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Gráficos
+7. La segunda visita a Gráficos no hace nueva query (store cacheado)
+8. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
+
+### F7c — Vista semanal de cumplimiento · _3-4h_
+
+> Segundo gráfico dentro de la vista **Gráficos** de Historial (F7b). Aparece debajo de `<DensityChart />` en el mismo scroll vertical. Requiere F7b (que añade el toggle Lista/Gráficos). Muestra una cuadrícula 7 días × N slots: columnas = hace 6 días…hoy, última columna (hoy) destacada. Celdas consecutivas con el mismo estado en la misma columna se fusionan en una pastilla vertical (pill). El número de filas es dinámico según slots habilitados en `useMealConfig`.
+
+**Imágenes de referencia:** `docs/design/f7c-ref-1.png` y `docs/design/f7c-ref-2.png` (copiadas al repo en sept 2026).
+
+#### Estados de celda
+
+| Estado | Visual |
+|---|---|
+| `given` | Círculo verde relleno + ✓ blanco |
+| `missed` | Círculo gris relleno + ✗ blanco |
+| `skipped` | Círculo ámbar relleno + icono skip blanco |
+| `not-yet` / `pending` (solo hoy, slots futuros) | Fondo blanco, borde gris claro, ✓ en gris claro |
+
+#### Fusión de celdas (pill vertical)
+
+Celdas **consecutivas en la misma columna** con el mismo estado forman una pastilla. `not-yet` y `pending` se tratan como el mismo grupo visual.
+
+- Celda única: `rounded-full`
+- Primera de grupo (≥2): `rounded-t-full rounded-b-none`
+- Celdas intermedias: `rounded-none`
+- Última de grupo: `rounded-t-none rounded-b-full`
+
+#### Columna de hoy
+
+El día actual tiene un borde negro que abraza toda la columna (cabecera + celdas), redondeado tipo pill. El nombre del día en la cabecera va en negro; el resto en gris.
+
+#### Derivación de estado para días pasados
+
+Para `dayStr < todayStr`:
+- `given` si hay feeding con `dateLocal === dayStr`, `method !== 'skipped'`, `hourLocal ∈ [slot.startHour, slot.endHour)`
+- `skipped` si hay feeding con `dateLocal === dayStr`, `method === 'skipped'`, `hourLocal === slot.startHour`
+- En otro caso: `missed`
+
+Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
+
+#### Checkboxes
+
+- [ ] `src/hooks/useWeekFeedings.ts` — Zustand + `onSnapshot` con `where('dateLocal', '>=', format(subDays(today, 6), 'yyyy-MM-dd'))`. Expone `{ feedings: Feeding[], loading: boolean }`. Unsubscribe en cleanup.
+- [ ] `src/lib/weekGrid.ts` — tipos `CellData` (`{ status: SlotStatus, position: 'single' | 'first' | 'middle' | 'last' }`) y `DayColumn` (`{ dayStr, label: string, isToday: boolean, cells: CellData[] }`). Función `buildWeekGrid(slots, feedings, todayStr, now): DayColumn[]` que genera los 7 días y agrupa celdas consecutivas de igual estado en cada columna. Función `deriveDaySlotStatus(slot, feedings, dayStr, todayStr, now): SlotStatus`.
+- [ ] `src/components/WeekGrid.tsx` — componente puro, props `{ days: DayColumn[], slots: MealSlot[], loading: boolean }`. Cabecera 7 columnas con nombre corto (`format(parseISO(d.dayStr), 'EEE', { locale: es })`). Hoy: `div` `ring-2 ring-black rounded-2xl` abrazando cabecera + celdas. Celdas según `position` → clases Tailwind de radio. Spinner si `loading`.
+- [ ] `src/pages/History.tsx` — sustituir `{/* TODO F7c: segundo gráfico */}` por `<WeekGrid days={...} slots={enabledSlots} loading={weekLoading} />`, con datos de `useWeekFeedings` y slots de `useMealConfig`.
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Historial → Gráficos → aparecen `DensityChart` y debajo `WeekGrid` en el mismo scroll
+3. "Lista" funciona igual que antes, sin regresiones
+4. WeekGrid: cabecera muestra 7 días (nombres cortos en `es`), hoy con borde negro
+5. Número de filas = slots habilitados en Ajustes
+6. Días anteriores con feedings → celdas verdes; sin feedings → celdas grises
+7. 2+ celdas consecutivas mismo estado en misma columna → pill fusionado (sin gap visual)
+8. Hoy: celdas dadas en verde, slot activo/futuro en blanco con borde gris
+9. Crear feeding nuevo → celda de hoy actualiza en tiempo real (onSnapshot)
+10. Desactivar slot en Ajustes → esa fila desaparece de la cuadrícula
+
+---
+
 ### F8 — Configuración de horarios de comida · _3-4h_
 - [ ] `/settings/schedule` CRUD de `config/schedule.meals`
 - [ ] Validación zod: no solapamiento, `endHour > startHour`
