@@ -83,7 +83,7 @@ export default function History() {
               <>
                 {days.map(({ date, label, feedings }, i) => (
                   <section key={date} className={i === 0 ? '' : 'mt-6'}>
-                    <h2 className="sticky top-24 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-2 capitalize z-10">
+                    <h2 className="sticky top-16 bg-gray-50 text-sm font-semibold text-gray-500 py-2 mb-2 capitalize z-10">
                       {label}
                     </h2>
                     <div className="flex flex-col gap-2">
