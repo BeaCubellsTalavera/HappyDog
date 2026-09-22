@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: #FFA000;
+}
+
 @utility hide-scrollbar {
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+.logo-text {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-kerning: none;
+  letter-spacing: -0.01em;
+}
+
+.logo-icon {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  vertical-align: -0.04em;
+}
+
+.step-connector {
+  height: 2px;
+  width: 1.5rem;
+  flex-shrink: 0;
+  background-color: #e5e7eb;
 }

@@ -3,6 +3,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Feeding, MealSlot, SlotStatus } from '../types';
 import { ManualFeedDialog, type ManualFeedDialogHandle } from './ManualFeedDialog';
+import { BowlIcon } from './icons/BowlIcon';
+import { SkipIcon } from './icons/SkipIcon';
 
 interface Props {
   slot: MealSlot;
@@ -14,16 +16,6 @@ interface Props {
   isLoading?: boolean;
 }
 
-function BowlIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 500 500" fill="currentColor" className={className}>
-      <path
-        fillRule="evenodd"
-        d="M 250,110 A 150,70 0 0,0 100,180 L 60,320 C 60,410 440,410 440,320 L 400,180 A 150,70 0 0,0 250,110 Z M 250,130 A 130,50 0 0,1 380,180 A 130,50 0 0,1 250,230 A 130,50 0 0,1 120,180 A 130,50 0 0,1 250,130 Z"
-      />
-    </svg>
-  );
-}
 
 const GRADIENTS: Record<string, string> = {
   morning:   'from-orange-300 via-yellow-200 to-sky-300',
@@ -87,7 +79,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
         className="absolute inset-0 w-full h-full object-cover"
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
       />
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} style={{ zIndex: -1 }} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} [z-index:-1]`} />
 
       {/* Dark overlay for legibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
@@ -108,9 +100,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
                 onClick={handleSkip}
                 className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0">
-                  <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
-                </svg>
+                <SkipIcon className="w-4 h-4 flex-shrink-0" />
                 Skip
               </button>
             </div>
@@ -207,9 +197,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
         {!isLoading && status === 'skipped' && (
           <div className="flex-1 h-14 bg-amber-400/35 backdrop-blur-sm rounded-2xl px-5 flex flex-col justify-center">
             <p className="text-white font-bold text-sm leading-tight flex items-center gap-1.5">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 flex-shrink-0">
-                <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
-              </svg>
+              <SkipIcon className="w-4 h-4 flex-shrink-0" />
               SALTADA
             </p>
             {skip && (

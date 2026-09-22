@@ -361,7 +361,7 @@ No abordar hasta que MVP (F0-F6) esté verificado en producción.
 - `pending`: `startHour` ≤ hora < `endHour`, sin feeding → naranja (activo ahora)
 - `given`: hay feeding con `hourLocal` en `[startHour, endHour)` y `dateLocal == hoy` → verde
 - `missed`: hora ≥ `endHour`, sin feeding → rojo (se olvidaron)
-- `skipped`: feeding con `method: 'skipped'` y `hourLocal == slot.startHour` → ámbar (intencional, distinto al rojo)
+- `skipped`: feeding con `method: 'skipped'` y `hourLocal == slot.startHour` → gris (intencional, distinto al rojo de missed)
 
 El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `mealSlotId` a `Feeding`**.
 
@@ -371,7 +371,7 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 - `pending` → naranja + icono comedero
 - `given` → verde + ✓
 - `missed` → rojo + ✗
-- `skipped` → ámbar + icono skip
+- `skipped` → gris + icono skip
 - `not-yet` → gris ○
 
 **Tamaño** (cuál card estás viendo, cambia al deslizar):
@@ -445,13 +445,103 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
   3. Tarjetas con esquinas redondeadas y peek de ~20px de tarjetas adyacentes
   4. Flechas visibles en laterales; desaparecen en primera/última tarjeta
   5. "DAR [toma]" → step verde, badge "DADA · [nombre] · [hora]"
-  6. ⋯ → Skip → step ámbar, badge "SALTADA"
+  6. ⋯ → Skip → step gris, badge "SALTADA"
   7. Relojito → dialog con hora inicializada a ventana del slot; picker solo de hora
   8. Registro retroactivo desde Inicio → step verde aunque ventana haya pasado
   9. Refresh → estado de hoy aparece instantáneamente (localStorage), sin flash "DAR X"
   10. Slot cuya ventana pasó sin feeding → step rojo, badge "NO REGISTRADO"
   11. Settings → Comidas: desactivar un slot → carrusel muestra 3 tarjetas, StepIndicator 3 círculos. Salir sin guardar → cambio descartado. Guardar → persiste en todos los dispositivos.
   12. History → "Registrar" → dialog permite elegir fecha de ayer hasta hace 7 días; bloquea hoy y >7 días
+
+### F7b — Vista semanal de cumplimiento en Historial · _3-4h_
+
+> Historial pasa a mostrar por defecto la cuadrícula semanal. Toggle "Gráfico | Lista" en la cabecera permite cambiar a la lista de feedings. Cuadrícula 7 días × N slots: columnas = hace 6 días…hoy, última columna (hoy) destacada. Celdas consecutivas con el mismo estado en la misma columna se fusionan en pastilla vertical (pill). El número de filas es dinámico según slots habilitados en `useMealConfig`.
+
+**Imágenes de referencia:** `docs/design/f7c-ref-1.png` y `docs/design/f7c-ref-2.png`.
+
+#### Estados de celda
+
+| Estado | Visual |
+|---|---|
+| `given` | Círculo verde relleno + ✓ blanco |
+| `missed` | Círculo gris relleno + ✗ blanco |
+| `skipped` | Círculo gris relleno + icono skip blanco |
+| `not-yet` / `pending` (solo hoy, slots futuros) | Fondo blanco, borde gris claro, ✓ en gris claro |
+
+#### Fusión de celdas (pill vertical)
+
+Celdas **consecutivas en la misma columna** con el mismo estado forman una pastilla. `not-yet` y `pending` se tratan como el mismo grupo visual.
+
+- Celda única: `rounded-full`
+- Primera de grupo (≥2): `rounded-t-full rounded-b-none`
+- Celdas intermedias: `rounded-none`
+- Última de grupo: `rounded-t-none rounded-b-full`
+
+#### Columna de hoy
+
+El día actual tiene un borde negro que abraza toda la columna (cabecera + celdas), redondeado tipo pill. El nombre del día en la cabecera va en negro; el resto en gris.
+
+#### Derivación de estado para días pasados
+
+Para `dayStr < todayStr`:
+- `given` si hay feeding con `dateLocal === dayStr`, `method !== 'skipped'`, `hourLocal ∈ [slot.startHour, slot.endHour)`
+- `skipped` si hay feeding con `dateLocal === dayStr`, `method === 'skipped'`, `hourLocal === slot.startHour`
+- En otro caso: `missed`
+
+Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
+
+#### Checkboxes
+
+- [x] `src/hooks/useWeekFeedings.ts` — Zustand + `onSnapshot` con `where('dateLocal', '>=', format(subDays(today, 6), 'yyyy-MM-dd'))`. Expone `{ feedings: Feeding[], loading: boolean }`. Unsubscribe en cleanup.
+- [x] `src/lib/weekGrid.ts` — tipos `CellData` (`{ status: SlotStatus, position: 'single' | 'first' | 'middle' | 'last' }`) y `DayColumn` (`{ dayStr, label: string, isToday: boolean, cells: CellData[] }`). Función `buildWeekGrid(slots, feedings, todayStr, now): DayColumn[]` que genera los 7 días y agrupa celdas consecutivas de igual estado en cada columna. Función `deriveDaySlotStatus(slot, feedings, dayStr, todayStr, now): SlotStatus`.
+- [x] `src/components/WeekGrid.tsx` — componente puro, props `{ days: DayColumn[], slots: MealSlot[], loading: boolean }`. Cabecera 7 columnas con nombre corto (`format(parseISO(d.dayStr), 'EEE', { locale: es })`). Hoy: `div` `ring-2 ring-black rounded-2xl` abrazando cabecera + celdas. Celdas según `position` → clases Tailwind de radio. Spinner si `loading`.
+- [x] `src/pages/History.tsx` — añadir toggle "Gráficos | Lista" (pill segmentado centrado, **Gráficos seleccionado por defecto**); render condicional: vista Gráficos = `<WeekGrid days={...} slots={enabledSlots} loading={weekLoading} />`, vista Lista = lista de feedings actual.
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Historial → abre directamente en vista Gráficos con WeekGrid visible; cabecera muestra toggle "Gráficos | Lista" centrado y estrecho
+3. Tap "Lista" → muestra lista de feedings igual que antes, sin regresiones
+4. WeekGrid: cabecera muestra 7 días (nombres cortos en `es`), hoy con borde negro
+5. Número de filas = slots habilitados en Ajustes
+6. Días anteriores con feedings → celdas verdes; sin feedings → celdas grises
+7. 2+ celdas consecutivas mismo estado en misma columna → pill fusionado (sin gap visual)
+8. Hoy: celdas dadas en verde, slot activo/futuro en blanco con borde gris
+9. Crear feeding nuevo → celda de hoy actualiza en tiempo real (onSnapshot)
+10. Desactivar slot en Ajustes → esa fila desaparece de la cuadrícula
+
+---
+
+### F7c — Detalle y edición de tomas desde Historial · _2-3h_
+
+> Al tocar una celda del WeekGrid con feeding (given/skipped) o una fila de la Lista, se abre un bottom sheet con los detalles de esa toma y opción de editar o eliminar. UX: bottom sheet en la misma página (no navegación) — el usuario mantiene el contexto visual del historial y el back-button en iOS PWA no interfiere.
+
+#### Cambio a reglas Firestore
+
+Las tomas nunca se borran — son el registro histórico de la familia. Solo se permite editar (corregir quién dio, a qué hora, o cambiar el método).
+
+#### Checkboxes
+
+- [ ] `firestore.rules` — añadir `allow update: if request.auth != null;` en el bloque `feedings/{feedingId}` (sin delete)
+- [ ] `src/lib/feedings.ts` — añadir `updateFeeding(id, patch)` (recalcula `dateLocal`/`hourLocal` si el patch incluye `timestamp`)
+- [ ] `src/lib/weekGrid.ts` — extender `CellData` con `feeding?: Feeding`; en `buildWeekGrid` adjuntar el objeto `Feeding` a celdas `given`/`skipped`
+- [ ] `src/components/WeekGrid.tsx` — nueva prop `onCellClick?: (feeding: Feeding) => void`; solo clickable si `cell.feeding != null` (cursor pointer)
+- [ ] `src/hooks/useHistory.ts` — añadir `updateFeedingLocally(id, patch)` para optimistic update en la Lista
+- [ ] `src/index.css` — clases `.feeding-sheet` y `.feeding-sheet-overlay` con animación slide-up
+- [ ] `src/components/FeedingDetailSheet.tsx` — nuevo componente. Modo lectura: nombre del slot (derivado de `hourLocal`), fecha, hora, feederName, badge método, botón "Editar". Modo edición: `datetime-local`, input feederName, select/radio método (`nfc` / `manual` / `skipped`), "Guardar"/"Cancelar". Cierre con tap en overlay o swipe-down (delta > 80px)
+- [ ] `src/pages/History.tsx` — en vista Gráfico pasar `onCellClick` a `<WeekGrid>`; en vista Lista cada fila clickable; rendir `<FeedingDetailSheet>` con callbacks `onSave`/`onClose`
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Historial → Gráfico → tap en celda verde → bottom sheet con datos correctos del feeding
+3. Tap en celda gris (saltada) → sheet muestra badge "Saltada"
+4. Tap en celda gris (`missed`) o `not-yet` → nada ocurre, sin cursor pointer
+5. Sheet → "Editar" → cambiar hora → "Guardar" → celda de WeekGrid actualiza en tiempo real (onSnapshot de `useWeekFeedings`)
+6. Sheet → "Editar" → cambiar método a `skipped` → celda pasa a gris
+7. Historial → Lista → tap en una fila → mismo sheet con mismos datos
+8. Swipe-down en el sheet → cierra
+9. `firebase deploy --only firestore:rules` y verificar en prod que update requiere auth
+
+---
 
 ### F8 — Configuración de horarios de comida · _3-4h_
 - [ ] `/settings/schedule` CRUD de `config/schedule.meals`
@@ -470,9 +560,31 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 - [ ] Página `/rankings` con tabs (semana / mes / total), cada tab con `onSnapshot(orderBy('count','desc').limit(10))`
 - [ ] Script admin one-off `scripts/recompute-leaderboards.ts` para recomputar desde `feedings/` (idempotente, corre local contra prod o contra emulador con datos importados)
 
-### F11 — Estadísticas visuales · _4-5h_
-- [ ] Página `/stats` con: comidas por día (últimos 30, agrupando `dateLocal`), distribución horaria (agrupando `hourLocal`), comparativa con `config/schedule`
-- [ ] Librería: `recharts` o `chart.js` + `react-chartjs-2`
+### F11 — Gráfico de densidad en tab Stats · _2-3h_
+
+> Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un gráfico de densidad KDE con una curva por slot habilitado, eje X = horas, eje Y = densidad normalizada. El número de series es dinámico según `useMealConfig`.
+>
+> **Imagen de referencia:** `docs/design/f11-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
+
+#### Checkboxes
+
+- [ ] Instalar `recharts` (`npm i recharts`)
+- [ ] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
+- [ ] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
+- [ ] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
+- [ ] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
+- [ ] `src/pages/Stats.tsx` — página con header y `<DensityChart />`
+- [ ] `src/components/BottomNav.tsx` — añadir tercera entrada `{ label: 'Stats', path: '/stats' }` al array `TABS`
+- [ ] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Barra inferior muestra 3 tabs: Inicio, Historial, Stats
+3. Tap Stats → spinner breve → aparece gráfico con una curva por slot habilitado
+4. Las curvas están centradas aproximadamente en las horas esperadas (según datos de seed)
+5. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Stats
+6. La segunda visita a Stats no hace nueva query (store cacheado)
+7. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
 
 ---
 
