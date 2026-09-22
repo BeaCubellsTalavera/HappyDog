@@ -495,11 +495,11 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 - [x] `src/hooks/useWeekFeedings.ts` — Zustand + `onSnapshot` con `where('dateLocal', '>=', format(subDays(today, 6), 'yyyy-MM-dd'))`. Expone `{ feedings: Feeding[], loading: boolean }`. Unsubscribe en cleanup.
 - [x] `src/lib/weekGrid.ts` — tipos `CellData` (`{ status: SlotStatus, position: 'single' | 'first' | 'middle' | 'last' }`) y `DayColumn` (`{ dayStr, label: string, isToday: boolean, cells: CellData[] }`). Función `buildWeekGrid(slots, feedings, todayStr, now): DayColumn[]` que genera los 7 días y agrupa celdas consecutivas de igual estado en cada columna. Función `deriveDaySlotStatus(slot, feedings, dayStr, todayStr, now): SlotStatus`.
 - [x] `src/components/WeekGrid.tsx` — componente puro, props `{ days: DayColumn[], slots: MealSlot[], loading: boolean }`. Cabecera 7 columnas con nombre corto (`format(parseISO(d.dayStr), 'EEE', { locale: es })`). Hoy: `div` `ring-2 ring-black rounded-2xl` abrazando cabecera + celdas. Celdas según `position` → clases Tailwind de radio. Spinner si `loading`.
-- [x] `src/pages/History.tsx` — añadir toggle "Gráfico | Lista" (pill segmentado, **Gráfico seleccionado por defecto**); render condicional: vista Gráfico = `<WeekGrid days={...} slots={enabledSlots} loading={weekLoading} />`, vista Lista = lista de feedings actual.
+- [x] `src/pages/History.tsx` — añadir toggle "Gráficos | Lista" (pill segmentado centrado, **Gráficos seleccionado por defecto**); render condicional: vista Gráficos = `<WeekGrid days={...} slots={enabledSlots} loading={weekLoading} />`, vista Lista = lista de feedings actual.
 
 #### Verificar
 1. `docker compose up -d && npm run dev`
-2. Historial → abre directamente en vista Gráfico con WeekGrid visible; cabecera muestra toggle "Gráfico | Lista"
+2. Historial → abre directamente en vista Gráficos con WeekGrid visible; cabecera muestra toggle "Gráficos | Lista" centrado y estrecho
 3. Tap "Lista" → muestra lista de feedings igual que antes, sin regresiones
 4. WeekGrid: cabecera muestra 7 días (nombres cortos en `es`), hoy con borde negro
 5. Número de filas = slots habilitados en Ajustes

@@ -52,23 +52,25 @@ export default function History() {
               Registrar
             </button>
           </div>
-          <div className="flex bg-gray-100 rounded-full p-0.5 text-sm">
-            <button
-              onClick={() => setView('chart')}
-              className={`flex-1 py-1.5 rounded-full text-center transition-colors ${
-                view === 'chart' ? 'bg-white text-gray-900 font-medium shadow-sm' : 'text-gray-500'
-              }`}
-            >
-              Gráfico
-            </button>
-            <button
-              onClick={() => setView('list')}
-              className={`flex-1 py-1.5 rounded-full text-center transition-colors ${
-                view === 'list' ? 'bg-white text-gray-900 font-medium shadow-sm' : 'text-gray-500'
-              }`}
-            >
-              Lista
-            </button>
+          <div className="flex justify-center">
+            <div className="inline-flex bg-gray-100 rounded-full p-0.5 text-sm">
+              <button
+                onClick={() => setView('chart')}
+                className={`px-5 py-1.5 rounded-full transition-colors ${
+                  view === 'chart' ? 'bg-white text-gray-900 font-medium shadow-sm' : 'text-gray-500'
+                }`}
+              >
+                Gráficos
+              </button>
+              <button
+                onClick={() => setView('list')}
+                className={`px-5 py-1.5 rounded-full transition-colors ${
+                  view === 'list' ? 'bg-white text-gray-900 font-medium shadow-sm' : 'text-gray-500'
+                }`}
+              >
+                Lista
+              </button>
+            </div>
           </div>
         </div>
 
@@ -103,8 +105,6 @@ export default function History() {
                             className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
                               f.method === 'nfc'
                                 ? 'bg-blue-100 text-blue-700'
-                                : f.method === 'skipped'
-                                ? 'bg-amber-100 text-amber-700'
                                 : 'bg-gray-100 text-gray-600'
                             }`}
                           >
