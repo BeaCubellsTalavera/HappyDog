@@ -42,17 +42,7 @@ export default function History() {
     <Layout>
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-6">
         <div className="sticky top-0 bg-gray-50 z-10 pt-3 pb-2">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-gray-800">Historial</h2>
-            <button
-              onClick={() => pastDialogRef.current?.open()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-medium rounded-xl transition-colors"
-            >
-              <span className="text-base leading-none">+</span>
-              Registrar
-            </button>
-          </div>
-          <div className="flex justify-center">
+          <div className="flex items-center justify-between">
             <div className="inline-flex bg-gray-100 rounded-full p-0.5 text-sm">
               <button
                 onClick={() => setView('chart')}
@@ -71,6 +61,13 @@ export default function History() {
                 Lista
               </button>
             </div>
+            <button
+              onClick={() => pastDialogRef.current?.open()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-medium rounded-xl transition-colors"
+            >
+              <span className="text-base leading-none">+</span>
+              Registrar
+            </button>
           </div>
         </div>
 
