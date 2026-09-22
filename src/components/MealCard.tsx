@@ -87,7 +87,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
         className="absolute inset-0 w-full h-full object-cover"
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
       />
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} style={{ zIndex: -1 }} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} [z-index:-1]`} />
 
       {/* Dark overlay for legibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
