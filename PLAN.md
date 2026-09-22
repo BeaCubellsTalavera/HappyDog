@@ -511,6 +511,38 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 ---
 
+### F7c — Detalle y edición de tomas desde Historial · _2-3h_
+
+> Al tocar una celda del WeekGrid con feeding (given/skipped) o una fila de la Lista, se abre un bottom sheet con los detalles de esa toma y opción de editar o eliminar. UX: bottom sheet en la misma página (no navegación) — el usuario mantiene el contexto visual del historial y el back-button en iOS PWA no interfiere.
+
+#### Cambio a reglas Firestore
+
+App privada de ~5 usuarios de confianza → cualquier usuario autenticado puede editar o borrar cualquier toma (útil si otro familiar cometió el error).
+
+#### Checkboxes
+
+- [ ] `firestore.rules` — añadir `allow update, delete: if request.auth != null;` en el bloque `feedings/{feedingId}`
+- [ ] `src/lib/feedings.ts` — añadir `updateFeeding(id, patch)` (recalcula `dateLocal`/`hourLocal` si el patch incluye `timestamp`) y `deleteFeeding(id)`
+- [ ] `src/lib/weekGrid.ts` — extender `CellData` con `feeding?: Feeding`; en `buildWeekGrid` adjuntar el objeto `Feeding` a celdas `given`/`skipped`
+- [ ] `src/components/WeekGrid.tsx` — nueva prop `onCellClick?: (feeding: Feeding) => void`; solo clickable si `cell.feeding != null` (cursor pointer)
+- [ ] `src/hooks/useHistory.ts` — añadir `updateFeedingLocally(id, patch)` y `removeFeedingLocally(id)` para optimistic updates en la Lista
+- [ ] `src/index.css` — clases `.feeding-sheet` y `.feeding-sheet-overlay` con animación slide-up
+- [ ] `src/components/FeedingDetailSheet.tsx` — nuevo componente. Modo lectura: nombre del slot (derivado de `hourLocal`), fecha, hora, feederName, badge método, botón "Editar", botón "Eliminar" (con confirmación inline). Modo edición: `datetime-local`, input feederName, select/radio método, "Guardar"/"Cancelar". Cierre con tap en overlay o swipe-down (delta > 80px)
+- [ ] `src/pages/History.tsx` — en vista Gráfico pasar `onCellClick` a `<WeekGrid>`; en vista Lista cada fila clickable; rendir `<FeedingDetailSheet>` con callbacks `onSave`/`onDelete`/`onClose`
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Historial → Gráfico → tap en celda verde → bottom sheet con datos correctos del feeding
+3. Tap en celda ámbar (saltada) → sheet muestra badge "Saltada"
+4. Tap en celda gris (`missed`) o `not-yet` → nada ocurre, sin cursor pointer
+5. Sheet → "Editar" → cambiar hora → "Guardar" → celda de WeekGrid actualiza en tiempo real (onSnapshot de `useWeekFeedings`)
+6. Sheet → "Eliminar" → confirmar → celda pasa a `missed`; fila desaparece de la Lista
+7. Historial → Lista → tap en una fila → mismo sheet con mismos datos
+8. Swipe-down en el sheet → cierra
+9. `firebase deploy --only firestore:rules` y verificar en prod que update/delete requiere auth
+
+---
+
 ### F8 — Configuración de horarios de comida · _3-4h_
 - [ ] `/settings/schedule` CRUD de `config/schedule.meals`
 - [ ] Validación zod: no solapamiento, `endHour > startHour`
