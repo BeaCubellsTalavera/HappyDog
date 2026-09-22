@@ -11,7 +11,7 @@ interface WeekGridProps {
 const PILL_BG: Record<SlotStatus, string> = {
   given:    'bg-green-100',
   missed:   'bg-gray-300/20',
-  skipped:  'bg-amber-100',
+  skipped:  'bg-transparent',
   'not-yet': 'bg-transparent',
   pending:  'bg-transparent',
 };
@@ -20,13 +20,13 @@ const PILL_BG: Record<SlotStatus, string> = {
 const CIRCLE_BG: Record<SlotStatus, string> = {
   given:    'bg-green-500',
   missed:   'bg-gray-300',
-  skipped:  'bg-amber-400',
+  skipped:  'bg-white border border-gray-200',
   'not-yet': 'bg-white border border-gray-200',
   pending:  'bg-white border border-gray-200',
 };
 
 const SKIP_ICON = (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-white">
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-gray-400">
     <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
   </svg>
 );

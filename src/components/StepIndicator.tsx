@@ -10,7 +10,7 @@ const statusBg: Record<SlotStatus, string> = {
   pending:   'bg-white border-2 border-gray-300',
   given:     'bg-green-500',
   missed:    'bg-red-500',
-  skipped:   'bg-amber-400',
+  skipped:   'bg-white border border-gray-200',
   'not-yet': 'bg-white border border-gray-200',
 };
 
@@ -29,7 +29,7 @@ function StepCircle({ status, isViewing }: { status: SlotStatus; isViewing: bool
   const innerSize = isViewing ? 'w-9 h-9' : 'w-7 h-7';
   const iconSize  = isViewing ? 'w-5 h-5' : 'w-4 h-4';
   const textSize  = isViewing ? 'text-base' : 'text-sm';
-  const textColor = (status === 'not-yet' || status === 'pending') ? 'text-gray-400' : 'text-white';
+  const textColor = (status === 'not-yet' || status === 'pending' || status === 'skipped') ? 'text-gray-400' : 'text-white';
 
   function Icon() {
     if (status === 'pending')  return <BowlIcon className={iconSize} />;
