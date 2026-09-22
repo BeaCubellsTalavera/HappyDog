@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { SlotStatus } from '../types';
 import type { CellData, CellPosition, DayColumn } from '../lib/weekGrid';
 
@@ -24,12 +25,18 @@ const CIRCLE_BG: Record<SlotStatus, string> = {
   pending:  'bg-white border border-gray-200',
 };
 
-const CELL_ICON: Record<SlotStatus, { char: string; cls: string }> = {
-  given:    { char: '✓', cls: 'text-white' },
-  missed:   { char: '✕', cls: 'text-white' },
-  skipped:  { char: '—', cls: 'text-white' },
-  'not-yet': { char: '✓', cls: 'text-gray-300' },
-  pending:  { char: '✓', cls: 'text-gray-300' },
+const SKIP_ICON = (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-white">
+    <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
+  </svg>
+);
+
+const CELL_ICON: Record<SlotStatus, { node: React.ReactNode }> = {
+  given:    { node: <span className="text-xs font-bold text-white">✓</span> },
+  missed:   { node: <span className="text-xs font-bold text-white">✕</span> },
+  skipped:  { node: SKIP_ICON },
+  'not-yet': { node: <span className="text-xs font-bold text-gray-300">✓</span> },
+  pending:  { node: <span className="text-xs font-bold text-gray-300">✓</span> },
 };
 
 const POSITION_ROUNDED: Record<CellPosition, string> = {
@@ -40,14 +47,14 @@ const POSITION_ROUNDED: Record<CellPosition, string> = {
 };
 
 function Cell({ cell }: { cell: CellData }) {
-  const { char, cls } = CELL_ICON[cell.status];
+  const { node } = CELL_ICON[cell.status];
   const inPill = cell.position !== 'single';
   return (
     <div className="w-full h-9 flex items-center justify-center">
       {/* Pill track: w-9 (36px) vs circle w-7 (28px) → 4px padding on all 4 sides, concentric */}
       <div className={`w-9 h-9 flex items-center justify-center ${POSITION_ROUNDED[cell.position]} ${inPill ? PILL_BG[cell.status] : 'bg-transparent'}`}>
-        <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${CIRCLE_BG[cell.status]}`}>
-          <span className={cls}>{char}</span>
+        <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center ${CIRCLE_BG[cell.status]}`}>
+          {node}
         </div>
       </div>
     </div>

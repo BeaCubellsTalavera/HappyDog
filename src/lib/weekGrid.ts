@@ -47,9 +47,13 @@ export function deriveDaySlotStatus(
 }
 
 function groupStatuses(statuses: SlotStatus[]): CellData[] {
-  const norm = statuses.map((s) => (s === 'pending' ? 'not-yet' : s) as SlotStatus);
+  // not-yet and pending are never grouped into pills (future slots, no history)
+  const norm = statuses.map((s) =>
+    s === 'pending' || s === 'not-yet' ? null : s,
+  );
   return statuses.map((status, i) => {
     const curr = norm[i];
+    if (curr === null) return { status, position: 'single' as CellPosition };
     const samePrev = i > 0 && norm[i - 1] === curr;
     const sameNext = i < norm.length - 1 && norm[i + 1] === curr;
     let position: CellPosition;
