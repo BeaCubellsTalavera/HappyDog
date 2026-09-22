@@ -41,10 +41,14 @@ const POSITION_ROUNDED: Record<CellPosition, string> = {
 
 function Cell({ cell }: { cell: CellData }) {
   const { char, cls } = CELL_ICON[cell.status];
+  const inPill = cell.position !== 'single';
   return (
-    <div className={`w-full h-9 flex items-center justify-center ${POSITION_ROUNDED[cell.position]} ${PILL_BG[cell.status]}`}>
-      <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${CIRCLE_BG[cell.status]}`}>
-        <span className={cls}>{char}</span>
+    <div className="w-full h-9 flex items-center justify-center">
+      {/* Pill track: same width as circle (w-7), only visible for multi-cell groups */}
+      <div className={`w-7 h-9 flex items-center justify-center ${POSITION_ROUNDED[cell.position]} ${inPill ? PILL_BG[cell.status] : 'bg-transparent'}`}>
+        <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${CIRCLE_BG[cell.status]}`}>
+          <span className={cls}>{char}</span>
+        </div>
       </div>
     </div>
   );
