@@ -11,7 +11,7 @@ const statusBg: Record<SlotStatus, string> = {
   given:     'bg-green-500',
   missed:    'bg-red-500',
   skipped:   'bg-amber-400',
-  'not-yet': 'bg-white border-2 border-gray-400',
+  'not-yet': 'bg-transparent',
 };
 
 function BowlIcon({ className }: { className?: string }) {
@@ -42,7 +42,7 @@ function StepCircle({ status, isViewing }: { status: SlotStatus; isViewing: bool
         </svg>
       );
     }
-    return <div className="w-2 h-2 rounded-full bg-gray-400" />;
+    return <div className={`${isViewing ? 'w-6 h-6' : 'w-5 h-5'} rounded-full bg-gray-300`} />;
   }
 
   return (
