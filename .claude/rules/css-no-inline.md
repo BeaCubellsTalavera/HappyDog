@@ -1,11 +1,42 @@
-# CSS: no inline styles
+# CSS: clases y variables globales, no valores inline
 
-No usar `style={{}}` en JSX.
+## 1. No inline styles
 
-**Primera opción:** utilidades Tailwind, incluyendo valores arbitrarios `[property:value]`.
+No usar `style={{}}` en JSX.  
+**Excepción:** valores auténticamente dinámicos que no se pueden precalcular como clase (p.ej. `style={{ width: progress + '%' }}`).
 
-**Si el valor no puede ser utilidad Tailwind:** definir una clase en `src/index.css` con `@utility` o en un CSS module del componente.
+## 2. Colores: variables en `@theme`, no valores arbitrarios
 
-**Excepción permitida:** valores auténticamente dinámicos que no se pueden precalcular como clase (p.ej. `style={{ width: progress + '%' }}`).
+No usar `text-[#xxx]`, `bg-[#xxx]` ni `fill-[#xxx]`.  
+Los colores del proyecto se definen en `src/index.css` bajo `@theme`:
 
-**Por qué:** los inline styles no son procesables por Tailwind, rompen la consistencia del sistema de diseño y dificultan el theming y el purging de CSS no usado.
+```css
+@theme {
+  --color-brand: #FFA000;
+}
+```
+
+Esto genera tokens Tailwind (`text-brand`, `bg-brand`, `fill-brand`, etc.) y mantiene el color en un solo lugar.  
+Los colores de terceros en SVG (ej. logo de Google) pueden quedar como `fill="#xxx"` en el atributo SVG porque son requisito de marca externa.
+
+## 3. Clases CSS para patrones reutilizables, no valores arbitrarios Tailwind
+
+No usar `className="w-[0.62em] h-[0.62em] [vertical-align:-0.04em]"` ni similares para estilos que pertenecen a un componente.  
+Definir una clase CSS en `src/index.css` (o en un `.module.css` si es exclusiva del componente):
+
+```css
+.logo-icon {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  vertical-align: -0.04em;
+}
+```
+
+Los valores arbitrarios Tailwind (`[property:value]`) solo son aceptables para ajustes únicos de layout que no tienen nombre semántico y no se repiten.
+
+## Por qué
+
+- Un solo punto de cambio para el color de marca.
+- Las clases CSS con nombre comunican la intención; una cadena de valores arbitrarios no.
+- Los inline styles y los valores arbitrarios de color no participan en el sistema de theming.
