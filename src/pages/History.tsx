@@ -25,8 +25,8 @@ export default function History() {
   const gridDays = buildWeekGrid(enabledSlots, weekFeedings, todayStr, now);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (view === 'list') load();
+  }, [view, load]);
 
   useEffect(() => {
     if (view !== 'list' || !sentinelRef.current) return;
