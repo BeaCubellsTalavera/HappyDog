@@ -517,18 +517,18 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 #### Cambio a reglas Firestore
 
-App privada de ~5 usuarios de confianza → cualquier usuario autenticado puede editar o borrar cualquier toma (útil si otro familiar cometió el error).
+Las tomas nunca se borran — son el registro histórico de la familia. Solo se permite editar (corregir quién dio, a qué hora, o cambiar el método).
 
 #### Checkboxes
 
-- [ ] `firestore.rules` — añadir `allow update, delete: if request.auth != null;` en el bloque `feedings/{feedingId}`
-- [ ] `src/lib/feedings.ts` — añadir `updateFeeding(id, patch)` (recalcula `dateLocal`/`hourLocal` si el patch incluye `timestamp`) y `deleteFeeding(id)`
+- [ ] `firestore.rules` — añadir `allow update: if request.auth != null;` en el bloque `feedings/{feedingId}` (sin delete)
+- [ ] `src/lib/feedings.ts` — añadir `updateFeeding(id, patch)` (recalcula `dateLocal`/`hourLocal` si el patch incluye `timestamp`)
 - [ ] `src/lib/weekGrid.ts` — extender `CellData` con `feeding?: Feeding`; en `buildWeekGrid` adjuntar el objeto `Feeding` a celdas `given`/`skipped`
 - [ ] `src/components/WeekGrid.tsx` — nueva prop `onCellClick?: (feeding: Feeding) => void`; solo clickable si `cell.feeding != null` (cursor pointer)
-- [ ] `src/hooks/useHistory.ts` — añadir `updateFeedingLocally(id, patch)` y `removeFeedingLocally(id)` para optimistic updates en la Lista
+- [ ] `src/hooks/useHistory.ts` — añadir `updateFeedingLocally(id, patch)` para optimistic update en la Lista
 - [ ] `src/index.css` — clases `.feeding-sheet` y `.feeding-sheet-overlay` con animación slide-up
-- [ ] `src/components/FeedingDetailSheet.tsx` — nuevo componente. Modo lectura: nombre del slot (derivado de `hourLocal`), fecha, hora, feederName, badge método, botón "Editar", botón "Eliminar" (con confirmación inline). Modo edición: `datetime-local`, input feederName, select/radio método, "Guardar"/"Cancelar". Cierre con tap en overlay o swipe-down (delta > 80px)
-- [ ] `src/pages/History.tsx` — en vista Gráfico pasar `onCellClick` a `<WeekGrid>`; en vista Lista cada fila clickable; rendir `<FeedingDetailSheet>` con callbacks `onSave`/`onDelete`/`onClose`
+- [ ] `src/components/FeedingDetailSheet.tsx` — nuevo componente. Modo lectura: nombre del slot (derivado de `hourLocal`), fecha, hora, feederName, badge método, botón "Editar". Modo edición: `datetime-local`, input feederName, select/radio método (`nfc` / `manual` / `skipped`), "Guardar"/"Cancelar". Cierre con tap en overlay o swipe-down (delta > 80px)
+- [ ] `src/pages/History.tsx` — en vista Gráfico pasar `onCellClick` a `<WeekGrid>`; en vista Lista cada fila clickable; rendir `<FeedingDetailSheet>` con callbacks `onSave`/`onClose`
 
 #### Verificar
 1. `docker compose up -d && npm run dev`
@@ -536,10 +536,10 @@ App privada de ~5 usuarios de confianza → cualquier usuario autenticado puede 
 3. Tap en celda ámbar (saltada) → sheet muestra badge "Saltada"
 4. Tap en celda gris (`missed`) o `not-yet` → nada ocurre, sin cursor pointer
 5. Sheet → "Editar" → cambiar hora → "Guardar" → celda de WeekGrid actualiza en tiempo real (onSnapshot de `useWeekFeedings`)
-6. Sheet → "Eliminar" → confirmar → celda pasa a `missed`; fila desaparece de la Lista
+6. Sheet → "Editar" → cambiar método a `skipped` → celda pasa a ámbar
 7. Historial → Lista → tap en una fila → mismo sheet con mismos datos
 8. Swipe-down en el sheet → cierra
-9. `firebase deploy --only firestore:rules` y verificar en prod que update/delete requiere auth
+9. `firebase deploy --only firestore:rules` y verificar en prod que update requiere auth
 
 ---
 
