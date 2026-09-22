@@ -45,7 +45,7 @@ export function Layout({ children }: Props) {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col pb-16">
-      <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-4 bg-white shadow-sm shrink-0">
+      <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-4 bg-white shadow-sm shrink-0">
         <h1><HappyDogLogo /></h1>
         <div ref={menuRef} className="relative">
           <button
