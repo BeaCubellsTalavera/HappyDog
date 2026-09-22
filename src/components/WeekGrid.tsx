@@ -9,7 +9,7 @@ interface WeekGridProps {
 // Outer container (pill segment): translucent color of the group
 const PILL_BG: Record<SlotStatus, string> = {
   given:    'bg-green-100',
-  missed:   'bg-gray-100',
+  missed:   'bg-gray-200',
   skipped:  'bg-amber-100',
   'not-yet': 'bg-transparent',
   pending:  'bg-transparent',
