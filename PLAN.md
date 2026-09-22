@@ -47,7 +47,7 @@
 - **Nombre:** HappyDog
 - **Objetivo:** evitar que se alimente dos veces al perro por descoordinación entre miembros de la familia
 - **Usuarios:** familia (pocas personas, todos con Google account, iPhone y Android mezclados)
-- **Fuera de scope ahora:** rankings, estadísticas, horarios configurables, recordatorios — planificados como F7–F11
+- **Fuera de scope ahora:** rankings, estadísticas, horarios configurables, recordatorios — planificados como F7–F12
 
 **Restricción técnica clave:** el API Web NFC solo funciona en Chrome Android. Para iPhone se usa el hecho de que iOS abre nativamente URLs codificadas en pegatinas NFC. Por eso el mecanismo es una URL profunda `/feed?token=XXX` en el tag, no lectura NFC desde código.
 
@@ -91,10 +91,10 @@ config/nfc
 config/schedule                              # (futuro F8)
   meals: [{ id, label, startHour, endHour }], timezone
 
-mealReminders/{dateLocal}_{mealId}          # (futuro F9, lock idempotente)
+mealReminders/{dateLocal}_{mealId}          # (futuro F10, lock idempotente)
   notifiedAt
 
-leaderboards/{periodType}/entries/{uid}     # (futuro F10)
+leaderboards/{periodType}/entries/{uid}     # (futuro F11)
   feederUid, feederName, photoURL, count, updatedAt
 ```
 
@@ -108,7 +108,7 @@ El cliente hace `addDoc` y responde en <300 ms. Todo lo demás (push, leaderboar
 
 ```
 Cliente ──addDoc──▶ feedings/{id} ──trigger──┬──▶ sendFeedingNotifications  (F6)
-                                              ├──▶ updateLeaderboards       (F10)
+                                              ├──▶ updateLeaderboards       (F11)
                                               └──▶ (futuros workers)
 ```
 
@@ -138,8 +138,8 @@ NFC/
 │   └── src/
 │       ├── index.ts               # re-export de todas las funciones
 │       ├── send-push.ts           # F6 — trigger onDocumentCreated('feedings/{id}')
-│       ├── update-leaderboards.ts # F10 (futuro) — trigger onDocumentCreated
-│       └── reminders-cron.ts      # F9 (futuro) — onSchedule('every 15 minutes')
+│       ├── update-leaderboards.ts # F11 (futuro) — trigger onDocumentCreated
+│       └── reminders-cron.ts      # F10 (futuro) — onSchedule('every 15 minutes')
 ├── src/
 │   ├── main.tsx
 │   ├── App.tsx
@@ -336,7 +336,7 @@ Cada fase acaba con algo **verificable**. No pasar a la siguiente sin comprobar 
 
 ---
 
-## 🔮 Iteraciones futuras (F7–F11)
+## 🔮 Iteraciones futuras (F7–F12)
 
 No abordar hasta que MVP (F0-F6) esté verificado en producción.
 
@@ -511,7 +511,12 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 ---
 
-### F7c — Detalle y edición de tomas desde Historial · _2-3h_
+### F8 — Configuración de horarios de comida · _3-4h_
+- [ ] `/settings/schedule` CRUD de `config/schedule.meals`
+- [ ] Validación zod: no solapamiento, `endHour > startHour`
+- [ ] Rules: cualquier user autenticado edita `config/schedule`
+
+### F9 — Detalle y edición de tomas desde Historial · _2-3h_
 
 > Al tocar una celda del WeekGrid con feeding (given/skipped) o una fila de la Lista, se abre un bottom sheet con los detalles de esa toma y opción de editar o eliminar. UX: bottom sheet en la misma página (no navegación) — el usuario mantiene el contexto visual del historial y el back-button en iOS PWA no interfiere.
 
@@ -543,28 +548,23 @@ Las tomas nunca se borran — son el registro histórico de la familia. Solo se 
 
 ---
 
-### F8 — Configuración de horarios de comida · _3-4h_
-- [ ] `/settings/schedule` CRUD de `config/schedule.meals`
-- [ ] Validación zod: no solapamiento, `endHour > startHour`
-- [ ] Rules: cualquier user autenticado edita `config/schedule`
-
-### F9 — Recordatorios de comida no dada · _3-4h_
+### F10 — Recordatorios de comida no dada · _3-4h_
 - [ ] `functions/src/reminders-cron.ts` — `onSchedule('every 15 minutes', ...)` (Cloud Scheduler, 3 jobs gratis)
 - [ ] Lógica: para cada `meal` en `config/schedule`, si hora actual > `meal.endHour` → intentar `create` de `mealReminders/{dateLocal}_{mealId}` en transacción (falla si existe → at-most-once); si create OK, comprobar si hay `feedings` en rango → si no, enviar push a familia
 - [ ] Push específico por meal ("⚠️ Aún no les habéis dado la Cena")
 - [ ] TTL policy en Firestore para purgar `mealReminders` >30 días automáticamente
 
-### F10 — Rankings semanal/mensual/all-time (async, Cloud Function aparte) · _4-5h_
+### F11 — Rankings semanal/mensual/all-time (async, Cloud Function aparte) · _4-5h_
 - [ ] `functions/src/update-leaderboards.ts` — `export const updateLeaderboards = onDocumentCreated('feedings/{id}', ...)` — **independiente** de `sendPushOnFeeding`, mismo trigger, ejecución paralela
 - [ ] Increment atómico sobre `leaderboards/all-time/entries/{uid}`, `leaderboards/weekly-{YYYY-Www}/entries/{uid}`, `leaderboards/monthly-{YYYY-MM}/entries/{uid}` (con `feederName` y `photoURL` denormalizados)
 - [ ] Página `/rankings` con tabs (semana / mes / total), cada tab con `onSnapshot(orderBy('count','desc').limit(10))`
 - [ ] Script admin one-off `scripts/recompute-leaderboards.ts` para recomputar desde `feedings/` (idempotente, corre local contra prod o contra emulador con datos importados)
 
-### F11 — Gráfico de densidad en tab Stats · _2-3h_
+### F12 — Gráfico de densidad en tab Stats · _2-3h_
 
 > Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un gráfico de densidad KDE con una curva por slot habilitado, eje X = horas, eje Y = densidad normalizada. El número de series es dinámico según `useMealConfig`.
 >
-> **Imagen de referencia:** `docs/design/f11-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
+> **Imagen de referencia:** `docs/design/f12-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
 
 #### Checkboxes
 
