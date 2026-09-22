@@ -453,37 +453,11 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
   11. Settings → Comidas: desactivar un slot → carrusel muestra 3 tarjetas, StepIndicator 3 círculos. Salir sin guardar → cambio descartado. Guardar → persiste en todos los dispositivos.
   12. History → "Registrar" → dialog permite elegir fecha de ayer hasta hace 7 días; bloquea hoy y >7 días
 
-### F7b — Gráfico de densidad en Historial · _2-3h_
+### F7b — Vista semanal de cumplimiento en Historial · _3-4h_
 
-> Toggle Lista/Gráficos en la pestaña Historial. Vista Gráficos muestra un gráfico de densidad KDE con una curva por slot habilitado, donde el eje X son las horas y el eje Y la densidad (normalizada). El número de series es dinámico según `useMealConfig`.
->
-> **Imagen de referencia:** `docs/design/f7b-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
+> Historial pasa a mostrar por defecto la cuadrícula semanal. Toggle "Gráfico | Lista" en la cabecera permite cambiar a la lista de feedings. Cuadrícula 7 días × N slots: columnas = hace 6 días…hoy, última columna (hoy) destacada. Celdas consecutivas con el mismo estado en la misma columna se fusionan en pastilla vertical (pill). El número de filas es dinámico según slots habilitados en `useMealConfig`.
 
-#### Checkboxes
-
-- [ ] Instalar `recharts` (`npm i recharts`)
-- [ ] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
-- [ ] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
-- [ ] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
-- [ ] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
-- [ ] `src/pages/History.tsx` — toggle Lista/Gráficos, pill segmentado, render condicional; la vista Gráficos es un scroll vertical donde se apilan los gráficos: primero `<DensityChart />` y luego `{/* TODO F7c: segundo gráfico */}`
-- [ ] _(por definir en F7c)_ **Segundo gráfico en vista Gráficos** — tipo y detalle a concretar en próxima sesión. Comparte vista, datos (`useStatsFeedings`) y colores (`SLOT_COLORS`) con el gráfico de densidad.
-
-#### Verificar
-1. `docker compose up -d && npm run dev`
-2. Abrir Historial → toggle "Lista | Gráficos" visible en la cabecera
-3. "Lista" funciona igual que antes
-4. "Gráficos" → spinner breve → aparece gráfico con una curva por slot habilitado
-5. Las curvas están centradas aproximadamente en las horas esperadas (según datos de seed)
-6. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Gráficos
-7. La segunda visita a Gráficos no hace nueva query (store cacheado)
-8. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
-
-### F7c — Vista semanal de cumplimiento · _3-4h_
-
-> Segundo gráfico dentro de la vista **Gráficos** de Historial (F7b). Aparece debajo de `<DensityChart />` en el mismo scroll vertical. Requiere F7b (que añade el toggle Lista/Gráficos). Muestra una cuadrícula 7 días × N slots: columnas = hace 6 días…hoy, última columna (hoy) destacada. Celdas consecutivas con el mismo estado en la misma columna se fusionan en una pastilla vertical (pill). El número de filas es dinámico según slots habilitados en `useMealConfig`.
-
-**Imágenes de referencia:** `docs/design/f7c-ref-1.png` y `docs/design/f7c-ref-2.png` (copiadas al repo en sept 2026).
+**Imágenes de referencia:** `docs/design/f7c-ref-1.png` y `docs/design/f7c-ref-2.png`.
 
 #### Estados de celda
 
@@ -518,15 +492,15 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 #### Checkboxes
 
-- [ ] `src/hooks/useWeekFeedings.ts` — Zustand + `onSnapshot` con `where('dateLocal', '>=', format(subDays(today, 6), 'yyyy-MM-dd'))`. Expone `{ feedings: Feeding[], loading: boolean }`. Unsubscribe en cleanup.
-- [ ] `src/lib/weekGrid.ts` — tipos `CellData` (`{ status: SlotStatus, position: 'single' | 'first' | 'middle' | 'last' }`) y `DayColumn` (`{ dayStr, label: string, isToday: boolean, cells: CellData[] }`). Función `buildWeekGrid(slots, feedings, todayStr, now): DayColumn[]` que genera los 7 días y agrupa celdas consecutivas de igual estado en cada columna. Función `deriveDaySlotStatus(slot, feedings, dayStr, todayStr, now): SlotStatus`.
-- [ ] `src/components/WeekGrid.tsx` — componente puro, props `{ days: DayColumn[], slots: MealSlot[], loading: boolean }`. Cabecera 7 columnas con nombre corto (`format(parseISO(d.dayStr), 'EEE', { locale: es })`). Hoy: `div` `ring-2 ring-black rounded-2xl` abrazando cabecera + celdas. Celdas según `position` → clases Tailwind de radio. Spinner si `loading`.
-- [ ] `src/pages/History.tsx` — sustituir `{/* TODO F7c: segundo gráfico */}` por `<WeekGrid days={...} slots={enabledSlots} loading={weekLoading} />`, con datos de `useWeekFeedings` y slots de `useMealConfig`.
+- [x] `src/hooks/useWeekFeedings.ts` — Zustand + `onSnapshot` con `where('dateLocal', '>=', format(subDays(today, 6), 'yyyy-MM-dd'))`. Expone `{ feedings: Feeding[], loading: boolean }`. Unsubscribe en cleanup.
+- [x] `src/lib/weekGrid.ts` — tipos `CellData` (`{ status: SlotStatus, position: 'single' | 'first' | 'middle' | 'last' }`) y `DayColumn` (`{ dayStr, label: string, isToday: boolean, cells: CellData[] }`). Función `buildWeekGrid(slots, feedings, todayStr, now): DayColumn[]` que genera los 7 días y agrupa celdas consecutivas de igual estado en cada columna. Función `deriveDaySlotStatus(slot, feedings, dayStr, todayStr, now): SlotStatus`.
+- [x] `src/components/WeekGrid.tsx` — componente puro, props `{ days: DayColumn[], slots: MealSlot[], loading: boolean }`. Cabecera 7 columnas con nombre corto (`format(parseISO(d.dayStr), 'EEE', { locale: es })`). Hoy: `div` `ring-2 ring-black rounded-2xl` abrazando cabecera + celdas. Celdas según `position` → clases Tailwind de radio. Spinner si `loading`.
+- [x] `src/pages/History.tsx` — añadir toggle "Gráfico | Lista" (pill segmentado, **Gráfico seleccionado por defecto**); render condicional: vista Gráfico = `<WeekGrid days={...} slots={enabledSlots} loading={weekLoading} />`, vista Lista = lista de feedings actual.
 
 #### Verificar
 1. `docker compose up -d && npm run dev`
-2. Historial → Gráficos → aparecen `DensityChart` y debajo `WeekGrid` en el mismo scroll
-3. "Lista" funciona igual que antes, sin regresiones
+2. Historial → abre directamente en vista Gráfico con WeekGrid visible; cabecera muestra toggle "Gráfico | Lista"
+3. Tap "Lista" → muestra lista de feedings igual que antes, sin regresiones
 4. WeekGrid: cabecera muestra 7 días (nombres cortos en `es`), hoy con borde negro
 5. Número de filas = slots habilitados en Ajustes
 6. Días anteriores con feedings → celdas verdes; sin feedings → celdas grises
@@ -534,6 +508,32 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 8. Hoy: celdas dadas en verde, slot activo/futuro en blanco con borde gris
 9. Crear feeding nuevo → celda de hoy actualiza en tiempo real (onSnapshot)
 10. Desactivar slot en Ajustes → esa fila desaparece de la cuadrícula
+
+### F7c — Gráfico de densidad en tab Stats · _2-3h_
+
+> Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un gráfico de densidad KDE con una curva por slot habilitado, eje X = horas, eje Y = densidad normalizada. El número de series es dinámico según `useMealConfig`.
+>
+> **Imagen de referencia:** `docs/design/f7b-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
+
+#### Checkboxes
+
+- [ ] Instalar `recharts` (`npm i recharts`)
+- [ ] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
+- [ ] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
+- [ ] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
+- [ ] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
+- [ ] `src/pages/Stats.tsx` — página con header y `<DensityChart />`
+- [ ] `src/components/BottomNav.tsx` — añadir tercera entrada `{ label: 'Stats', path: '/stats' }` al array `TABS`
+- [ ] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Barra inferior muestra 3 tabs: Inicio, Historial, Stats
+3. Tap Stats → spinner breve → aparece gráfico con una curva por slot habilitado
+4. Las curvas están centradas aproximadamente en las horas esperadas (según datos de seed)
+5. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Stats
+6. La segunda visita a Stats no hace nueva query (store cacheado)
+7. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
 
 ---
 
