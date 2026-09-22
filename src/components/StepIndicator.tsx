@@ -28,10 +28,10 @@ function StepCircle({ status, isViewing }: { status: SlotStatus; isViewing: bool
 
   function Icon() {
     if (status === 'pending')  return <BowlIcon className={iconSize} />;
-    if (status === 'given')    return <span className={textSize}>✓</span>;
-    if (status === 'missed')   return <span className={textSize}>✕</span>;
+    if (status === 'given')    return <span className={`${textSize} font-bold`}>✓</span>;
+    if (status === 'missed')   return <span className={`${textSize} font-bold`}>✕</span>;
     if (status === 'skipped')  return <SkipIcon className={iconSize} />;
-    return <span className={textSize}>✓</span>;
+    return <span className={`${textSize} font-bold`}>✓</span>;
   }
 
   return (
