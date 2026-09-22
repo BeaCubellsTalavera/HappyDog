@@ -361,7 +361,7 @@ No abordar hasta que MVP (F0-F6) esté verificado en producción.
 - `pending`: `startHour` ≤ hora < `endHour`, sin feeding → naranja (activo ahora)
 - `given`: hay feeding con `hourLocal` en `[startHour, endHour)` y `dateLocal == hoy` → verde
 - `missed`: hora ≥ `endHour`, sin feeding → rojo (se olvidaron)
-- `skipped`: feeding con `method: 'skipped'` y `hourLocal == slot.startHour` → ámbar (intencional, distinto al rojo)
+- `skipped`: feeding con `method: 'skipped'` y `hourLocal == slot.startHour` → gris (intencional, distinto al rojo de missed)
 
 El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `mealSlotId` a `Feeding`**.
 
@@ -371,7 +371,7 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 - `pending` → naranja + icono comedero
 - `given` → verde + ✓
 - `missed` → rojo + ✗
-- `skipped` → ámbar + icono skip
+- `skipped` → gris + icono skip
 - `not-yet` → gris ○
 
 **Tamaño** (cuál card estás viendo, cambia al deslizar):
@@ -445,7 +445,7 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
   3. Tarjetas con esquinas redondeadas y peek de ~20px de tarjetas adyacentes
   4. Flechas visibles en laterales; desaparecen en primera/última tarjeta
   5. "DAR [toma]" → step verde, badge "DADA · [nombre] · [hora]"
-  6. ⋯ → Skip → step ámbar, badge "SALTADA"
+  6. ⋯ → Skip → step gris, badge "SALTADA"
   7. Relojito → dialog con hora inicializada a ventana del slot; picker solo de hora
   8. Registro retroactivo desde Inicio → step verde aunque ventana haya pasado
   9. Refresh → estado de hoy aparece instantáneamente (localStorage), sin flash "DAR X"
@@ -465,7 +465,7 @@ El slot de un feeding se deriva de su `hourLocal` existente — **no se añade `
 |---|---|
 | `given` | Círculo verde relleno + ✓ blanco |
 | `missed` | Círculo gris relleno + ✗ blanco |
-| `skipped` | Círculo ámbar relleno + icono skip blanco |
+| `skipped` | Círculo gris relleno + icono skip blanco |
 | `not-yet` / `pending` (solo hoy, slots futuros) | Fondo blanco, borde gris claro, ✓ en gris claro |
 
 #### Fusión de celdas (pill vertical)
@@ -533,10 +533,10 @@ Las tomas nunca se borran — son el registro histórico de la familia. Solo se 
 #### Verificar
 1. `docker compose up -d && npm run dev`
 2. Historial → Gráfico → tap en celda verde → bottom sheet con datos correctos del feeding
-3. Tap en celda ámbar (saltada) → sheet muestra badge "Saltada"
+3. Tap en celda gris (saltada) → sheet muestra badge "Saltada"
 4. Tap en celda gris (`missed`) o `not-yet` → nada ocurre, sin cursor pointer
 5. Sheet → "Editar" → cambiar hora → "Guardar" → celda de WeekGrid actualiza en tiempo real (onSnapshot de `useWeekFeedings`)
-6. Sheet → "Editar" → cambiar método a `skipped` → celda pasa a ámbar
+6. Sheet → "Editar" → cambiar método a `skipped` → celda pasa a gris
 7. Historial → Lista → tap en una fila → mismo sheet con mismos datos
 8. Swipe-down en el sheet → cierra
 9. `firebase deploy --only firestore:rules` y verificar en prod que update requiere auth
