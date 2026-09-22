@@ -509,11 +509,30 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 9. Crear feeding nuevo → celda de hoy actualiza en tiempo real (onSnapshot)
 10. Desactivar slot en Ajustes → esa fila desaparece de la cuadrícula
 
-### F7c — Gráfico de densidad en tab Stats · _2-3h_
+---
+
+### F8 — Configuración de horarios de comida · _3-4h_
+- [ ] `/settings/schedule` CRUD de `config/schedule.meals`
+- [ ] Validación zod: no solapamiento, `endHour > startHour`
+- [ ] Rules: cualquier user autenticado edita `config/schedule`
+
+### F9 — Recordatorios de comida no dada · _3-4h_
+- [ ] `functions/src/reminders-cron.ts` — `onSchedule('every 15 minutes', ...)` (Cloud Scheduler, 3 jobs gratis)
+- [ ] Lógica: para cada `meal` en `config/schedule`, si hora actual > `meal.endHour` → intentar `create` de `mealReminders/{dateLocal}_{mealId}` en transacción (falla si existe → at-most-once); si create OK, comprobar si hay `feedings` en rango → si no, enviar push a familia
+- [ ] Push específico por meal ("⚠️ Aún no les habéis dado la Cena")
+- [ ] TTL policy en Firestore para purgar `mealReminders` >30 días automáticamente
+
+### F10 — Rankings semanal/mensual/all-time (async, Cloud Function aparte) · _4-5h_
+- [ ] `functions/src/update-leaderboards.ts` — `export const updateLeaderboards = onDocumentCreated('feedings/{id}', ...)` — **independiente** de `sendPushOnFeeding`, mismo trigger, ejecución paralela
+- [ ] Increment atómico sobre `leaderboards/all-time/entries/{uid}`, `leaderboards/weekly-{YYYY-Www}/entries/{uid}`, `leaderboards/monthly-{YYYY-MM}/entries/{uid}` (con `feederName` y `photoURL` denormalizados)
+- [ ] Página `/rankings` con tabs (semana / mes / total), cada tab con `onSnapshot(orderBy('count','desc').limit(10))`
+- [ ] Script admin one-off `scripts/recompute-leaderboards.ts` para recomputar desde `feedings/` (idempotente, corre local contra prod o contra emulador con datos importados)
+
+### F11 — Gráfico de densidad en tab Stats · _2-3h_
 
 > Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un gráfico de densidad KDE con una curva por slot habilitado, eje X = horas, eje Y = densidad normalizada. El número de series es dinámico según `useMealConfig`.
 >
-> **Imagen de referencia:** `docs/design/f7b-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
+> **Imagen de referencia:** `docs/design/f11-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
 
 #### Checkboxes
 
@@ -534,29 +553,6 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 5. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Stats
 6. La segunda visita a Stats no hace nueva query (store cacheado)
 7. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
-
----
-
-### F8 — Configuración de horarios de comida · _3-4h_
-- [ ] `/settings/schedule` CRUD de `config/schedule.meals`
-- [ ] Validación zod: no solapamiento, `endHour > startHour`
-- [ ] Rules: cualquier user autenticado edita `config/schedule`
-
-### F9 — Recordatorios de comida no dada · _3-4h_
-- [ ] `functions/src/reminders-cron.ts` — `onSchedule('every 15 minutes', ...)` (Cloud Scheduler, 3 jobs gratis)
-- [ ] Lógica: para cada `meal` en `config/schedule`, si hora actual > `meal.endHour` → intentar `create` de `mealReminders/{dateLocal}_{mealId}` en transacción (falla si existe → at-most-once); si create OK, comprobar si hay `feedings` en rango → si no, enviar push a familia
-- [ ] Push específico por meal ("⚠️ Aún no les habéis dado la Cena")
-- [ ] TTL policy en Firestore para purgar `mealReminders` >30 días automáticamente
-
-### F10 — Rankings semanal/mensual/all-time (async, Cloud Function aparte) · _4-5h_
-- [ ] `functions/src/update-leaderboards.ts` — `export const updateLeaderboards = onDocumentCreated('feedings/{id}', ...)` — **independiente** de `sendPushOnFeeding`, mismo trigger, ejecución paralela
-- [ ] Increment atómico sobre `leaderboards/all-time/entries/{uid}`, `leaderboards/weekly-{YYYY-Www}/entries/{uid}`, `leaderboards/monthly-{YYYY-MM}/entries/{uid}` (con `feederName` y `photoURL` denormalizados)
-- [ ] Página `/rankings` con tabs (semana / mes / total), cada tab con `onSnapshot(orderBy('count','desc').limit(10))`
-- [ ] Script admin one-off `scripts/recompute-leaderboards.ts` para recomputar desde `feedings/` (idempotente, corre local contra prod o contra emulador con datos importados)
-
-### F11 — Estadísticas visuales · _4-5h_
-- [ ] Página `/stats` con: comidas por día (últimos 30, agrupando `dateLocal`), distribución horaria (agrupando `hourLocal`), comparativa con `config/schedule`
-- [ ] Librería: `recharts` o `chart.js` + `react-chartjs-2`
 
 ---
 
