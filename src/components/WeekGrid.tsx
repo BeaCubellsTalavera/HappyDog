@@ -6,7 +6,17 @@ interface WeekGridProps {
   loading: boolean;
 }
 
-const CELL_BG: Record<SlotStatus, string> = {
+// Outer container (pill segment): translucent color of the group
+const PILL_BG: Record<SlotStatus, string> = {
+  given:    'bg-green-100',
+  missed:   'bg-gray-100',
+  skipped:  'bg-amber-100',
+  'not-yet': 'bg-transparent',
+  pending:  'bg-transparent',
+};
+
+// Inner circle: solid color
+const CIRCLE_BG: Record<SlotStatus, string> = {
   given:    'bg-green-500',
   missed:   'bg-gray-300',
   skipped:  'bg-amber-400',
@@ -18,8 +28,8 @@ const CELL_ICON: Record<SlotStatus, { char: string; cls: string }> = {
   given:    { char: '✓', cls: 'text-white' },
   missed:   { char: '✕', cls: 'text-white' },
   skipped:  { char: '—', cls: 'text-white' },
-  'not-yet': { char: '✓', cls: 'text-gray-200' },
-  pending:  { char: '✓', cls: 'text-gray-200' },
+  'not-yet': { char: '✓', cls: 'text-gray-300' },
+  pending:  { char: '✓', cls: 'text-gray-300' },
 };
 
 const POSITION_ROUNDED: Record<CellPosition, string> = {
@@ -32,10 +42,10 @@ const POSITION_ROUNDED: Record<CellPosition, string> = {
 function Cell({ cell }: { cell: CellData }) {
   const { char, cls } = CELL_ICON[cell.status];
   return (
-    <div
-      className={`w-full aspect-square flex items-center justify-center text-xs font-bold ${POSITION_ROUNDED[cell.position]} ${CELL_BG[cell.status]}`}
-    >
-      <span className={cls}>{char}</span>
+    <div className={`w-full h-9 flex items-center justify-center ${POSITION_ROUNDED[cell.position]} ${PILL_BG[cell.status]}`}>
+      <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${CIRCLE_BG[cell.status]}`}>
+        <span className={cls}>{char}</span>
+      </div>
     </div>
   );
 }
@@ -50,15 +60,10 @@ export function WeekGrid({ days, loading }: WeekGridProps) {
   }
 
   return (
-    <div className="flex gap-1 w-full pt-2">
+    <div className="flex gap-2 w-full pt-2">
       {days.map((day) => (
-        <div
-          key={day.dayStr}
-          className={`flex-1 flex flex-col min-w-0${day.isToday ? ' ring-2 ring-black rounded-2xl overflow-hidden' : ''}`}
-        >
-          <div
-            className={`text-center text-xs py-1.5 font-medium capitalize${day.isToday ? ' text-black' : ' text-gray-400'}`}
-          >
+        <div key={day.dayStr} className="flex-1 flex flex-col min-w-0">
+          <div className={`text-center text-xs py-1.5 capitalize ${day.isToday ? 'text-black font-semibold' : 'text-gray-400 font-medium'}`}>
             {day.label}
           </div>
           {day.cells.map((cell, i) => (
