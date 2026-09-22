@@ -41,7 +41,7 @@ export default function History() {
   return (
     <Layout>
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-6">
-        <div className="sticky top-0 bg-gray-50 z-10 pt-3 pb-2">
+        <div className="sticky top-0 bg-gray-50 z-20 pt-3 pb-2">
           <div className="flex items-center justify-between">
             <div className="inline-flex bg-gray-100 rounded-full p-0.5 text-sm">
               <button
