@@ -70,9 +70,11 @@ export function WeekGrid({ days, loading }: WeekGridProps) {
           <div className={`text-center text-xs py-1.5 capitalize ${day.isToday ? 'text-black font-semibold' : 'text-gray-400 font-medium'}`}>
             {day.label}
           </div>
-          {day.cells.map((cell, i) => (
-            <Cell key={i} cell={cell} />
-          ))}
+          <div className={day.isToday ? undefined : 'opacity-60'}>
+            {day.cells.map((cell, i) => (
+              <Cell key={i} cell={cell} />
+            ))}
+          </div>
         </div>
       ))}
     </div>
