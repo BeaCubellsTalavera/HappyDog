@@ -35,6 +35,19 @@ Definir una clase CSS en `src/index.css` (o en un `.module.css` si es exclusiva 
 
 Los valores arbitrarios Tailwind (`[property:value]`) solo son aceptables para ajustes únicos de layout que no tienen nombre semántico y no se repiten.
 
+## 4. Elementos UI semánticos: componente o clase con nombre
+
+Un `<div>` o `<span>` con significado propio (separador, conector, badge, overlay…) debe ser un componente con nombre o usar una clase CSS semántica, no un div anónimo con cadena de utilidades.
+
+```tsx
+// Mal
+<div className="h-0.5 w-6 flex-shrink-0 bg-gray-200" />
+
+// Bien
+function StepConnector() { return <div className="step-connector" />; }
+// + .step-connector en index.css
+```
+
 ## Por qué
 
 - Un solo punto de cambio para el color de marca.

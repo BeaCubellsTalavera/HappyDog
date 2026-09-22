@@ -14,6 +14,10 @@ const statusBg: Record<SlotStatus, string> = {
   'not-yet': 'bg-white border border-gray-200',
 };
 
+function StepConnector() {
+  return <div className="step-connector" />;
+}
+
 function BowlIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 500 500" fill="currentColor" className={className}>
@@ -60,9 +64,7 @@ export function StepIndicator({ statuses, viewingIndex }: Props) {
       {statuses.map((status, i) => (
         <Fragment key={i}>
           <StepCircle status={status} isViewing={i === viewingIndex} />
-          {i < statuses.length - 1 && (
-            <div className="h-0.5 w-6 flex-shrink-0 bg-gray-200" />
-          )}
+          {i < statuses.length - 1 && <StepConnector />}
         </Fragment>
       ))}
     </div>

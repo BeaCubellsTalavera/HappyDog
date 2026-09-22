@@ -24,3 +24,10 @@
   height: 0.62em;
   vertical-align: -0.04em;
 }
+
+.step-connector {
+  height: 2px;
+  width: 1.5rem;
+  flex-shrink: 0;
+  background-color: #e5e7eb;
+}
