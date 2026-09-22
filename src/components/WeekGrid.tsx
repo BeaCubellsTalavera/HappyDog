@@ -1,6 +1,7 @@
 import type React from 'react';
 import type { SlotStatus } from '../types';
 import type { CellData, CellPosition, DayColumn } from '../lib/weekGrid';
+import { SkipIcon } from './icons/SkipIcon';
 
 interface WeekGridProps {
   days: DayColumn[];
@@ -25,16 +26,10 @@ const CIRCLE_BG: Record<SlotStatus, string> = {
   pending:  'bg-white border border-gray-200',
 };
 
-const SKIP_ICON = (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-gray-400">
-    <path d="M6 18V6l8.5 6L6 18zm8.5 0V6H17v12h-2.5z" />
-  </svg>
-);
-
 const CELL_ICON: Record<SlotStatus, { node: React.ReactNode }> = {
   given:    { node: <span className="text-xs font-bold text-white">✓</span> },
   missed:   { node: <span className="text-xs font-bold text-white">✕</span> },
-  skipped:  { node: SKIP_ICON },
+  skipped:  { node: <SkipIcon className="w-3.5 h-3.5 text-gray-400" /> },
   'not-yet': { node: <span className="text-xs font-bold text-gray-300">✓</span> },
   pending:  { node: <span className="text-xs font-bold text-gray-300">✓</span> },
 };
