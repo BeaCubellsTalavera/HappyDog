@@ -110,7 +110,6 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
 
       {/* Header */}
       <div className="absolute top-4 left-4 z-10">
-        <p className="text-white/80 text-xs font-semibold tracking-widest">{slot.label}</p>
         <p className="text-white text-2xl font-bold leading-tight">{slot.name.toUpperCase()}</p>
         <p className="text-white/70 text-sm">{windowLabel(slot)}</p>
       </div>
