@@ -40,62 +40,64 @@ export default function ScheduleSettings() {
 
   return (
     <Layout>
-      <section className="pt-6 pb-24 flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <Link
-            to="/settings"
-            aria-label="Volver a Ajustes"
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </Link>
-          <h2 className="text-lg font-semibold text-gray-800">Horarios de comida</h2>
+      <section className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pt-6 pb-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Link
+              to="/settings"
+              aria-label="Volver a Ajustes"
+              className="w-8 h-8 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </Link>
+            <h2 className="text-lg font-semibold text-gray-800">Horarios de comida</h2>
+          </div>
+
+          <p className="text-sm text-gray-500 -mt-2">
+            Ajusta el nombre y la ventana horaria de cada toma. Los cambios afectan también a cómo se muestran las tomas pasadas en el Historial.
+          </p>
+
+          {sortedIds.map((id) => (
+            <SlotEditor
+              key={id}
+              id={id}
+              enabled={draftEnabled[id]}
+              name={draftMeals[id].name}
+              startHour={draftMeals[id].startHour}
+              endHour={draftMeals[id].endHour}
+              errors={validation.errorsBySlot[id]}
+              onChange={(patch) => updateMeal(id, patch)}
+            />
+          ))}
+
+          {validation.globalErrors.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              {validation.globalErrors.map((e, i) => (
+                <p key={i} className="text-sm text-red-600">{e}</p>
+              ))}
+            </div>
+          )}
+
+          {isDirty && (
+            <div className="flex gap-3 sticky bottom-0 bg-gray-50/95 backdrop-blur-sm py-2">
+              <button
+                onClick={discard}
+                className="flex-1 py-2.5 rounded-2xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                Descartar
+              </button>
+              <button
+                onClick={save}
+                disabled={!validation.ok}
+                className="flex-1 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+              >
+                Guardar
+              </button>
+            </div>
+          )}
         </div>
-
-        <p className="text-sm text-gray-500 -mt-2">
-          Ajusta el nombre y la ventana horaria de cada toma. Los cambios afectan también a cómo se muestran las tomas pasadas en el Historial.
-        </p>
-
-        {sortedIds.map((id) => (
-          <SlotEditor
-            key={id}
-            id={id}
-            enabled={draftEnabled[id]}
-            name={draftMeals[id].name}
-            startHour={draftMeals[id].startHour}
-            endHour={draftMeals[id].endHour}
-            errors={validation.errorsBySlot[id]}
-            onChange={(patch) => updateMeal(id, patch)}
-          />
-        ))}
-
-        {validation.globalErrors.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-            {validation.globalErrors.map((e, i) => (
-              <p key={i} className="text-sm text-red-600">{e}</p>
-            ))}
-          </div>
-        )}
-
-        {isDirty && (
-          <div className="flex gap-3 sticky bottom-20 bg-gray-50/95 backdrop-blur-sm py-2">
-            <button
-              onClick={discard}
-              className="flex-1 py-2.5 rounded-2xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-            >
-              Descartar
-            </button>
-            <button
-              onClick={save}
-              disabled={!validation.ok}
-              className="flex-1 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
-            >
-              Guardar
-            </button>
-          </div>
-        )}
       </section>
     </Layout>
   );
