@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import History from './pages/History';
 import Feed from './pages/Feed';
 import Settings from './pages/Settings';
+import ScheduleSettings from './pages/ScheduleSettings';
 
 export default function App() {
   return (
@@ -33,6 +34,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/schedule"
+          element={
+            <ProtectedRoute>
+              <ScheduleSettings />
             </ProtectedRoute>
           }
         />
