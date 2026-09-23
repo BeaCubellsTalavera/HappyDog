@@ -81,7 +81,7 @@ export default function ScheduleSettings() {
           )}
 
           {isDirty && (
-            <div className="flex gap-3 sticky bottom-0 bg-gray-50 py-3 border-t border-gray-200 -mx-4 px-4">
+            <div className="flex gap-3 sticky bottom-0 bg-gray-50 py-2">
               <button
                 onClick={discard}
                 className="flex-1 py-2.5 rounded-2xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
