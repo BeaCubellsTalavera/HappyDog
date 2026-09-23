@@ -77,7 +77,7 @@ export function MealCarousel() {
     async (slotIndex: number) => {
       if (!user) return;
       await createSkip(
-        slots[slotIndex].id,
+        slots[slotIndex].startHour,
         user.uid,
         user.displayName ?? user.email ?? 'Desconocido'
       );
