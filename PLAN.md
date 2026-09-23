@@ -525,7 +525,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 #### Checkboxes
 
 - [x] `src/lib/mealSlots.ts` — añadir `DEFAULT_MEALS`, `BG_BY_ID`, `LABEL_BY_ID`, `MEAL_IDS`, `buildSlots(meals)` (ordena por `startHour`). `MEAL_SLOTS = buildSlots(DEFAULT_MEALS)`.
-- [ ] `src/hooks/useMealConfig.ts` — extender store con `meals`, `draftMeals`, `updateMeal(id, patch)`; `save` escribe ambos campos con merge; `discard` restaura ambos.
+- [x] `src/hooks/useMealConfig.ts` — extender store con `meals`, `draftMeals`, `updateMeal(id, patch)`; `save` escribe ambos campos con merge; `discard` restaura ambos.
 - [ ] `src/hooks/useMealStatus.ts` — construir `slots` con `buildSlots(meals)` filtrado por `enabled`.
 - [ ] `src/pages/History.tsx` — misma sustitución para `enabledSlots`.
 - [ ] `src/lib/skips.ts` + `src/hooks/useTodaySkips.ts` + `src/components/MealCarousel.tsx` — pasar `startHour` como argumento en vez de leer `MEAL_SLOTS`.
