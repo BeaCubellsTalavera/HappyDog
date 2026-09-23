@@ -22,10 +22,10 @@ export default function Settings() {
   const enableNotifications = useFcmToken((s) => s.enableNotifications);
   const disableNotifications = useFcmToken((s) => s.disableNotifications);
 
-  const draft = useMealConfig((s) => s.draft);
+  const draft = useMealConfig((s) => s.draftEnabled);
   const isDirty = useMealConfig((s) => s.isDirty);
   const saving = useMealConfig((s) => s.loading);
-  const toggle = useMealConfig((s) => s.toggle);
+  const toggle = useMealConfig((s) => s.toggleEnabled);
   const save = useMealConfig((s) => s.save);
   const discard = useMealConfig((s) => s.discard);
 
