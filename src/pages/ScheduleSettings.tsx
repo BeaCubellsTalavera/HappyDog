@@ -41,7 +41,7 @@ export default function ScheduleSettings() {
   return (
     <Layout>
       <section className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
-        <div className="flex flex-col gap-4 pt-6">
+        <div className={`flex flex-col gap-4 pt-6 ${isDirty ? '' : 'pb-6'}`}>
           <div className="flex items-center gap-2">
             <Link
               to="/settings"
