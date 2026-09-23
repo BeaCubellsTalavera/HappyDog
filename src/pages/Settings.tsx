@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useFcmToken } from '../hooks/useFcmToken';
 import { useMealConfig } from '../hooks/useMealConfig';
-import { MEAL_SLOTS } from '../lib/mealSlots';
+import { buildSlots } from '../lib/mealSlots';
 import type { MealSlotId } from '../types';
 
 function pad(n: number) {
@@ -23,11 +24,14 @@ export default function Settings() {
   const disableNotifications = useFcmToken((s) => s.disableNotifications);
 
   const draft = useMealConfig((s) => s.draftEnabled);
+  const meals = useMealConfig((s) => s.meals);
   const isDirty = useMealConfig((s) => s.isDirty);
   const saving = useMealConfig((s) => s.loading);
   const toggle = useMealConfig((s) => s.toggleEnabled);
   const save = useMealConfig((s) => s.save);
   const discard = useMealConfig((s) => s.discard);
+
+  const slotList = buildSlots(meals);
 
   // Al salir de Settings sin guardar, descartar cambios pendientes
   useEffect(() => () => { discard(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -109,20 +113,20 @@ export default function Settings() {
           </div>
 
           <ul>
-            {MEAL_SLOTS.map((slot, i) => {
+            {slotList.map((slot, i) => {
               const isOn = draft[slot.id];
               const isLast = isOn && draftEnabledCount === 1;
               return (
                 <li
                   key={slot.id}
                   className={`flex items-center justify-between px-4 py-3 ${
-                    i < MEAL_SLOTS.length - 1 ? 'border-b border-gray-100' : ''
+                    i < slotList.length - 1 ? 'border-b border-gray-100' : ''
                   }`}
                 >
                   <div className="flex-1 mr-4">
                     <p className="font-medium text-gray-800 text-sm">{slot.name}</p>
                     <p className="text-xs text-gray-400">
-                      {slot.label} · {windowLabel(slot.startHour, slot.endHour)}
+                      {windowLabel(slot.startHour, slot.endHour)}
                     </p>
                   </div>
                   <button
@@ -145,6 +149,20 @@ export default function Settings() {
                 </li>
               );
             })}
+            <li className="border-t border-gray-100">
+              <Link
+                to="/settings/schedule"
+                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                <div className="flex-1 mr-4">
+                  <p className="font-medium text-gray-800 text-sm">Editar horarios y nombres</p>
+                  <p className="text-xs text-gray-400">Ajusta la ventana horaria de cada toma</p>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-gray-400 shrink-0">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            </li>
           </ul>
 
           {isDirty && (
