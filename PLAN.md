@@ -529,7 +529,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 - [x] `src/hooks/useMealStatus.ts` — construir `slots` con `buildSlots(meals)` filtrado por `enabled`.
 - [x] `src/pages/History.tsx` — misma sustitución para `enabledSlots`.
 - [x] `src/lib/skips.ts` + `src/hooks/useTodaySkips.ts` + `src/components/MealCarousel.tsx` — pasar `startHour` como argumento en vez de leer `MEAL_SLOTS`.
-- [ ] `src/lib/scheduleValidation.ts` — nueva utilidad `validateSchedule(enabled, meals)` (por-slot + overlap global + min 1 ON).
+- [x] `src/lib/scheduleValidation.ts` — nueva utilidad `validateSchedule(enabled, meals)` (por-slot + overlap global + min 1 ON).
 - [ ] `src/App.tsx` — ruta protegida `/settings/schedule`.
 - [ ] `src/pages/Settings.tsx` — añadir enlace "Editar horarios y nombres" en la sección Comidas.
 - [ ] `src/components/MealCard.tsx` — quitar el `<p>{slot.label}</p>` de la cabecera (label pasa a ser interno).
