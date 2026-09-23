@@ -22,7 +22,6 @@ export type MealSlotId = 'morning' | 'midday' | 'afternoon' | 'night';
 export interface MealSlot {
   id: MealSlotId;
   name: string;
-  label: string;
   startHour: number;
   endHour: number;
   bg: string;

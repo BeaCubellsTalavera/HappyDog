@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { useHistory } from '../hooks/useHistory';
 import { useWeekFeedings } from '../hooks/useWeekFeedings';
 import { useMealConfig } from '../hooks/useMealConfig';
-import { MEAL_SLOTS } from '../lib/mealSlots';
+import { buildSlots } from '../lib/mealSlots';
 import { buildWeekGrid } from '../lib/weekGrid';
 import { Layout } from '../components/Layout';
 import { WeekGrid } from '../components/WeekGrid';
@@ -17,8 +17,9 @@ export default function History() {
   const pastDialogRef = useRef<ManualFeedDialogHandle>(null);
 
   const { feedings: weekFeedings, loading: weekLoading } = useWeekFeedings();
+  const meals = useMealConfig((s) => s.meals);
   const enabled = useMealConfig((s) => s.enabled);
-  const enabledSlots = MEAL_SLOTS.filter((s) => enabled[s.id]);
+  const enabledSlots = buildSlots(meals).filter((s) => enabled[s.id]);
 
   const now = new Date();
   const todayStr = format(now, 'yyyy-MM-dd');

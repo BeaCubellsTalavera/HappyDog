@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F7 — Nueva tab Inicio` en `phase/f7-inicio`. Código implementado, pendiente verificación en browser.
-- **Último paso completado:** migración skips → feedings (`method: 'skipped'`); colección `skips` eliminada; badge "Saltada" en Historial.
-- **Próximo paso:** verificación completa F7.
+- **Fase activa:** `F8 — Configuración de horarios de comida` en `phase/f8-schedule`.
+- **Último paso completado:** F7 verificada. F7b (WeekGrid) implementada.
+- **Próximo paso:** F8 — editor `/settings/schedule` para editar nombre y horas de cada slot, con validación de solapamiento y orden cronológico automático.
 - **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -512,9 +512,42 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 ---
 
 ### F8 — Configuración de horarios de comida · _3-4h_
-- [ ] `/settings/schedule` CRUD de `config/schedule.meals`
-- [ ] Validación zod: no solapamiento, `endHour > startHour`
-- [ ] Rules: cualquier user autenticado edita `config/schedule`
+
+> La familia edita nombre y horas de cada slot desde `/settings/schedule`. `id`, `label` (identificador interno) y `bg` siguen hardcoded. Guardado en `config/schedule.meals` (record keyed por `MealSlotId`). Orden cronológico automático por `startHour` en toda la app.
+
+#### Reglas de validación
+
+1. Máximo 4 slots enabled (trivial).
+2. Mínimo 1 slot enabled (ya lo garantiza el toggle en Ajustes).
+3. Sin solapamiento entre **ninguno** de los 4 slots (aunque estén OFF), para que activarlos luego nunca deje estado inválido.
+4. Orden cronológico ascendente por `startHour` de arriba abajo — garantizado por render (`buildSlots` ordena), no por regla extra.
+
+#### Checkboxes
+
+- [x] `src/lib/mealSlots.ts` — añadir `DEFAULT_MEALS`, `BG_BY_ID`, `LABEL_BY_ID`, `MEAL_IDS`, `buildSlots(meals)` (ordena por `startHour`). `MEAL_SLOTS = buildSlots(DEFAULT_MEALS)`.
+- [x] `src/hooks/useMealConfig.ts` — extender store con `meals`, `draftMeals`, `updateMeal(id, patch)`; `save` escribe ambos campos con merge; `discard` restaura ambos.
+- [x] `src/hooks/useMealStatus.ts` — construir `slots` con `buildSlots(meals)` filtrado por `enabled`.
+- [x] `src/pages/History.tsx` — misma sustitución para `enabledSlots`.
+- [x] `src/lib/skips.ts` + `src/hooks/useTodaySkips.ts` + `src/components/MealCarousel.tsx` — pasar `startHour` como argumento en vez de leer `MEAL_SLOTS`.
+- [x] `src/lib/scheduleValidation.ts` — nueva utilidad `validateSchedule(enabled, meals)` (por-slot + overlap global + min 1 ON).
+- [x] `src/App.tsx` — ruta protegida `/settings/schedule`.
+- [x] `src/pages/Settings.tsx` — añadir enlace "Editar horarios y nombres" en la sección Comidas.
+- [x] `src/components/MealCard.tsx` — quitar el `<p>{slot.label}</p>` de la cabecera (label pasa a ser interno).
+- [x] `src/pages/ScheduleSettings.tsx` — página nueva con las 4 tarjetas editables (ordenadas por `startHour` del draft) + validación inline + draft/save/discard.
+
+#### Verificar
+
+1. `docker compose up -d && npm run dev`.
+2. Ajustes → tap "Editar horarios y nombres" → abre `/settings/schedule` con las 4 tarjetas en orden cronológico (Desayuno → Comida → Merienda → Cena).
+3. Cambiar Desayuno `startHour: 8 → 9`, `endHour: 13 → 12` → Guardar → Inicio: card muestra `09:00 – 12:00`; **el pequeño "MAÑANA" arriba desapareció**.
+4. Renombrar Desayuno → "Almuerzo" → la card muestra `ALMUERZO / 09:00 – 12:00`.
+5. Cambiar Cena a `06:00 – 09:00` → la tarjeta Cena salta a la primera posición del editor; carrusel de Inicio muestra Cena a la izquierda; fila Cena es la primera en WeekGrid.
+6. Intentar solapar Desayuno 9–13 con Comida 12–16 → error inline en ambas ("Solapa con …"), Guardar deshabilitado.
+7. Desactivar Merienda desde Ajustes (toggle OFF) → volver a `/settings/schedule` → intentar Merienda 18–19 mientras Cena está 18–24 → error inline, Guardar deshabilitado (validación aplica también a OFF).
+8. Descartar cambios sin guardar y salir de la subpágina → volver: valores idénticos a los previos.
+9. Segundo dispositivo abierto en Inicio: al Guardar en el primero, `onSnapshot` propaga y las cards del segundo se actualizan sin refresh manual.
+10. Historial → Gráficos: cambiar hora de Cena de `20–24` a `21–24` → celdas del pasado con feeding a las 20:00 dejan de contar como Cena.
+11. Borrar el campo `meals` de `config/schedule` desde Emulator UI (:4000) → la app arranca con los defaults hardcoded, sin errores.
 
 ### F9 — Detalle y edición de tomas desde Historial · _2-3h_
 
