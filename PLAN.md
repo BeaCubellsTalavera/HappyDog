@@ -533,7 +533,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 - [ ] `src/App.tsx` — ruta protegida `/settings/schedule`.
 - [ ] `src/pages/Settings.tsx` — añadir enlace "Editar horarios y nombres" en la sección Comidas.
 - [x] `src/components/MealCard.tsx` — quitar el `<p>{slot.label}</p>` de la cabecera (label pasa a ser interno).
-- [ ] `src/pages/ScheduleSettings.tsx` — página nueva con las 4 tarjetas editables (ordenadas por `startHour` del draft) + validación inline + draft/save/discard.
+- [x] `src/pages/ScheduleSettings.tsx` — página nueva con las 4 tarjetas editables (ordenadas por `startHour` del draft) + validación inline + draft/save/discard.
 
 #### Verificar
 
