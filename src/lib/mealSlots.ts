@@ -26,20 +26,11 @@ export const BG_BY_ID: Record<MealSlotId, string> = {
   night:     '/meal-slots/night.png',
 };
 
-/** Label interno por id — no se pinta en la UI, útil para logs y consumidores backend. */
-export const LABEL_BY_ID: Record<MealSlotId, string> = {
-  morning:   'MAÑANA',
-  midday:    'MEDIODÍA',
-  afternoon: 'TARDE',
-  night:     'NOCHE',
-};
-
 export function buildSlots(meals: MealsMap): MealSlot[] {
   return MEAL_IDS
     .map((id) => ({
       id,
       bg: BG_BY_ID[id],
-      label: LABEL_BY_ID[id],
       ...meals[id],
     }))
     .sort((a, b) => a.startHour - b.startHour);
