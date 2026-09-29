@@ -23,9 +23,22 @@ function IconHistory({ active }: { active: boolean }) {
   );
 }
 
+function IconStats({ active }: { active: boolean }) {
+  const fill = active ? 'currentColor' : 'none';
+  const opacity = active ? 0.15 : 0;
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4"  y="13" width="4" height="7" rx="1" fill={fill} fillOpacity={opacity} />
+      <rect x="10" y="9"  width="4" height="11" rx="1" fill={fill} fillOpacity={opacity} />
+      <rect x="16" y="5"  width="4" height="15" rx="1" fill={fill} fillOpacity={opacity} />
+    </svg>
+  );
+}
+
 const TABS = [
   { to: '/', label: 'Inicio', Icon: IconHome },
   { to: '/history', label: 'Historial', Icon: IconHistory },
+  { to: '/stats', label: 'Stats', Icon: IconStats },
 ] as const;
 
 export function BottomNav() {
