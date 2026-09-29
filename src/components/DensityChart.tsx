@@ -23,9 +23,25 @@ function formatHourTick(h: number): string {
 }
 
 export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
+  const orderedSlots = useMemo(
+    () => [...activeSlots].sort((a, b) => a.startHour - b.startHour),
+    [activeSlots],
+  );
+
+  const legendPayload = useMemo(
+    () =>
+      orderedSlots.map((s) => ({
+        value: s.name,
+        type: 'circle' as const,
+        id: s.id,
+        color: SLOT_COLORS[s.id],
+      })),
+    [orderedSlots],
+  );
+
   const data = useMemo(
-    () => buildDensityData(feedings, activeSlots),
-    [feedings, activeSlots],
+    () => buildDensityData(feedings, orderedSlots),
+    [feedings, orderedSlots],
   );
 
   return (
@@ -62,8 +78,9 @@ export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
           height={28}
           iconType="circle"
           wrapperStyle={{ fontSize: 12 }}
+          payload={legendPayload}
         />
-        {activeSlots.map((s) => (
+        {orderedSlots.map((s) => (
           <Area
             key={s.id}
             type="monotone"
