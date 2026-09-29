@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F8 — Configuración de horarios de comida` en `phase/f8-schedule`.
-- **Último paso completado:** F7 verificada. F7b (WeekGrid) implementada.
-- **Próximo paso:** F8 — editor `/settings/schedule` para editar nombre y horas de cada slot, con validación de solapamiento y orden cronológico automático.
+- **Fase activa:** `F9 — Gráfico de densidad en tab Stats` en `phase/f9-stats`.
+- **Último paso completado:** F8 (`/settings/schedule`) mergeada a `develop`.
+- **Próximo paso:** F9 — nueva tab `/stats` con gráfico KDE (una curva por slot habilitado) usando Recharts, hook `useStatsFeedings` lazy + cached (300 feedings, sin skips).
 - **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -549,7 +549,33 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 10. Historial → Gráficos: cambiar hora de Cena de `20–24` a `21–24` → celdas del pasado con feeding a las 20:00 dejan de contar como Cena.
 11. Borrar el campo `meals` de `config/schedule` desde Emulator UI (:4000) → la app arranca con los defaults hardcoded, sin errores.
 
-### F9 — Detalle y edición de tomas desde Historial · _2-3h_
+### F9 — Gráfico de densidad en tab Stats · _2-3h_
+
+> Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un gráfico de densidad KDE con una curva por slot habilitado, eje X = horas, eje Y = densidad normalizada. El número de series es dinámico según `useMealConfig`.
+>
+> **Imagen de referencia:** `docs/design/f11-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
+
+#### Checkboxes
+
+- [ ] Instalar `recharts` (`npm i recharts`)
+- [ ] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
+- [ ] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
+- [ ] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
+- [ ] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
+- [ ] `src/pages/Stats.tsx` — página con header y `<DensityChart />`
+- [ ] `src/components/BottomNav.tsx` — añadir tercera entrada `{ label: 'Stats', path: '/stats' }` al array `TABS`
+- [ ] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Barra inferior muestra 3 tabs: Inicio, Historial, Stats
+3. Tap Stats → spinner breve → aparece gráfico con una curva por slot habilitado
+4. Las curvas están centradas aproximadamente en las horas esperadas (según datos de seed)
+5. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Stats
+6. La segunda visita a Stats no hace nueva query (store cacheado)
+7. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
+
+### F10 — Detalle y edición de tomas desde Historial · _2-3h_
 
 > Al tocar una celda del WeekGrid con feeding (given/skipped) o una fila de la Lista, se abre un bottom sheet con los detalles de esa toma y opción de editar o eliminar. UX: bottom sheet en la misma página (no navegación) — el usuario mantiene el contexto visual del historial y el back-button en iOS PWA no interfiere.
 
@@ -581,43 +607,19 @@ Las tomas nunca se borran — son el registro histórico de la familia. Solo se 
 
 ---
 
-### F10 — Recordatorios de comida no dada · _3-4h_
+### F11 — Recordatorios de comida no dada · _3-4h_
 - [ ] `functions/src/reminders-cron.ts` — `onSchedule('every 15 minutes', ...)` (Cloud Scheduler, 3 jobs gratis)
 - [ ] Lógica: para cada `meal` en `config/schedule`, si hora actual > `meal.endHour` → intentar `create` de `mealReminders/{dateLocal}_{mealId}` en transacción (falla si existe → at-most-once); si create OK, comprobar si hay `feedings` en rango → si no, enviar push a familia
 - [ ] Push específico por meal ("⚠️ Aún no les habéis dado la Cena")
 - [ ] TTL policy en Firestore para purgar `mealReminders` >30 días automáticamente
 
-### F11 — Rankings semanal/mensual/all-time (async, Cloud Function aparte) · _4-5h_
+### F12 — Rankings semanal/mensual/all-time (async, Cloud Function aparte) · _4-5h_
 - [ ] `functions/src/update-leaderboards.ts` — `export const updateLeaderboards = onDocumentCreated('feedings/{id}', ...)` — **independiente** de `sendPushOnFeeding`, mismo trigger, ejecución paralela
 - [ ] Increment atómico sobre `leaderboards/all-time/entries/{uid}`, `leaderboards/weekly-{YYYY-Www}/entries/{uid}`, `leaderboards/monthly-{YYYY-MM}/entries/{uid}` (con `feederName` y `photoURL` denormalizados)
 - [ ] Página `/rankings` con tabs (semana / mes / total), cada tab con `onSnapshot(orderBy('count','desc').limit(10))`
 - [ ] Script admin one-off `scripts/recompute-leaderboards.ts` para recomputar desde `feedings/` (idempotente, corre local contra prod o contra emulador con datos importados)
 
-### F12 — Gráfico de densidad en tab Stats · _2-3h_
 
-> Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un gráfico de densidad KDE con una curva por slot habilitado, eje X = horas, eje Y = densidad normalizada. El número de series es dinámico según `useMealConfig`.
->
-> **Imagen de referencia:** `docs/design/f12-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
-
-#### Checkboxes
-
-- [ ] Instalar `recharts` (`npm i recharts`)
-- [ ] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
-- [ ] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
-- [ ] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
-- [ ] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
-- [ ] `src/pages/Stats.tsx` — página con header y `<DensityChart />`
-- [ ] `src/components/BottomNav.tsx` — añadir tercera entrada `{ label: 'Stats', path: '/stats' }` al array `TABS`
-- [ ] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
-
-#### Verificar
-1. `docker compose up -d && npm run dev`
-2. Barra inferior muestra 3 tabs: Inicio, Historial, Stats
-3. Tap Stats → spinner breve → aparece gráfico con una curva por slot habilitado
-4. Las curvas están centradas aproximadamente en las horas esperadas (según datos de seed)
-5. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Stats
-6. La segunda visita a Stats no hace nueva query (store cacheado)
-7. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
 
 ---
 
