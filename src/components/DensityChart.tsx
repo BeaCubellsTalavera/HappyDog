@@ -12,6 +12,10 @@ import type { TooltipContentProps } from 'recharts';
 import type { Feeding, MealSlot } from '../types';
 import { SLOT_COLORS, buildDensityData } from '../lib/kdeUtils';
 
+// Recharts v3 ignora el prop `payload` del <Legend> y ordena por defecto
+// alfabeticamente (itemSorter: 'value'). Pasamos null para respetar el orden
+// de declaracion de los <Area>, que ya es cronologico (por startHour).
+
 function DensityTooltip({ active, label }: TooltipContentProps<number, string>) {
   if (!active) return null;
   const h = typeof label === 'number' ? label : Number(label);
@@ -43,17 +47,6 @@ export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
     [activeSlots],
   );
 
-  const legendPayload = useMemo(
-    () =>
-      orderedSlots.map((s) => ({
-        value: s.name,
-        type: 'circle' as const,
-        id: s.id,
-        color: SLOT_COLORS[s.id],
-      })),
-    [orderedSlots],
-  );
-
   const data = useMemo(
     () => buildDensityData(feedings, orderedSlots),
     [feedings, orderedSlots],
@@ -79,7 +72,7 @@ export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
           height={28}
           iconType="circle"
           wrapperStyle={{ fontSize: 12 }}
-          payload={legendPayload}
+          itemSorter={null}
         />
         {orderedSlots.map((s) => (
           <Area
