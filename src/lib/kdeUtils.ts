@@ -20,15 +20,23 @@ export function feedingHour(f: Feeding): number {
   return d.getHours() + d.getMinutes() / 60;
 }
 
-export function computeKDE(sample: number[], xs: number[], h: number): number[] {
+// KDE con reflexión en los bordes [a, b]: la masa que se escaparía fuera del
+// slot se refleja hacia dentro, así la curva vive solo dentro de su slot y no
+// invade al slot vecino. Sin dividir entre N → altura ∝ volumen de tomas.
+export function computeSlotKDE(
+  sample: number[],
+  xs: number[],
+  h: number,
+  a: number,
+  b: number,
+): number[] {
   if (sample.length === 0) return xs.map(() => 0);
-  // Sin dividir entre sample.length → la curva integra al número de muestras.
-  // Así la altura relativa entre curvas refleja el volumen de tomas de cada
-  // slot: más tomas totales = pico más alto (a igual dispersión).
   const norm = 1 / (h * Math.sqrt(2 * Math.PI));
+  const augmented = sample.flatMap((s) => [s, 2 * a - s, 2 * b - s]);
   return xs.map((x) => {
+    if (x < a || x > b) return 0;
     let sum = 0;
-    for (const s of sample) {
+    for (const s of augmented) {
       const u = (x - s) / h;
       sum += Math.exp(-0.5 * u * u);
     }
@@ -56,7 +64,13 @@ export function buildDensityData(
 
   const densities: Record<string, number[]> = {};
   for (const slot of activeSlots) {
-    densities[slot.id] = computeKDE(bySlot[slot.id], KDE_GRID_X, bandwidth);
+    densities[slot.id] = computeSlotKDE(
+      bySlot[slot.id],
+      KDE_GRID_X,
+      bandwidth,
+      slot.startHour,
+      slot.endHour,
+    );
   }
 
   return KDE_GRID_X.map((x, i) => {
