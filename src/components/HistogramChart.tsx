@@ -3,6 +3,7 @@ import {
   Bar,
   BarChart,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -10,7 +11,12 @@ import {
 } from 'recharts';
 import type { TooltipContentProps } from 'recharts';
 import type { Feeding, MealSlot } from '../types';
-import { BUCKET_SIZE, SLOT_COLORS, buildHistogramData } from '../lib/statsUtils';
+import {
+  BUCKET_SIZE,
+  SLOT_COLORS,
+  buildHistogramData,
+  computeSlotMeans,
+} from '../lib/statsUtils';
 
 function formatBucket(x: number): string {
   const start = x;
@@ -56,6 +62,19 @@ export function HistogramChart({ feedings, activeSlots }: HistogramChartProps) {
     [feedings, orderedSlots],
   );
 
+  const means = useMemo(
+    () => computeSlotMeans(feedings, orderedSlots),
+    [feedings, orderedSlots],
+  );
+
+  const meanLines = useMemo(
+    () =>
+      orderedSlots
+        .map((s) => ({ id: s.id, mean: means[s.id] }))
+        .filter((e): e is { id: typeof e.id; mean: number } => e.mean != null),
+    [orderedSlots, means],
+  );
+
   return (
     <ResponsiveContainer width="100%" height={320}>
       <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
@@ -89,6 +108,16 @@ export function HistogramChart({ feedings, activeSlots }: HistogramChartProps) {
             fill={SLOT_COLORS[s.id]}
             stackId="slot"
             isAnimationActive={false}
+          />
+        ))}
+        {meanLines.map((m) => (
+          <ReferenceLine
+            key={m.id}
+            x={m.mean}
+            stroke={SLOT_COLORS[m.id]}
+            strokeWidth={1.5}
+            strokeDasharray="3 3"
+            ifOverflow="extendDomain"
           />
         ))}
       </BarChart>
