@@ -51,8 +51,8 @@ export function RadialClockChart({ feedings, activeSlots }: RadialClockChartProp
       if (mean == null) continue;
       const r = ringForSlot[slot.id];
       const angle = hourToAngle(mean);
-      const [x1, y1] = polar(r - 7, angle);
-      const [x2, y2] = polar(r + 7, angle);
+      const [x1, y1] = polar(r, angle);
+      const [x2, y2] = polar(OUTER_R, angle);
       marks.push({ key: slot.id, x1, y1, x2, y2, color: SLOT_COLORS[slot.id] });
     }
     return marks;
@@ -125,7 +125,8 @@ export function RadialClockChart({ feedings, activeSlots }: RadialClockChartProp
             x2={m.x2}
             y2={m.y2}
             stroke={m.color}
-            strokeWidth={2.5}
+            strokeWidth={1.5}
+            strokeDasharray="3 3"
             strokeLinecap="round"
           />
         ))}
