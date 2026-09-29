@@ -46,6 +46,12 @@
   font-family: inherit;
 }
 
+.clock-ring {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-dasharray: 2 4;
+}
+
 .clock-tick {
   stroke: #d1d5db;
   stroke-width: 1;
