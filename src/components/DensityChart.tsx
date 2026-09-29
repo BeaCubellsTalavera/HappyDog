@@ -8,8 +8,39 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import type { TooltipContentProps } from 'recharts';
 import type { Feeding, MealSlot } from '../types';
 import { SLOT_COLORS, buildDensityData } from '../lib/kdeUtils';
+
+const DENSITY_EPSILON = 0.01;
+
+function DensityTooltip({ active, payload, label }: TooltipContentProps<number, string>) {
+  if (!active || !payload || payload.length === 0) return null;
+  const items = payload.filter(
+    (p) => typeof p.value === 'number' && p.value > DENSITY_EPSILON,
+  );
+  if (items.length === 0) return null;
+  const h = typeof label === 'number' ? label : Number(label);
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  const timeStr = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white/95 px-3 py-2 text-xs shadow-sm">
+      <div className="font-medium text-gray-900 mb-1">{timeStr}</div>
+      <ul className="flex flex-col gap-0.5">
+        {items.map((p) => (
+          <li key={String(p.dataKey)} className="flex items-center gap-2">
+            <span
+              className="inline-block w-2 h-2 rounded-full"
+              style={{ backgroundColor: p.color }}
+            />
+            <span className="text-gray-700">{p.name}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 interface DensityChartProps {
   feedings: Feeding[];
@@ -58,21 +89,7 @@ export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
           tickLine={{ stroke: '#e5e7eb' }}
         />
         <YAxis hide />
-        <Tooltip
-          formatter={(v) => (typeof v === 'number' ? v.toFixed(3) : String(v ?? ''))}
-          labelFormatter={(label) => {
-            const h = typeof label === 'number' ? label : Number(label);
-            if (!Number.isFinite(h)) return '';
-            const hh = Math.floor(h);
-            const mm = Math.round((h - hh) * 60);
-            return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-          }}
-          contentStyle={{
-            borderRadius: 8,
-            border: '1px solid #e5e7eb',
-            fontSize: 12,
-          }}
-        />
+        <Tooltip content={<DensityTooltip />} />
         <Legend
           verticalAlign="bottom"
           height={28}
