@@ -100,8 +100,8 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
   return (
     <div>
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="clock-svg">
-        <circle cx={CX} cy={CY} r={INNER_R} className="clock-ring" />
-        <circle cx={CX} cy={CY} r={MAX_BAR_R} className="clock-ring" />
+        <circle cx={CX} cy={CY} r={INNER_R} className="clock-frame" />
+        <circle cx={CX} cy={CY} r={MAX_BAR_R} className="clock-frame" />
 
         {wedges.map((w) => (
           <path key={w.key} d={w.d} fill={w.color} opacity={0.85} />
