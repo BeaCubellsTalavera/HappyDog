@@ -3,7 +3,7 @@ import { useStatsFeedings } from '../hooks/useStatsFeedings';
 import { useMealConfig } from '../hooks/useMealConfig';
 import { buildSlots } from '../lib/mealSlots';
 import { Layout } from '../components/Layout';
-import { DensityChart } from '../components/DensityChart';
+import { HistogramChart } from '../components/HistogramChart';
 
 export default function Stats() {
   const { feedings, loading, loaded, reload } = useStatsFeedings();
@@ -32,7 +32,7 @@ export default function Stats() {
               Sin datos todavía
             </div>
           ) : (
-            <DensityChart feedings={feedings} activeSlots={activeSlots} />
+            <HistogramChart feedings={feedings} activeSlots={activeSlots} />
           )}
         </div>
       </div>

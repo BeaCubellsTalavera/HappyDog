@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   Legend,
   ResponsiveContainer,
   Tooltip,
@@ -10,27 +10,31 @@ import {
 } from 'recharts';
 import type { TooltipContentProps } from 'recharts';
 import type { Feeding, MealSlot } from '../types';
-import { SLOT_COLORS, buildDensityData } from '../lib/kdeUtils';
+import { BUCKET_SIZE, SLOT_COLORS, buildHistogramData } from '../lib/statsUtils';
 
-// Recharts v3 ignora el prop `payload` del <Legend> y ordena por defecto
-// alfabeticamente (itemSorter: 'value'). Pasamos null para respetar el orden
-// de declaracion de los <Area>, que ya es cronologico (por startHour).
+function formatBucket(x: number): string {
+  const start = x;
+  const end = x + BUCKET_SIZE;
+  const fmt = (h: number) => {
+    const hh = Math.floor(h);
+    const mm = Math.round((h - hh) * 60);
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  };
+  return `${fmt(start)}–${fmt(end)}`;
+}
 
-function DensityTooltip({ active, label }: TooltipContentProps<number, string>) {
+function HistogramTooltip({ active, label }: TooltipContentProps<number, string>) {
   if (!active) return null;
-  const h = typeof label === 'number' ? label : Number(label);
-  if (Number.isNaN(h)) return null;
-  const hh = Math.floor(h);
-  const mm = Math.round((h - hh) * 60);
-  const timeStr = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  const x = typeof label === 'number' ? label : Number(label);
+  if (Number.isNaN(x)) return null;
   return (
     <div className="rounded-lg border border-gray-200 bg-white/95 px-3 py-2 text-xs font-medium text-gray-900 shadow-sm">
-      {timeStr}
+      {formatBucket(x)}
     </div>
   );
 }
 
-interface DensityChartProps {
+interface HistogramChartProps {
   feedings: Feeding[];
   activeSlots: MealSlot[];
 }
@@ -41,20 +45,20 @@ function formatHourTick(h: number): string {
   return `${h}h`;
 }
 
-export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
+export function HistogramChart({ feedings, activeSlots }: HistogramChartProps) {
   const orderedSlots = useMemo(
     () => [...activeSlots].sort((a, b) => a.startHour - b.startHour),
     [activeSlots],
   );
 
   const data = useMemo(
-    () => buildDensityData(feedings, orderedSlots),
+    () => buildHistogramData(feedings, orderedSlots),
     [feedings, orderedSlots],
   );
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <AreaChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+      <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
         <XAxis
           dataKey="x"
           type="number"
@@ -66,7 +70,10 @@ export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
           tickLine={{ stroke: '#e5e7eb' }}
         />
         <YAxis hide />
-        <Tooltip content={<DensityTooltip />} />
+        <Tooltip
+          content={<HistogramTooltip />}
+          cursor={{ fill: 'rgba(0,0,0,0.03)' }}
+        />
         <Legend
           verticalAlign="bottom"
           height={28}
@@ -75,19 +82,16 @@ export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
           itemSorter={null}
         />
         {orderedSlots.map((s) => (
-          <Area
+          <Bar
             key={s.id}
-            type="monotone"
             dataKey={s.id}
             name={s.name}
-            stroke={SLOT_COLORS[s.id]}
             fill={SLOT_COLORS[s.id]}
-            fillOpacity={0.35}
-            strokeWidth={2}
+            stackId="slot"
             isAnimationActive={false}
           />
         ))}
-      </AreaChart>
+      </BarChart>
     </ResponsiveContainer>
   );
 }
