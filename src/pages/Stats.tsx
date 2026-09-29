@@ -3,7 +3,6 @@ import { useStatsFeedings } from '../hooks/useStatsFeedings';
 import { useMealConfig } from '../hooks/useMealConfig';
 import { buildSlots } from '../lib/mealSlots';
 import { Layout } from '../components/Layout';
-import { HistogramChart } from '../components/HistogramChart';
 import { RadialHistogramChart } from '../components/RadialHistogramChart';
 
 export default function Stats() {
@@ -33,15 +32,7 @@ export default function Stats() {
               Sin datos todavía
             </div>
           ) : (
-            <>
-              <HistogramChart feedings={feedings} activeSlots={activeSlots} />
-              <div className="px-2 pt-8">
-                <h2 className="text-base font-semibold text-gray-900 mb-3 px-2">
-                  Histograma radial (20 min)
-                </h2>
-                <RadialHistogramChart feedings={feedings} activeSlots={activeSlots} />
-              </div>
-            </>
+            <RadialHistogramChart feedings={feedings} activeSlots={activeSlots} />
           )}
         </div>
       </div>
