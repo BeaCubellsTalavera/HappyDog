@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Feeding, MealSlot } from '../types';
-import { SLOT_COLORS, feedingHour } from '../lib/statsUtils';
+import { SLOT_COLORS, computeSlotMeans, feedingHour } from '../lib/statsUtils';
 
 interface RadialClockChartProps {
   feedings: Feeding[];
@@ -42,6 +42,21 @@ export function RadialClockChart({ feedings, activeSlots }: RadialClockChartProp
     });
     return map;
   }, [orderedSlots]);
+
+  const meanMarks = useMemo(() => {
+    const means = computeSlotMeans(feedings, orderedSlots);
+    const marks: { key: string; x1: number; y1: number; x2: number; y2: number; color: string }[] = [];
+    for (const slot of orderedSlots) {
+      const mean = means[slot.id];
+      if (mean == null) continue;
+      const r = ringForSlot[slot.id];
+      const angle = hourToAngle(mean);
+      const [x1, y1] = polar(r - 7, angle);
+      const [x2, y2] = polar(r + 7, angle);
+      marks.push({ key: slot.id, x1, y1, x2, y2, color: SLOT_COLORS[slot.id] });
+    }
+    return marks;
+  }, [feedings, orderedSlots, ringForSlot]);
 
   const dots = useMemo(() => {
     const result: { key: string; x: number; y: number; color: string }[] = [];
@@ -100,6 +115,19 @@ export function RadialClockChart({ feedings, activeSlots }: RadialClockChartProp
 
         {dots.map((d) => (
           <circle key={d.key} cx={d.x} cy={d.y} r={3.5} fill={d.color} opacity={0.65} />
+        ))}
+
+        {meanMarks.map((m) => (
+          <line
+            key={m.key}
+            x1={m.x1}
+            y1={m.y1}
+            x2={m.x2}
+            y2={m.y2}
+            stroke={m.color}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+          />
         ))}
       </svg>
 
