@@ -564,7 +564,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 - [x] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
 - [x] `src/pages/Stats.tsx` — página con header y `<DensityChart />`
 - [x] `src/components/BottomNav.tsx` — añadir tercera entrada `{ label: 'Stats', path: '/stats' }` al array `TABS`
-- [ ] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
+- [x] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
 
 #### Verificar
 1. `docker compose up -d && npm run dev`
