@@ -43,8 +43,10 @@ export function DensityChart({ feedings, activeSlots }: DensityChartProps) {
         />
         <YAxis hide />
         <Tooltip
-          formatter={(v: number) => v.toFixed(3)}
-          labelFormatter={(h: number) => {
+          formatter={(v) => (typeof v === 'number' ? v.toFixed(3) : String(v ?? ''))}
+          labelFormatter={(label) => {
+            const h = typeof label === 'number' ? label : Number(label);
+            if (!Number.isFinite(h)) return '';
             const hh = Math.floor(h);
             const mm = Math.round((h - hh) * 60);
             return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
