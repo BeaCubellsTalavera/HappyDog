@@ -22,7 +22,10 @@ export function feedingHour(f: Feeding): number {
 
 export function computeKDE(sample: number[], xs: number[], h: number): number[] {
   if (sample.length === 0) return xs.map(() => 0);
-  const norm = 1 / (sample.length * h * Math.sqrt(2 * Math.PI));
+  // Sin dividir entre sample.length → la curva integra al número de muestras.
+  // Así la altura relativa entre curvas refleja el volumen de tomas de cada
+  // slot: más tomas totales = pico más alto (a igual dispersión).
+  const norm = 1 / (h * Math.sqrt(2 * Math.PI));
   return xs.map((x) => {
     let sum = 0;
     for (const s of sample) {
