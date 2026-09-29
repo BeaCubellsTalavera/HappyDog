@@ -22,6 +22,7 @@ const ALL_HOURS = Array.from({ length: 24 }, (_, i) => i);
 const BUCKET_MIN = 20;
 const BUCKET_HOURS = BUCKET_MIN / 60;
 const BUCKET_COUNT = Math.round(24 / BUCKET_HOURS);
+const WEDGE_GAP_RAD = (0.6 * Math.PI) / 180;
 
 function hourToAngle(h: number): number {
   return (h / 24) * 2 * Math.PI - Math.PI / 2;
@@ -71,8 +72,8 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
       );
       if (!slot) continue;
       const r1 = INNER_R + (c / max) * (MAX_BAR_R - INNER_R);
-      const a0 = hourToAngle(i * BUCKET_HOURS);
-      const a1 = hourToAngle((i + 1) * BUCKET_HOURS);
+      const a0 = hourToAngle(i * BUCKET_HOURS) + WEDGE_GAP_RAD / 2;
+      const a1 = hourToAngle((i + 1) * BUCKET_HOURS) - WEDGE_GAP_RAD / 2;
       items.push({
         key: `${i}`,
         d: annularSectorPath(INNER_R, r1, a0, a1),
