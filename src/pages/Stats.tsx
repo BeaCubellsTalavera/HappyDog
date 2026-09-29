@@ -4,6 +4,7 @@ import { useMealConfig } from '../hooks/useMealConfig';
 import { buildSlots } from '../lib/mealSlots';
 import { Layout } from '../components/Layout';
 import { HistogramChart } from '../components/HistogramChart';
+import { RadialClockChart } from '../components/RadialClockChart';
 
 export default function Stats() {
   const { feedings, loading, loaded, reload } = useStatsFeedings();
@@ -32,7 +33,15 @@ export default function Stats() {
               Sin datos todavía
             </div>
           ) : (
-            <HistogramChart feedings={feedings} activeSlots={activeSlots} />
+            <>
+              <HistogramChart feedings={feedings} activeSlots={activeSlots} />
+              <div className="px-2 pt-8">
+                <h2 className="text-base font-semibold text-gray-900 mb-3 px-2">
+                  Reloj 24h
+                </h2>
+                <RadialClockChart feedings={feedings} activeSlots={activeSlots} />
+              </div>
+            </>
           )}
         </div>
       </div>
