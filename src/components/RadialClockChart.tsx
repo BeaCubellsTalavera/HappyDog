@@ -27,6 +27,13 @@ function polar(r: number, angle: number): [number, number] {
   return [CX + r * Math.cos(angle), CY + r * Math.sin(angle)];
 }
 
+function slotArcPath(r: number, startHour: number, endHour: number): string {
+  const [sx, sy] = polar(r, hourToAngle(startHour));
+  const [ex, ey] = polar(r, hourToAngle(endHour));
+  const largeArc = endHour - startHour > 12 ? 1 : 0;
+  return `M ${sx} ${sy} A ${r} ${r} 0 ${largeArc} 1 ${ex} ${ey}`;
+}
+
 export function RadialClockChart({ feedings, activeSlots }: RadialClockChartProps) {
   const orderedSlots = useMemo(
     () => [...activeSlots].sort((a, b) => a.startHour - b.startHour),
@@ -75,8 +82,43 @@ export function RadialClockChart({ feedings, activeSlots }: RadialClockChartProp
   return (
     <div>
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="clock-svg">
+        <defs>
+          {orderedSlots.map((s) => (
+            <path
+              key={`p-${s.id}`}
+              id={`slot-arc-${s.id}`}
+              d={slotArcPath(ringForSlot[s.id], s.startHour, s.endHour)}
+            />
+          ))}
+        </defs>
+
         {orderedSlots.map((s) => (
-          <circle key={s.id} cx={CX} cy={CY} r={ringForSlot[s.id]} className="clock-ring" />
+          <use
+            key={s.id}
+            href={`#slot-arc-${s.id}`}
+            fill="none"
+            stroke={SLOT_COLORS[s.id]}
+            strokeWidth={9}
+            strokeLinecap="round"
+            opacity={0.18}
+          />
+        ))}
+
+        {orderedSlots.map((s) => (
+          <text
+            key={`label-${s.id}`}
+            fontSize={10}
+            fontWeight={600}
+            fill={SLOT_COLORS[s.id]}
+          >
+            <textPath
+              href={`#slot-arc-${s.id}`}
+              startOffset="50%"
+              textAnchor="middle"
+            >
+              {s.name}
+            </textPath>
+          </text>
         ))}
 
         {ALL_HOURS.map((h) => {
