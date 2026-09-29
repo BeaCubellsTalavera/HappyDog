@@ -1,6 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Feeding, MealSlot } from '../types';
-import { SLOT_COLORS, computeSlotMeans, feedingHour } from '../lib/statsUtils';
+import {
+  SLOT_COLORS,
+  computeSlotMeans,
+  feedingHour,
+  formatHourRange,
+} from '../lib/statsUtils';
 
 interface RadialHistogramChartProps {
   feedings: Feeding[];
@@ -13,11 +18,13 @@ const CY = SIZE / 2;
 const OUTER_R = 138;
 const INNER_R = 45;
 const MAX_BAR_R = 122;
+const HOVER_INNER_R = 12;
 const LABEL_R = OUTER_R - 18;
 const TICK_MAJOR_INSET = 10;
 const TICK_MINOR_INSET = 5;
 const MAJOR_TICKS = [0, 6, 12, 18];
 const ALL_HOURS = Array.from({ length: 24 }, (_, i) => i);
+const GUIDE_FRACTIONS = [0.25, 0.5, 0.75];
 
 const BUCKET_MIN = 20;
 const BUCKET_HOURS = BUCKET_MIN / 60;
@@ -48,6 +55,8 @@ function annularSectorPath(r0: number, r1: number, a0: number, a1: number): stri
 }
 
 export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramChartProps) {
+  const [hovered, setHovered] = useState<number | null>(null);
+
   const orderedSlots = useMemo(
     () => [...activeSlots].sort((a, b) => a.startHour - b.startHour),
     [activeSlots],
@@ -97,11 +106,40 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
     return marks;
   }, [feedings, orderedSlots]);
 
+  const hoverBuckets = useMemo(() => {
+    const items: { idx: number; d: string }[] = [];
+    for (let i = 0; i < BUCKET_COUNT; i++) {
+      const a0 = hourToAngle(i * BUCKET_HOURS);
+      const a1 = hourToAngle((i + 1) * BUCKET_HOURS);
+      items.push({ idx: i, d: annularSectorPath(HOVER_INNER_R, OUTER_R, a0, a1) });
+    }
+    return items;
+  }, []);
+
+  const highlightPath = hovered !== null ? hoverBuckets[hovered].d : null;
+
   return (
     <div>
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="clock-svg">
+      <svg
+        viewBox={`0 0 ${SIZE} ${SIZE}`}
+        className="clock-svg"
+        onMouseLeave={() => setHovered(null)}
+      >
         <circle cx={CX} cy={CY} r={INNER_R} className="clock-frame" />
+        {GUIDE_FRACTIONS.map((f) => (
+          <circle
+            key={f}
+            cx={CX}
+            cy={CY}
+            r={INNER_R + f * (MAX_BAR_R - INNER_R)}
+            className="clock-guide"
+          />
+        ))}
         <circle cx={CX} cy={CY} r={MAX_BAR_R} className="clock-frame" />
+
+        {highlightPath && (
+          <path d={highlightPath} className="clock-hover-bg" pointerEvents="none" />
+        )}
 
         {wedges.map((w) => (
           <path key={w.key} d={w.d} fill={w.color} opacity={0.85} />
@@ -152,6 +190,28 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
             strokeWidth={1.5}
             strokeDasharray="3 3"
             strokeLinecap="round"
+          />
+        ))}
+
+        {hovered !== null && (
+          <text
+            x={CX}
+            y={CY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="clock-hover-label"
+          >
+            {formatHourRange(hovered * BUCKET_HOURS, BUCKET_HOURS)}
+          </text>
+        )}
+
+        {hoverBuckets.map((b) => (
+          <path
+            key={`h${b.idx}`}
+            d={b.d}
+            fill="transparent"
+            pointerEvents="all"
+            onMouseEnter={() => setHovered(b.idx)}
           />
         ))}
       </svg>

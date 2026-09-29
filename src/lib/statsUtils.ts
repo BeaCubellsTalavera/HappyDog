@@ -15,6 +15,16 @@ export function feedingHour(f: Feeding): number {
   return d.getHours() + d.getMinutes() / 60;
 }
 
+export function formatHourRange(startHour: number, sizeHours: number): string {
+  const fmt = (h: number): string => {
+    const total = Math.round(h * 60);
+    const hh = Math.floor(total / 60);
+    const mm = total % 60;
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  };
+  return `${fmt(startHour)}–${fmt(startHour + sizeHours)}`;
+}
+
 export type HistogramRow = { x: number } & Partial<Record<MealSlotId, number>>;
 
 function slotForHour(h: number, slots: MealSlot[]): MealSlot | undefined {
