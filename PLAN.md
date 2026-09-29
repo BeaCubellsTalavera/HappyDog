@@ -559,7 +559,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 - [x] Instalar `recharts` (`npm i recharts`)
 - [x] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
-- [ ] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
+- [x] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
 - [ ] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
 - [ ] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
 - [ ] `src/pages/Stats.tsx` — página con header y `<DensityChart />`
