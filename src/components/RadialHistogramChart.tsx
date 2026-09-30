@@ -5,7 +5,9 @@ import {
   computeSlotMeans,
   feedingHour,
   formatHourRange,
+  logicalToCalendarHour,
 } from '../lib/statsUtils';
+import { slotLogicalBounds } from '../lib/logicalDay';
 
 interface RadialHistogramChartProps {
   feedings: Feeding[];
@@ -58,7 +60,10 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
   const [hovered, setHovered] = useState<number | null>(null);
 
   const orderedSlots = useMemo(
-    () => [...activeSlots].sort((a, b) => a.startHour - b.startHour),
+    () =>
+      [...activeSlots].sort(
+        (a, b) => slotLogicalBounds(a).logStart - slotLogicalBounds(b).logStart,
+      ),
     [activeSlots],
   );
 
@@ -76,9 +81,10 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
       const c = counts[i];
       if (c === 0) continue;
       const centerHour = (i + 0.5) * BUCKET_HOURS;
-      const slot = orderedSlots.find(
-        (s) => centerHour >= s.startHour && centerHour < s.endHour,
-      );
+      const slot = orderedSlots.find((s) => {
+        const { logStart, logEnd } = slotLogicalBounds(s);
+        return centerHour >= logStart && centerHour < logEnd;
+      });
       if (!slot) continue;
       const r1 = INNER_R + (c / max) * (MAX_BAR_R - INNER_R);
       const a0 = hourToAngle(i * BUCKET_HOURS) + WEDGE_GAP_RAD / 2;
@@ -174,7 +180,7 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
               dominantBaseline="middle"
               className="clock-label"
             >
-              {h}h
+              {logicalToCalendarHour(h)}h
             </text>
           );
         })}
@@ -201,7 +207,7 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
             dominantBaseline="middle"
             className="clock-hover-label"
           >
-            {formatHourRange(hovered * BUCKET_HOURS, BUCKET_HOURS)}
+            {formatHourRange(logicalToCalendarHour(hovered * BUCKET_HOURS), BUCKET_HOURS)}
           </text>
         )}
 
