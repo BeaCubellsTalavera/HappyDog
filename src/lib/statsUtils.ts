@@ -8,9 +8,6 @@ export const SLOT_COLORS: Record<MealSlotId, string> = {
   night: '#818CF8',
 };
 
-/** Color para buckets con feedings que no caen en ningún slot activo. */
-export const ORPHAN_BUCKET_COLOR = '#D1D5DB';
-
 /**
  * Devuelve la hora del feeding en espacio LÓGICO (0..24), donde 0 = DAY_CUTOFF_HOUR calendar.
  */
