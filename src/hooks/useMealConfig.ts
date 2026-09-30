@@ -38,18 +38,32 @@ function cloneMeals(m: MealsMap): MealsMap {
   };
 }
 
+/**
+ * Normaliza `endHour === 24` a `0` (misma medianoche, representación consistente
+ * con el picker rotado alrededor del corte de día lógico). Migración lazy:
+ * cuando el usuario guarda, el 0 sustituye al 24 en Firestore.
+ */
+function normalizeEndHour(h: number): number {
+  return h === 24 ? 0 : h;
+}
+
 /** Parsea el `meals` del snapshot rellenando con defaults los slots ausentes. */
 function parseMeals(raw: unknown): MealsMap {
-  if (!raw || typeof raw !== 'object') return cloneMeals(DEFAULT_MEALS);
-  const src = raw as Partial<Record<MealSlotId, Partial<MealFields>>>;
+  const src =
+    raw && typeof raw === 'object'
+      ? (raw as Partial<Record<MealSlotId, Partial<MealFields>>>)
+      : {};
   const out = {} as MealsMap;
   for (const id of MEAL_IDS) {
     const patch = src[id];
     const base = DEFAULT_MEALS[id];
+    const rawEnd = Number.isFinite(patch?.endHour)
+      ? (patch!.endHour as number)
+      : base.endHour;
     out[id] = {
       name: typeof patch?.name === 'string' && patch.name.length > 0 ? patch.name : base.name,
       startHour: Number.isFinite(patch?.startHour) ? (patch!.startHour as number) : base.startHour,
-      endHour: Number.isFinite(patch?.endHour) ? (patch!.endHour as number) : base.endHour,
+      endHour: normalizeEndHour(rawEnd),
     };
   }
   return out;
