@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { format } from 'date-fns';
 import { useHistory } from '../hooks/useHistory';
 import { useWeekFeedings } from '../hooks/useWeekFeedings';
 import { useMealConfig } from '../hooks/useMealConfig';
 import { buildSlots } from '../lib/mealSlots';
 import { buildWeekGrid } from '../lib/weekGrid';
+import { logicalToday } from '../lib/logicalDay';
 import { Layout } from '../components/Layout';
 import { WeekGrid } from '../components/WeekGrid';
 import { ManualFeedDialog, type ManualFeedDialogHandle } from '../components/ManualFeedDialog';
@@ -22,7 +22,7 @@ export default function History() {
   const enabledSlots = buildSlots(meals).filter((s) => enabled[s.id]);
 
   const now = new Date();
-  const todayStr = format(now, 'yyyy-MM-dd');
+  const todayStr = logicalToday(now);
   const gridDays = buildWeekGrid(enabledSlots, weekFeedings, todayStr, now);
 
   useEffect(() => {
