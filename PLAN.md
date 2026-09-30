@@ -596,7 +596,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 **Ola B — Utilidades (build verde tras cada archivo)**
 
-- [ ] `src/lib/mealSlots.ts`: `deriveSlotStatus` y `getActiveSlotIndex` en logical time; `todayString` delega en `logicalToday`; `buildSlots` sort por `logStart`
+- [x] `src/lib/mealSlots.ts`: `deriveSlotStatus` y `getActiveSlotIndex` en logical time; `todayString` delega en `logicalToday`; `buildSlots` sort por `logStart`
 - [ ] `src/lib/weekGrid.ts`: `deriveDaySlotStatus` con `feedingInSlot` + `logicalDate`
 - [ ] `src/lib/statsUtils.ts`: `feedingHour` devuelve logical; `computeSlotMeans` con `feedingInSlot`; `formatHourRange` soporta wrap
 - [ ] `src/lib/scheduleValidation.ts`: rangos 0..23; regla `logEnd > logStart`; overlap con `slotLogicalBounds`

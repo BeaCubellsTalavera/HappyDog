@@ -1,5 +1,11 @@
-import { format } from 'date-fns';
 import type { Feeding, MealSlot, MealSlotId, SlotStatus } from '../types';
+import {
+  feedingInSlot,
+  logicalDate,
+  logicalHour,
+  logicalToday,
+  slotLogicalBounds,
+} from './logicalDay';
 
 /** Editable meal fields — el resto (id, bg, label) queda hardcoded por id. */
 export interface MealFields {
@@ -33,16 +39,25 @@ export function buildSlots(meals: MealsMap): MealSlot[] {
       bg: BG_BY_ID[id],
       ...meals[id],
     }))
-    .sort((a, b) => a.startHour - b.startHour);
+    .sort((a, b) => slotLogicalBounds(a).logStart - slotLogicalBounds(b).logStart);
 }
 
 export const MEAL_SLOTS: MealSlot[] = buildSlots(DEFAULT_MEALS);
 
 export function getActiveSlotIndex(slots: MealSlot[], now: Date): number {
-  const hour = now.getHours();
-  const idx = slots.findIndex((s) => hour >= s.startHour && hour < s.endHour);
-  if (idx !== -1) return idx;
-  return hour < slots[0].startHour ? 0 : slots.length - 1;
+  const logNow = logicalHour(now.getHours());
+  const ordered = [...slots].sort(
+    (a, b) => slotLogicalBounds(a).logStart - slotLogicalBounds(b).logStart,
+  );
+  const idx = ordered.findIndex((s) => {
+    const { logStart, logEnd } = slotLogicalBounds(s);
+    return logNow >= logStart && logNow < logEnd;
+  });
+  if (idx !== -1) return slots.indexOf(ordered[idx]);
+  const firstLogStart = slotLogicalBounds(ordered[0]).logStart;
+  return logNow < firstLogStart
+    ? slots.indexOf(ordered[0])
+    : slots.indexOf(ordered[ordered.length - 1]);
 }
 
 export function deriveSlotStatus(
@@ -51,24 +66,30 @@ export function deriveSlotStatus(
   today: string,
   now: Date
 ): SlotStatus {
-  const hour = now.getHours();
+  const logNow = logicalHour(now.getHours());
+  const { logStart, logEnd } = slotLogicalBounds(slot);
 
   const hasFeed = feedings.some(
-    (f) => f.dateLocal === today && f.method !== 'skipped' && f.hourLocal >= slot.startHour && f.hourLocal < slot.endHour
+    (f) =>
+      f.method !== 'skipped' &&
+      logicalDate(f.timestamp.toDate()) === today &&
+      feedingInSlot(f, slot),
   );
   if (hasFeed) return 'given';
 
   const hasSkip = feedings.some(
-    (f) => f.dateLocal === today && f.method === 'skipped' && f.hourLocal === slot.startHour
+    (f) =>
+      f.method === 'skipped' &&
+      logicalDate(f.timestamp.toDate()) === today &&
+      logicalHour(f.hourLocal) === logStart,
   );
   if (hasSkip) return 'skipped';
 
-  if (hour < slot.startHour) return 'not-yet';
-  // endHour 24 means until midnight; since getHours() returns 0-23, hour < 24 is always true
-  if (slot.endHour === 24 || hour < slot.endHour) return 'pending';
+  if (logNow < logStart) return 'not-yet';
+  if (logNow < logEnd) return 'pending';
   return 'missed';
 }
 
 export function todayString(): string {
-  return format(new Date(), 'yyyy-MM-dd');
+  return logicalToday();
 }
