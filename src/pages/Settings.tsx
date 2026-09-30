@@ -4,16 +4,8 @@ import { Layout } from '../components/Layout';
 import { useFcmToken } from '../hooks/useFcmToken';
 import { useMealConfig } from '../hooks/useMealConfig';
 import { buildSlots } from '../lib/mealSlots';
+import { windowLabel } from '../lib/timeFormat';
 import type { MealSlotId } from '../types';
-
-function pad(n: number) {
-  return n.toString().padStart(2, '0');
-}
-
-function windowLabel(startHour: number, endHour: number) {
-  const end = endHour === 24 ? '00:00' : `${pad(endHour)}:00`;
-  return `${pad(startHour)}:00–${end}`;
-}
 
 export default function Settings() {
   const permission = useFcmToken((s) => s.permission);

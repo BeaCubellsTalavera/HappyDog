@@ -2,6 +2,7 @@ import { format, subDays, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Feeding, MealSlot, SlotStatus } from '../types';
 import { deriveSlotStatus } from './mealSlots';
+import { feedingInSlot, logicalDate, logicalHour, slotLogicalBounds } from './logicalDay';
 
 export type CellPosition = 'single' | 'first' | 'middle' | 'last';
 
@@ -26,20 +27,21 @@ export function deriveDaySlotStatus(
 ): SlotStatus {
   if (dayStr === todayStr) return deriveSlotStatus(slot, feedings, todayStr, now);
 
+  const { logStart } = slotLogicalBounds(slot);
+
   const hasFeed = feedings.some(
     (f) =>
-      f.dateLocal === dayStr &&
       f.method !== 'skipped' &&
-      f.hourLocal >= slot.startHour &&
-      f.hourLocal < slot.endHour,
+      logicalDate(f.timestamp.toDate()) === dayStr &&
+      feedingInSlot(f, slot),
   );
   if (hasFeed) return 'given';
 
   const hasSkip = feedings.some(
     (f) =>
-      f.dateLocal === dayStr &&
       f.method === 'skipped' &&
-      f.hourLocal === slot.startHour,
+      logicalDate(f.timestamp.toDate()) === dayStr &&
+      logicalHour(f.hourLocal) === logStart,
   );
   if (hasSkip) return 'skipped';
 
