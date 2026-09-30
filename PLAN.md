@@ -591,7 +591,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 **Ola A — Núcleo lógico (sin cambio semántico aún)**
 
-- [ ] Crear `src/lib/logicalDay.ts` con `DAY_CUTOFF_HOUR`, `logicalHour`, `logicalDate`, `logicalToday`, `calendarToday`, `slotLogicalBounds`, `feedingInSlot`, `slotToAbsoluteTimestamp`
+- [x] Crear `src/lib/logicalDay.ts` con `DAY_CUTOFF_HOUR`, `logicalHour`, `logicalDate`, `logicalToday`, `calendarToday`, `slotLogicalBounds`, `feedingInSlot`, `slotToAbsoluteTimestamp`
 - [ ] Crear `src/lib/timeFormat.ts` con `windowLabel(startHour, endHour)` centralizado; actualizar `MealCard.tsx` y `Settings.tsx` para importarlo
 
 **Ola B — Utilidades (build verde tras cada archivo)**
