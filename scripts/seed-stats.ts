@@ -29,7 +29,7 @@ const USERS = [
   { uid: 'user-luis', name: 'Luis' },
 ];
 
-const DAYS = 76;
+const DAYS = 100;
 const NFC_RATIO = 0.15;
 
 function gaussian(mu: number, sigma: number): number {
