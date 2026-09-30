@@ -19,11 +19,12 @@ interface RadialHistogramChartProps {
 const SIZE = 300;
 const CX = SIZE / 2;
 const CY = SIZE / 2;
-const OUTER_R = 126;
+const OUTER_R = 120;
 const INNER_R = 45;
-const MAX_BAR_R = 110;
+const MAX_BAR_R = 104;
 const HOVER_INNER_R = 12;
-const LABEL_R = OUTER_R + 14;
+const LABEL_GAP = 8;
+const LABEL_R = OUTER_R + LABEL_GAP;
 const TICK_MAJOR_INSET = 10;
 const TICK_AUX_INSET = 8;
 const TICK_MINOR_INSET = 5;
@@ -186,14 +187,32 @@ export function RadialHistogramChart({
         })}
 
         {MAJOR_TICKS.map((h) => {
-          const [x, y] = polar(LABEL_R, hourToAngle(h));
+          // Alineación por dirección para que el gap visible entre el aro y
+          // el borde interior del texto sea el mismo en las cuatro esquinas.
+          let x = CX;
+          let y = CY;
+          let textAnchor: 'start' | 'middle' | 'end' = 'middle';
+          let dominantBaseline: 'middle' | 'hanging' | 'alphabetic' = 'middle';
+          if (h === 0) {
+            y = CY - LABEL_R;
+            dominantBaseline = 'alphabetic';
+          } else if (h === 6) {
+            x = CX + LABEL_R;
+            textAnchor = 'start';
+          } else if (h === 12) {
+            y = CY + LABEL_R;
+            dominantBaseline = 'hanging';
+          } else {
+            x = CX - LABEL_R;
+            textAnchor = 'end';
+          }
           return (
             <text
               key={h}
               x={x}
               y={y}
-              textAnchor="middle"
-              dominantBaseline="middle"
+              textAnchor={textAnchor}
+              dominantBaseline={dominantBaseline}
               className="clock-label"
             >
               {h}h
