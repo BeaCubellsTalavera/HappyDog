@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Feeding, MealSlot } from '../types';
 import {
+  ORPHAN_BUCKET_COLOR,
   SLOT_COLORS,
   computeSlotMeans,
   feedingHour,
@@ -93,14 +94,13 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
         const { logStart, logEnd } = slotLogicalBounds(s);
         return centerHour >= logStart && centerHour < logEnd;
       });
-      if (!slot) continue;
       const r1 = INNER_R + (c / max) * (MAX_BAR_R - INNER_R);
       const a0 = logicalHourToAngle(i * BUCKET_HOURS) + WEDGE_GAP_RAD / 2;
       const a1 = logicalHourToAngle((i + 1) * BUCKET_HOURS) - WEDGE_GAP_RAD / 2;
       items.push({
         key: `${i}`,
         d: annularSectorPath(INNER_R, r1, a0, a1),
-        color: SLOT_COLORS[slot.id],
+        color: slot ? SLOT_COLORS[slot.id] : ORPHAN_BUCKET_COLOR,
       });
     }
     return items;
