@@ -77,3 +77,8 @@
   stroke: #9ca3af;
   stroke-width: 1.5;
 }
+
+.clock-tick-aux {
+  stroke: #b0b6bf;
+  stroke-width: 1.25;
+}

@@ -7,7 +7,7 @@ import {
   formatHourRange,
   logicalToCalendarHour,
 } from '../lib/statsUtils';
-import { slotLogicalBounds } from '../lib/logicalDay';
+import { DAY_CUTOFF_HOUR, slotLogicalBounds } from '../lib/logicalDay';
 
 interface RadialHistogramChartProps {
   feedings: Feeding[];
@@ -23,8 +23,10 @@ const MAX_BAR_R = 122;
 const HOVER_INNER_R = 12;
 const LABEL_R = OUTER_R - 18;
 const TICK_MAJOR_INSET = 10;
+const TICK_AUX_INSET = 8;
 const TICK_MINOR_INSET = 5;
 const MAJOR_TICKS = [0, 6, 12, 18];
+const AUX_TICKS = [3, 9, 15, 21];
 const ALL_HOURS = Array.from({ length: 24 }, (_, i) => i);
 const GUIDE_FRACTIONS = [0.25, 0.5, 0.75];
 
@@ -33,8 +35,14 @@ const BUCKET_HOURS = BUCKET_MIN / 60;
 const BUCKET_COUNT = Math.round(24 / BUCKET_HOURS);
 const WEDGE_GAP_RAD = (0.6 * Math.PI) / 180;
 
-function hourToAngle(h: number): number {
-  return (h / 24) * 2 * Math.PI - Math.PI / 2;
+/** Ángulo para una hora calendar (0 = arriba, 6 = derecha, 12 = abajo, 18 = izquierda). */
+function hourToAngle(calendarH: number): number {
+  return (calendarH / 24) * 2 * Math.PI - Math.PI / 2;
+}
+
+/** Ángulo para una hora en espacio lógico (0 = calendar DAY_CUTOFF_HOUR). */
+function logicalHourToAngle(logicalH: number): number {
+  return hourToAngle(logicalH + DAY_CUTOFF_HOUR);
 }
 
 function polar(r: number, angle: number): [number, number] {
@@ -87,8 +95,8 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
       });
       if (!slot) continue;
       const r1 = INNER_R + (c / max) * (MAX_BAR_R - INNER_R);
-      const a0 = hourToAngle(i * BUCKET_HOURS) + WEDGE_GAP_RAD / 2;
-      const a1 = hourToAngle((i + 1) * BUCKET_HOURS) - WEDGE_GAP_RAD / 2;
+      const a0 = logicalHourToAngle(i * BUCKET_HOURS) + WEDGE_GAP_RAD / 2;
+      const a1 = logicalHourToAngle((i + 1) * BUCKET_HOURS) - WEDGE_GAP_RAD / 2;
       items.push({
         key: `${i}`,
         d: annularSectorPath(INNER_R, r1, a0, a1),
@@ -104,7 +112,7 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
     for (const slot of orderedSlots) {
       const mean = means[slot.id];
       if (mean == null) continue;
-      const angle = hourToAngle(mean);
+      const angle = logicalHourToAngle(mean);
       const [x1, y1] = polar(INNER_R, angle);
       const [x2, y2] = polar(OUTER_R, angle);
       marks.push({ key: slot.id, x1, y1, x2, y2, color: SLOT_COLORS[slot.id] });
@@ -115,8 +123,8 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
   const hoverBuckets = useMemo(() => {
     const items: { idx: number; d: string }[] = [];
     for (let i = 0; i < BUCKET_COUNT; i++) {
-      const a0 = hourToAngle(i * BUCKET_HOURS);
-      const a1 = hourToAngle((i + 1) * BUCKET_HOURS);
+      const a0 = logicalHourToAngle(i * BUCKET_HOURS);
+      const a1 = logicalHourToAngle((i + 1) * BUCKET_HOURS);
       items.push({ idx: i, d: annularSectorPath(HOVER_INNER_R, OUTER_R, a0, a1) });
     }
     return items;
@@ -153,10 +161,12 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
 
         {ALL_HOURS.map((h) => {
           const isMajor = MAJOR_TICKS.includes(h);
+          const isAux = AUX_TICKS.includes(h);
           const angle = hourToAngle(h);
-          const inset = isMajor ? TICK_MAJOR_INSET : TICK_MINOR_INSET;
+          const inset = isMajor ? TICK_MAJOR_INSET : isAux ? TICK_AUX_INSET : TICK_MINOR_INSET;
           const [x1, y1] = polar(OUTER_R - inset, angle);
           const [x2, y2] = polar(OUTER_R, angle);
+          const cls = isMajor ? 'clock-tick-major' : isAux ? 'clock-tick-aux' : 'clock-tick';
           return (
             <line
               key={h}
@@ -164,7 +174,7 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
               y1={y1}
               x2={x2}
               y2={y2}
-              className={isMajor ? 'clock-tick-major' : 'clock-tick'}
+              className={cls}
             />
           );
         })}
@@ -180,7 +190,7 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
               dominantBaseline="middle"
               className="clock-label"
             >
-              {logicalToCalendarHour(h)}h
+              {h}h
             </text>
           );
         })}
