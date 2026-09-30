@@ -1,6 +1,8 @@
 import { createFeeding } from './feedings';
+import { slotToAbsoluteTimestamp } from './logicalDay';
 
 interface CreateSkipInput {
+  /** Fecha del día LÓGICO al que pertenece el slot (YYYY-MM-DD). */
   date: string;
   startHour: number;
   uid: string;
@@ -8,7 +10,6 @@ interface CreateSkipInput {
 }
 
 export async function createSkip({ date, startHour, uid, name }: CreateSkipInput): Promise<void> {
-  const [year, month, day] = date.split('-').map(Number);
-  const timestamp = new Date(year, month - 1, day, startHour, 0, 0);
+  const timestamp = slotToAbsoluteTimestamp(date, startHour);
   await createFeeding({ method: 'skipped', timestamp, feederUid: uid, feederName: name });
 }
