@@ -611,7 +611,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 - [x] `src/hooks/useMealStatus.ts`: `today = logicalToday(now)`; el tick de 60s dispara `useTodayFeedings.reload()` cuando cambia `logicalToday`
 - [x] `src/pages/History.tsx`: `todayStr = logicalToday(now)` para vista Gráficos (Lista sin cambios)
 - [x] `src/pages/ScheduleSettings.tsx`: `START_OPTIONS`/`END_OPTIONS` rotados alrededor de 04:00; `formatHour` sin caso 24; sort por `logStart`
-- [ ] `src/components/MealCarousel.tsx`: filtros con `feedingInSlot` + `logicalDate`; borrar `const today` local
+- [x] `src/components/MealCarousel.tsx`: filtros con `feedingInSlot` + `logicalDate`; borrar `const today` local
 - [ ] `src/components/ManualFeedDialog.tsx` (modo slot): `defaultValue` fijo a `startHour:00`; `toDate` con `slotToAbsoluteTimestamp`; schema en logical; omitir HTML `min`/`max`
 - [ ] `src/components/RadialHistogramChart.tsx`: `orderedSlots` sort por `logStart`; wedges con `slotLogicalBounds`; tick labels calendar (`04h, 10h, 16h, 22h`); hover tooltip con wrap
 

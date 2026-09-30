@@ -1,11 +1,17 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { format } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { useTodayFeedings } from '../hooks/useFeedings';
 import { useTodaySkips } from '../hooks/useTodaySkips';
 import { useMealStatus } from '../hooks/useMealStatus';
 import { getActiveSlotIndex } from '../lib/mealSlots';
 import { createFeeding } from '../lib/feedings';
+import {
+  feedingInSlot,
+  logicalDate,
+  logicalHour,
+  logicalToday,
+  slotLogicalBounds,
+} from '../lib/logicalDay';
 import { StepIndicator } from './StepIndicator';
 import { MealCard } from './MealCard';
 
@@ -107,21 +113,21 @@ export function MealCarousel() {
           className="flex h-full overflow-x-scroll snap-x snap-mandatory scroll-smooth hide-scrollbar px-7 gap-3"
         >
           {slots.map((slot, i) => {
-            const today = format(new Date(), 'yyyy-MM-dd');
+            const today = logicalToday();
+            const { logStart } = slotLogicalBounds(slot);
             const slotFeeding =
               feedings.find(
                 (f) =>
-                  f.dateLocal === today &&
                   f.method !== 'skipped' &&
-                  f.hourLocal >= slot.startHour &&
-                  f.hourLocal < slot.endHour
+                  logicalDate(f.timestamp.toDate()) === today &&
+                  feedingInSlot(f, slot)
               ) ?? null;
             const slotSkip =
               feedings.find(
                 (f) =>
-                  f.dateLocal === today &&
                   f.method === 'skipped' &&
-                  f.hourLocal === slot.startHour
+                  logicalDate(f.timestamp.toDate()) === today &&
+                  logicalHour(f.hourLocal) === logStart
               ) ?? null;
 
             return (
