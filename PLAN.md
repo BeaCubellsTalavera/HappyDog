@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** F-Cutoff — corte de día lógico a las 04:00 en `phase/logical-day-cutoff`.
-- **Último paso completado:** F9 (histograma radial 24h en tab Stats) en `phase/f9-stats`.
-- **Próximo paso:** F-Cutoff — mover el corte del día lógico de 00:00 a 04:00.
+- **Fase activa:** F-Cutoff completada en `phase/logical-day-cutoff` — pendiente verificación manual y merge a `develop`.
+- **Último paso completado:** F-Cutoff (corte de día lógico a las 04:00) en `phase/logical-day-cutoff`.
+- **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial.
 - **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
