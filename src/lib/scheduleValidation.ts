@@ -1,4 +1,6 @@
 import { MEAL_IDS, type MealsMap } from './mealSlots';
+import { slotLogicalBounds } from './logicalDay';
+import { windowLabel } from './timeFormat';
 import type { MealSlotId } from '../types';
 
 export interface ValidationResult {
@@ -9,17 +11,20 @@ export interface ValidationResult {
 
 type EnabledMap = Record<MealSlotId, boolean>;
 
-function pad(n: number): string {
-  return n.toString().padStart(2, '0');
+/** Un rango [start, end) es válido si difiere y su representación lógica avanza (logEnd > logStart). */
+function spanValid(m: { startHour: number; endHour: number }): boolean {
+  if (m.startHour === m.endHour) return false;
+  const { logStart, logEnd } = slotLogicalBounds(m);
+  return logEnd > logStart;
 }
 
-function formatHour(h: number): string {
-  if (h === 24) return '24:00';
-  return `${pad(h)}:00`;
-}
-
-function overlaps(a: { startHour: number; endHour: number }, b: { startHour: number; endHour: number }): boolean {
-  return Math.max(a.startHour, b.startHour) < Math.min(a.endHour, b.endHour);
+function overlaps(
+  a: { startHour: number; endHour: number },
+  b: { startHour: number; endHour: number },
+): boolean {
+  const ba = slotLogicalBounds(a);
+  const bb = slotLogicalBounds(b);
+  return Math.max(ba.logStart, bb.logStart) < Math.min(ba.logEnd, bb.logEnd);
 }
 
 /** Valida un draft completo (enabled + meals). Se llama en cada render del editor. */
@@ -41,11 +46,20 @@ export function validateSchedule(enabled: EnabledMap, meals: MealsMap): Validati
     if (!Number.isInteger(m.startHour) || m.startHour < 0 || m.startHour > 23) {
       errorsBySlot[id].push('Hora de inicio inválida');
     }
-    if (!Number.isInteger(m.endHour) || m.endHour < 1 || m.endHour > 24) {
+    // endHour acepta 0..23; se admite 24 defensivamente por retrocompat, aunque parseMeals lo normaliza a 0.
+    if (
+      !Number.isInteger(m.endHour) ||
+      m.endHour < 0 ||
+      (m.endHour > 23 && m.endHour !== 24)
+    ) {
       errorsBySlot[id].push('Hora de fin inválida');
     }
-    if (Number.isFinite(m.startHour) && Number.isFinite(m.endHour) && m.endHour <= m.startHour) {
-      errorsBySlot[id].push('La hora de fin debe ser posterior a la de inicio');
+    if (
+      Number.isFinite(m.startHour) &&
+      Number.isFinite(m.endHour) &&
+      !spanValid(m)
+    ) {
+      errorsBySlot[id].push('La hora de fin debe ser posterior a la de inicio en el día lógico');
     }
   }
 
@@ -61,10 +75,10 @@ export function validateSchedule(enabled: EnabledMap, meals: MealsMap): Validati
       const a = meals[MEAL_IDS[i]];
       const b = meals[MEAL_IDS[j]];
       // Sólo revisamos overlap si los rangos son individualmente válidos.
-      if (a.endHour <= a.startHour || b.endHour <= b.startHour) continue;
+      if (!spanValid(a) || !spanValid(b)) continue;
       if (overlaps(a, b)) {
-        const rangeA = `${formatHour(a.startHour)}–${formatHour(a.endHour)}`;
-        const rangeB = `${formatHour(b.startHour)}–${formatHour(b.endHour)}`;
+        const rangeA = windowLabel(a.startHour, a.endHour);
+        const rangeB = windowLabel(b.startHour, b.endHour);
         errorsBySlot[MEAL_IDS[i]].push(`Solapa con ${b.name} (${rangeB})`);
         errorsBySlot[MEAL_IDS[j]].push(`Solapa con ${a.name} (${rangeA})`);
       }
