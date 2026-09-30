@@ -607,7 +607,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 - [x] `src/hooks/useMealConfig.ts`: `parseMeals` normaliza `endHour === 24 → 0` (incluye el fallback del default)
 - [x] `src/hooks/useFeedings.ts`: `logicalToday()`; filtrar `f.dateLocal === calendarToday()` antes de `syncTodayInHistory`
-- [ ] `src/hooks/useWeekFeedings.ts`: `since = subDays(parseISO(logicalToday()), 6)`
+- [x] `src/hooks/useWeekFeedings.ts`: `since = subDays(parseISO(logicalToday()), 6)`
 - [ ] `src/hooks/useMealStatus.ts`: `today = logicalToday(now)`; el tick de 60s dispara `useTodayFeedings.reload()` cuando cambia `logicalToday`
 - [ ] `src/pages/History.tsx`: `todayStr = logicalToday(now)` para vista Gráficos (Lista sin cambios)
 - [ ] `src/pages/ScheduleSettings.tsx`: `START_OPTIONS`/`END_OPTIONS` rotados alrededor de 04:00; `formatHour` sin caso 24; sort por `logStart`
