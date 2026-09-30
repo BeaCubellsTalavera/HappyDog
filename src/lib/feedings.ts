@@ -61,6 +61,16 @@ export async function getTodayFeedings(today: string): Promise<Feeding[]> {
   return feedings.sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
 }
 
+export async function getStatsFeedings(max = 300): Promise<Feeding[]> {
+  const q = query(
+    collection(db, 'feedings'),
+    orderBy('timestamp', 'desc'),
+    firestoreLimit(max),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Feeding[];
+}
+
 export async function getHistoryPage(
   cursor: DocumentSnapshot | null,
   pageSize = 60
