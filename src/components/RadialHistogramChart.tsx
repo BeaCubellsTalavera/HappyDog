@@ -19,11 +19,11 @@ interface RadialHistogramChartProps {
 const SIZE = 300;
 const CX = SIZE / 2;
 const CY = SIZE / 2;
-const OUTER_R = 138;
+const OUTER_R = 126;
 const INNER_R = 45;
-const MAX_BAR_R = 122;
+const MAX_BAR_R = 110;
 const HOVER_INNER_R = 12;
-const LABEL_R = OUTER_R - 18;
+const LABEL_R = OUTER_R + 14;
 const TICK_MAJOR_INSET = 10;
 const TICK_AUX_INSET = 8;
 const TICK_MINOR_INSET = 5;
