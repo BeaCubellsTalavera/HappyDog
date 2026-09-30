@@ -21,7 +21,7 @@ type SlotSpec = {
 // la cena admite cola hasta las 03:00 del día calendar siguiente (max=27) y
 // el desayuno puede empezar desde las 03:00 del día actual (min=3).
 const SLOTS: SlotSpec[] = [
-  { id: 'morning',   mu: 8,    sigma: 1.5, min: 3,  max: 13, probability: 0.9  },
+  { id: 'morning',   mu: 7,    sigma: 2.0, min: 3,  max: 13, probability: 1.0  },
   { id: 'midday',    mu: 14.5, sigma: 0.7, min: 13, max: 18, probability: 0.85 },
   { id: 'afternoon', mu: 19,   sigma: 0.5, min: 18, max: 20, probability: 0.75 },
   { id: 'night',     mu: 22.5, sigma: 1.6, min: 20, max: 27, probability: 0.9  },
