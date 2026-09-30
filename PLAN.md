@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F9 — Gráfico de densidad en tab Stats` en `phase/f9-stats`.
-- **Último paso completado:** F8 (`/settings/schedule`) mergeada a `develop`.
-- **Próximo paso:** F9 — nueva tab `/stats` con gráfico KDE (una curva por slot habilitado) usando Recharts, hook `useStatsFeedings` lazy + cached (300 feedings, sin skips).
+- **Fase activa:** ninguna — F9 lista para merge a `develop` pendiente de verificación manual y luz verde.
+- **Último paso completado:** F9 (histograma radial 24h en tab Stats) en `phase/f9-stats`.
+- **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial.
 - **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -549,31 +549,29 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 10. Historial → Gráficos: cambiar hora de Cena de `20–24` a `21–24` → celdas del pasado con feeding a las 20:00 dejan de contar como Cena.
 11. Borrar el campo `meals` de `config/schedule` desde Emulator UI (:4000) → la app arranca con los defaults hardcoded, sin errores.
 
-### F9 — Gráfico de densidad en tab Stats · _2-3h_
+### F9 — Histograma radial 24h en tab Stats · _2-3h_
 
-> Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un gráfico de densidad KDE con una curva por slot habilitado, eje X = horas, eje Y = densidad normalizada. El número de series es dinámico según `useMealConfig`.
->
-> **Imagen de referencia:** `docs/design/f11-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
+> Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un histograma radial 24h en SVG puro con cuñas de 20 min: la longitud radial de cada cuña indica el número de tomas en esa franja y el color la asigna al slot correspondiente. Incluye guías concéntricas al 25/50/75 %, línea de media por slot y hover con rango horario en el centro. El número de slots activos es dinámico según `useMealConfig`.
 
 #### Checkboxes
 
-- [x] Instalar `recharts` (`npm i recharts`)
 - [x] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
-- [x] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
+- [x] `src/lib/statsUtils.ts` — nuevo archivo: `SLOT_COLORS`, `feedingHour`, `computeSlotMeans`, `formatHourRange`
 - [x] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
-- [x] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
-- [x] `src/pages/Stats.tsx` — página con header y `<DensityChart />`
+- [x] `src/components/RadialHistogramChart.tsx` — SVG polar 24h con 72 cuñas de 20 min, guías 25/50/75 %, línea de media dashed por slot y hover con rango horario centrado
+- [x] `src/pages/Stats.tsx` — página con header y `<RadialHistogramChart />`
 - [x] `src/components/BottomNav.tsx` — añadir tercera entrada `{ label: 'Stats', path: '/stats' }` al array `TABS`
 - [x] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
 
 #### Verificar
 1. `docker compose up -d && npm run dev`
 2. Barra inferior muestra 3 tabs: Inicio, Historial, Stats
-3. Tap Stats → spinner breve → aparece gráfico con una curva por slot habilitado
-4. Las curvas están centradas aproximadamente en las horas esperadas (según datos de seed)
-5. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Stats
-6. La segunda visita a Stats no hace nueva query (store cacheado)
-7. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
+3. Tap Stats → spinner breve → aparece el histograma radial con cuñas de 20 min coloreadas por slot
+4. Cada slot activo tiene una línea de media dashed que llega al borde exterior
+5. Hover sobre cualquier franja de 20 min → se resalta grisita y aparece el rango `HH:MM–HH:MM` en el centro
+6. Si se deshabilita un slot en Ajustes → sus cuñas desaparecen al volver a Stats
+7. La segunda visita a Stats no hace nueva query (store cacheado)
+8. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
 
 ### F10 — Detalle y edición de tomas desde Historial · _2-3h_
 
