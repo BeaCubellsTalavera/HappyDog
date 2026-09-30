@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** `F8 — Configuración de horarios de comida` en `phase/f8-schedule`.
-- **Último paso completado:** F7 verificada. F7b (WeekGrid) implementada.
-- **Próximo paso:** F8 — editor `/settings/schedule` para editar nombre y horas de cada slot, con validación de solapamiento y orden cronológico automático.
+- **Fase activa:** F-Cutoff completada en `phase/logical-day-cutoff` — pendiente verificación manual y merge a `develop`.
+- **Último paso completado:** F-Cutoff (corte de día lógico a las 04:00) en `phase/logical-day-cutoff`.
+- **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial.
 - **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -549,7 +549,88 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 10. Historial → Gráficos: cambiar hora de Cena de `20–24` a `21–24` → celdas del pasado con feeding a las 20:00 dejan de contar como Cena.
 11. Borrar el campo `meals` de `config/schedule` desde Emulator UI (:4000) → la app arranca con los defaults hardcoded, sin errores.
 
-### F9 — Detalle y edición de tomas desde Historial · _2-3h_
+### F9 — Histograma radial 24h en tab Stats · _2-3h_
+
+> Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un histograma radial 24h en SVG puro con cuñas de 20 min: la longitud radial de cada cuña indica el número de tomas en esa franja y el color la asigna al slot correspondiente. Incluye guías concéntricas al 25/50/75 %, línea de media por slot y hover con rango horario en el centro. El número de slots activos es dinámico según `useMealConfig`.
+
+#### Checkboxes
+
+- [x] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
+- [x] `src/lib/statsUtils.ts` — nuevo archivo: `SLOT_COLORS`, `feedingHour`, `computeSlotMeans`, `formatHourRange`
+- [x] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
+- [x] `src/components/RadialHistogramChart.tsx` — SVG polar 24h con 72 cuñas de 20 min, guías 25/50/75 %, línea de media dashed por slot y hover con rango horario centrado
+- [x] `src/pages/Stats.tsx` — página con header y `<RadialHistogramChart />`
+- [x] `src/components/BottomNav.tsx` — añadir tercera entrada `{ label: 'Stats', path: '/stats' }` al array `TABS`
+- [x] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
+
+#### Verificar
+1. `docker compose up -d && npm run dev`
+2. Barra inferior muestra 3 tabs: Inicio, Historial, Stats
+3. Tap Stats → spinner breve → aparece el histograma radial con cuñas de 20 min coloreadas por slot
+4. Cada slot activo tiene una línea de media dashed que llega al borde exterior
+5. Hover sobre cualquier franja de 20 min → se resalta grisita y aparece el rango `HH:MM–HH:MM` en el centro
+6. Si se deshabilita un slot en Ajustes → sus cuñas desaparecen al volver a Stats
+7. La segunda visita a Stats no hace nueva query (store cacheado)
+8. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
+
+### F-Cutoff — Corte del día lógico a las 04:00 · _4-6h_
+
+> Cambio transversal: el "día operativo" pasa de `[00:00, 24:00)` a `[04:00, 04:00 del día siguiente)`. Un feeding a las 02:00 pertenece al día lógico anterior — aparece como Cena del día anterior en Home, WeekGrid y Stats. Historial→Lista sigue mostrando `dateLocal` calendar. Schema de `feedings` NO cambia (todo se re-deriva desde `timestamp` en render). Los defaults de `DEFAULT_MEALS` NO cambian; los docs `config/schedule` legacy con `endHour: 24` se normalizan a `0` al leer.
+>
+> Detalles: `C:\Users\Beatriz.Cubells\.claude\plans\splendid-floating-lemon.md`.
+
+#### Modelo
+
+- `DAY_CUTOFF_HOUR = 4` (hardcoded).
+- `logicalHour(h) = (h - 4 + 24) % 24` (mapea 0..23 → 0..23 rotado alrededor del corte).
+- `logicalDate(ts) = format(subHours(ts, 4), 'yyyy-MM-dd')`.
+- `slotLogicalBounds(slot)` normaliza `endHour === 24 → 0` y devuelve `{ logStart, logEnd }`; `endHour === 4` implica `logEnd = 24` (fin del día lógico).
+- Picker de horarios rotado: `Start ∈ [4..23, 0..3]`, `End ∈ [5..23, 0..4]` (24 desaparece; equivalente `0`).
+
+#### Checkboxes
+
+**Ola A — Núcleo lógico (sin cambio semántico aún)**
+
+- [x] Crear `src/lib/logicalDay.ts` con `DAY_CUTOFF_HOUR`, `logicalHour`, `logicalDate`, `logicalToday`, `calendarToday`, `slotLogicalBounds`, `feedingInSlot`, `slotToAbsoluteTimestamp`
+- [x] Crear `src/lib/timeFormat.ts` con `windowLabel(startHour, endHour)` centralizado; actualizar `MealCard.tsx` y `Settings.tsx` para importarlo
+
+**Ola B — Utilidades (build verde tras cada archivo)**
+
+- [x] `src/lib/mealSlots.ts`: `deriveSlotStatus` y `getActiveSlotIndex` en logical time; `todayString` delega en `logicalToday`; `buildSlots` sort por `logStart`
+- [x] `src/lib/weekGrid.ts`: `deriveDaySlotStatus` con `feedingInSlot` + `logicalDate`
+- [x] `src/lib/statsUtils.ts`: `feedingHour` devuelve logical; `computeSlotMeans` con `feedingInSlot`; `formatHourRange` soporta wrap
+- [x] `src/lib/scheduleValidation.ts`: rangos 0..23; regla `logEnd > logStart`; overlap con `slotLogicalBounds`
+- [x] `src/lib/skips.ts`: timestamp construido con `slotToAbsoluteTimestamp`
+- [x] `src/lib/feedings.ts` `getTodayFeedings`: query `where('dateLocal','in', [logicalToday, logicalToday+1])` + filtro cliente por `logicalDate`
+
+**Ola C — Hooks y páginas**
+
+- [x] `src/hooks/useMealConfig.ts`: `parseMeals` normaliza `endHour === 24 → 0` (incluye el fallback del default)
+- [x] `src/hooks/useFeedings.ts`: `logicalToday()`; filtrar `f.dateLocal === calendarToday()` antes de `syncTodayInHistory`
+- [x] `src/hooks/useWeekFeedings.ts`: `since = subDays(parseISO(logicalToday()), 6)`
+- [x] `src/hooks/useMealStatus.ts`: `today = logicalToday(now)`; el tick de 60s dispara `useTodayFeedings.reload()` cuando cambia `logicalToday`
+- [x] `src/pages/History.tsx`: `todayStr = logicalToday(now)` para vista Gráficos (Lista sin cambios)
+- [x] `src/pages/ScheduleSettings.tsx`: `START_OPTIONS`/`END_OPTIONS` rotados alrededor de 04:00; `formatHour` sin caso 24; sort por `logStart`
+- [x] `src/components/MealCarousel.tsx`: filtros con `feedingInSlot` + `logicalDate`; borrar `const today` local
+- [x] `src/components/ManualFeedDialog.tsx` (modo slot): `defaultValue` fijo a `startHour:00`; `toDate` con `slotToAbsoluteTimestamp`; schema en logical; omitir HTML `min`/`max`
+- [x] `src/components/RadialHistogramChart.tsx`: `orderedSlots` sort por `logStart`; wedges con `slotLogicalBounds`; tick labels calendar (`04h, 10h, 16h, 22h`); hover tooltip con wrap
+
+#### Verificar
+
+1. `docker compose up -d && npm run dev`
+2. `/settings/schedule` con doc legacy (`night.endHour=24`) → picker muestra "00:00" en Cena, no vacío
+3. Cambiar Cena `20/4` y Desayuno `4/13` → Guardar sin errores; carrusel Home ordenado correctamente
+4. Intento inválido (Cena `20/13`) → error inline "hora de fin debe ser posterior a la de inicio en el día lógico"; Guardar deshabilitado
+5. Feeding a las 14:00 → Comida `given` en Home, columna hoy en WeekGrid, sección "Hoy" en Lista
+6. Feeding a las 02:00 (seed con `timestamp = 2026-09-30T02:00`) → Cena `given` para logical day `2026-09-29`; WeekGrid columna 29-sep; Lista bajo "martes, 30 de septiembre"
+7. Skip de Cena a las 02:00 → doc Firestore con `dateLocal=2026-09-29`, `hourLocal=20`, `method=skipped`, `timestamp=2026-09-29T20:00`
+8. `ManualFeedDialog` desde Cena a las 02:00: default `20:00` → cambiar a `22:30` → guarda `2026-09-29T22:30`; cambiar a `01:30` → guarda `2026-09-30T01:30`
+9. Cruce automático 03:58 → 04:01 (o simular): Home refresca al nuevo día lógico sin recarga manual
+10. `/stats`: tick labels `04h, 10h, 16h, 22h`; feeding a las 02:00 aparece junto a `04h`; línea media Cena en la mitad superior del círculo
+11. Overlap: Desayuno `4/13` + Comida `12/18` → mensaje de solape con `windowLabel` correcto
+12. Segundo dispositivo: `onSnapshot` propaga cambios de horario sin recargar
+
+### F10 — Detalle y edición de tomas desde Historial · _2-3h_
 
 > Al tocar una celda del WeekGrid con feeding (given/skipped) o una fila de la Lista, se abre un bottom sheet con los detalles de esa toma y opción de editar o eliminar. UX: bottom sheet en la misma página (no navegación) — el usuario mantiene el contexto visual del historial y el back-button en iOS PWA no interfiere.
 
@@ -581,43 +662,19 @@ Las tomas nunca se borran — son el registro histórico de la familia. Solo se 
 
 ---
 
-### F10 — Recordatorios de comida no dada · _3-4h_
+### F11 — Recordatorios de comida no dada · _3-4h_
 - [ ] `functions/src/reminders-cron.ts` — `onSchedule('every 15 minutes', ...)` (Cloud Scheduler, 3 jobs gratis)
 - [ ] Lógica: para cada `meal` en `config/schedule`, si hora actual > `meal.endHour` → intentar `create` de `mealReminders/{dateLocal}_{mealId}` en transacción (falla si existe → at-most-once); si create OK, comprobar si hay `feedings` en rango → si no, enviar push a familia
 - [ ] Push específico por meal ("⚠️ Aún no les habéis dado la Cena")
 - [ ] TTL policy en Firestore para purgar `mealReminders` >30 días automáticamente
 
-### F11 — Rankings semanal/mensual/all-time (async, Cloud Function aparte) · _4-5h_
+### F12 — Rankings semanal/mensual/all-time (async, Cloud Function aparte) · _4-5h_
 - [ ] `functions/src/update-leaderboards.ts` — `export const updateLeaderboards = onDocumentCreated('feedings/{id}', ...)` — **independiente** de `sendPushOnFeeding`, mismo trigger, ejecución paralela
 - [ ] Increment atómico sobre `leaderboards/all-time/entries/{uid}`, `leaderboards/weekly-{YYYY-Www}/entries/{uid}`, `leaderboards/monthly-{YYYY-MM}/entries/{uid}` (con `feederName` y `photoURL` denormalizados)
 - [ ] Página `/rankings` con tabs (semana / mes / total), cada tab con `onSnapshot(orderBy('count','desc').limit(10))`
 - [ ] Script admin one-off `scripts/recompute-leaderboards.ts` para recomputar desde `feedings/` (idempotente, corre local contra prod o contra emulador con datos importados)
 
-### F12 — Gráfico de densidad en tab Stats · _2-3h_
 
-> Nueva pestaña "Stats" en la barra de navegación inferior (junto a Inicio e Historial), ruta `/stats`. Muestra un gráfico de densidad KDE con una curva por slot habilitado, eje X = horas, eje Y = densidad normalizada. El número de series es dinámico según `useMealConfig`.
->
-> **Imagen de referencia:** `docs/design/f12-ref-1.png` (KDE con áreas solapadas, una por grupo/slot, eje X continuo).
-
-#### Checkboxes
-
-- [ ] Instalar `recharts` (`npm i recharts`)
-- [ ] `src/lib/feedings.ts` — añadir `getStatsFeedings(limit = 300)`: query simple `orderBy('timestamp','desc') + limit(300)`, sin paginación, una sola llamada `getDocs`
-- [ ] `src/lib/kdeUtils.ts` — nuevo archivo: `SLOT_COLORS`, `computeKDE` (Gaussian kernel normalizado), `buildDensityData` (48 puntos x = 0..23.5, paso 0.5)
-- [ ] `src/hooks/useStatsFeedings.ts` — Zustand store, lazy + cached, excluye `method === 'skipped'`
-- [ ] `src/components/DensityChart.tsx` — Recharts `AreaChart` + `ResponsiveContainer`, una `<Area>` por slot activo, eje X horas, eje Y oculto, leyenda
-- [ ] `src/pages/Stats.tsx` — página con header y `<DensityChart />`
-- [ ] `src/components/BottomNav.tsx` — añadir tercera entrada `{ label: 'Stats', path: '/stats' }` al array `TABS`
-- [ ] `src/App.tsx` — añadir ruta `<Route path="/stats" element={<Stats />} />`
-
-#### Verificar
-1. `docker compose up -d && npm run dev`
-2. Barra inferior muestra 3 tabs: Inicio, Historial, Stats
-3. Tap Stats → spinner breve → aparece gráfico con una curva por slot habilitado
-4. Las curvas están centradas aproximadamente en las horas esperadas (según datos de seed)
-5. Si se deshabilita un slot en Ajustes → esa curva desaparece al volver a Stats
-6. La segunda visita a Stats no hace nueva query (store cacheado)
-7. ≤300 lecturas de Firestore verificado en Emulator UI (:4000)
 
 ---
 

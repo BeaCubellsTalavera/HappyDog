@@ -3,18 +3,27 @@ import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useMealConfig } from '../hooks/useMealConfig';
 import { BG_BY_ID, MEAL_IDS } from '../lib/mealSlots';
+import { DAY_CUTOFF_HOUR, slotLogicalBounds } from '../lib/logicalDay';
 import { validateSchedule } from '../lib/scheduleValidation';
 import type { MealSlotId } from '../types';
 
-const START_OPTIONS = Array.from({ length: 24 }, (_, h) => h); // 0..23
-const END_OPTIONS = Array.from({ length: 24 }, (_, i) => i + 1); // 1..24
+// Picker rotado alrededor del corte de día lógico:
+// Start ofrece [cutoff..23, 0..cutoff-1] (mínimo del día lógico primero).
+// End ofrece   [cutoff+1..23, 0..cutoff]  (máximo del día lógico último).
+const START_OPTIONS = [
+  ...Array.from({ length: 24 - DAY_CUTOFF_HOUR }, (_, i) => i + DAY_CUTOFF_HOUR),
+  ...Array.from({ length: DAY_CUTOFF_HOUR }, (_, i) => i),
+];
+const END_OPTIONS = [
+  ...Array.from({ length: 23 - DAY_CUTOFF_HOUR }, (_, i) => i + DAY_CUTOFF_HOUR + 1),
+  ...Array.from({ length: DAY_CUTOFF_HOUR + 1 }, (_, i) => i),
+];
 
 function pad(n: number) {
   return n.toString().padStart(2, '0');
 }
 
 function formatHour(h: number): string {
-  if (h === 24) return '24:00 (medianoche)';
   return `${pad(h)}:00`;
 }
 
@@ -35,7 +44,9 @@ export default function ScheduleSettings() {
   );
 
   const sortedIds = useMemo(() => {
-    return [...MEAL_IDS].sort((a, b) => draftMeals[a].startHour - draftMeals[b].startHour);
+    return [...MEAL_IDS].sort(
+      (a, b) => slotLogicalBounds(draftMeals[a]).logStart - slotLogicalBounds(draftMeals[b]).logStart,
+    );
   }, [draftMeals]);
 
   return (

@@ -3,6 +3,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import History from './pages/History';
+import Stats from './pages/Stats';
 import Feed from './pages/Feed';
 import Settings from './pages/Settings';
 import ScheduleSettings from './pages/ScheduleSettings';
@@ -26,6 +27,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <History />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stats"
+          element={
+            <ProtectedRoute>
+              <Stats />
             </ProtectedRoute>
           }
         />

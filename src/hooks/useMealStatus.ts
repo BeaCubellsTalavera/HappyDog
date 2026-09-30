@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { format } from 'date-fns';
 import { buildSlots, deriveSlotStatus } from '../lib/mealSlots';
+import { logicalToday } from '../lib/logicalDay';
 import { useTodayFeedings } from './useFeedings';
 import { useMealConfig } from './useMealConfig';
 import type { MealSlot, SlotStatus } from '../types';
@@ -12,7 +12,19 @@ export function useMealStatus(): { slots: MealSlot[]; statuses: SlotStatus[] } {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60_000);
+    let prevLogicalToday = logicalToday(new Date());
+    const interval = setInterval(() => {
+      const nextNow = new Date();
+      const nextLogicalToday = logicalToday(nextNow);
+      // Si al cruzar la medianoche del día lógico cambió el día operativo,
+      // recargamos el store de "hoy" para reflejar el nuevo slot activo sin
+      // exigir refresh manual.
+      if (nextLogicalToday !== prevLogicalToday) {
+        prevLogicalToday = nextLogicalToday;
+        useTodayFeedings.getState().reload();
+      }
+      setNow(nextNow);
+    }, 60_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -20,7 +32,7 @@ export function useMealStatus(): { slots: MealSlot[]; statuses: SlotStatus[] } {
     () => buildSlots(meals).filter((s) => enabled[s.id]),
     [meals, enabled],
   );
-  const today = format(now, 'yyyy-MM-dd');
+  const today = logicalToday(now);
   const statuses = slots.map((slot) => deriveSlotStatus(slot, feedings, today, now));
   return { slots, statuses };
 }

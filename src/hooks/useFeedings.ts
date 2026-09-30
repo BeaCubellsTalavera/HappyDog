@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { format } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
 import type { Feeding } from '../types';
 import { getTodayFeedings } from '../lib/feedings';
+import { calendarToday, logicalToday } from '../lib/logicalDay';
 import { useHistory, syncTodayInHistory } from './useHistory';
 import { auth } from '../lib/firebase';
 
@@ -12,18 +12,19 @@ interface TodayFeedingsState {
   reload: () => Promise<void>;
 }
 
-const today = () => format(new Date(), 'yyyy-MM-dd');
-
 export const useTodayFeedings = create<TodayFeedingsState>((set, get) => ({
   feedings: [],
   loading: true,
   reload: async () => {
     const isFirstLoad = get().loading;
-    const todayStr = today();
+    const lToday = logicalToday();
+    const cToday = calendarToday();
 
-    const fetched = await getTodayFeedings(todayStr);
+    const fetched = await getTodayFeedings(lToday);
     set({ feedings: fetched, loading: false });
-    syncTodayInHistory(todayStr, fetched);
+    // History→Lista agrupa por dateLocal calendar: sólo se le pasan los del calendar-today.
+    // Los de madrugada calendar-tomorrow entran a History por su propio onSnapshot vivo.
+    syncTodayInHistory(cToday, fetched.filter((f) => f.dateLocal === cToday));
     if (isFirstLoad) {
       useHistory.getState().load();
     }
@@ -36,4 +37,3 @@ if (auth.currentUser) useTodayFeedings.getState().reload();
 onAuthStateChanged(auth, (user) => {
   if (user) useTodayFeedings.getState().reload();
 });
-

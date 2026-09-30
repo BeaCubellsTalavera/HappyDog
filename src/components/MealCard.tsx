@@ -5,6 +5,7 @@ import type { Feeding, MealSlot, SlotStatus } from '../types';
 import { ManualFeedDialog, type ManualFeedDialogHandle } from './ManualFeedDialog';
 import { BowlIcon } from './icons/BowlIcon';
 import { SkipIcon } from './icons/SkipIcon';
+import { windowLabel } from '../lib/timeFormat';
 
 interface Props {
   slot: MealSlot;
@@ -23,15 +24,6 @@ const GRADIENTS: Record<string, string> = {
   afternoon: 'from-orange-400 via-rose-300 to-purple-400',
   night:     'from-indigo-900 via-blue-900 to-slate-900',
 };
-
-function pad(n: number) {
-  return n.toString().padStart(2, '0');
-}
-
-function windowLabel(slot: MealSlot) {
-  const end = slot.endHour === 24 ? '00:00' : `${pad(slot.endHour)}:00`;
-  return `${pad(slot.startHour)}:00 – ${end}`;
-}
 
 export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoading }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -111,7 +103,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
       {/* Header */}
       <div className="absolute top-4 left-4 z-10">
         <p className="text-white text-2xl font-bold leading-tight">{slot.name.toUpperCase()}</p>
-        <p className="text-white/70 text-sm">{windowLabel(slot)}</p>
+        <p className="text-white/70 text-sm">{windowLabel(slot.startHour, slot.endHour)}</p>
       </div>
 
       {/* Action area — todos los bloques usan h-14 para ocupar el mismo espacio */}

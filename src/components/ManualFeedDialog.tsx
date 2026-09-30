@@ -5,12 +5,22 @@ import {
   useState,
 } from 'react';
 import { z } from 'zod';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay, setMinutes } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { createFeeding } from '../lib/feedings';
 import { useTodayFeedings } from '../hooks/useFeedings';
 import { injectHistoryFeeding } from '../hooks/useHistory';
+import {
+  logicalHour,
+  logicalToday,
+  slotLogicalBounds,
+  slotToAbsoluteTimestamp,
+} from '../lib/logicalDay';
 import type { MealSlot } from '../types';
+
+function pad(n: number): string {
+  return n.toString().padStart(2, '0');
+}
 
 export interface ManualFeedDialogHandle {
   open: () => void;
@@ -26,11 +36,10 @@ interface Props {
 function defaultValue(slot: MealSlot | undefined, pastMode: boolean): string {
   if (pastMode) return format(subDays(new Date(), 1), "yyyy-MM-dd'T'12:00");
   if (slot) {
-    // Solo hora — type="time"
-    const d = new Date();
-    d.setHours(slot.startHour, 0, 0, 0);
-    if (d > new Date()) return format(new Date(), 'HH:mm');
-    return format(d, 'HH:mm');
+    // Con el corte de día lógico, la mañana lógica puede empezar en la
+    // madrugada calendar del día siguiente: fijar el default al startHour
+    // del slot y dejar que toDate() lo mapee al día calendar correcto.
+    return `${pad(slot.startHour)}:00`;
   }
   return format(new Date(), "yyyy-MM-dd'T'HH:mm");
 }
@@ -38,8 +47,11 @@ function defaultValue(slot: MealSlot | undefined, pastMode: boolean): string {
 /** Construye la Date final a partir del valor del input. */
 function toDate(value: string, slot: MealSlot | undefined, pastMode: boolean): Date {
   if (!pastMode && slot) {
-    // value es "HH:mm" — combinar con la fecha de hoy
-    return new Date(`${format(new Date(), 'yyyy-MM-dd')}T${value}`);
+    // value es "HH:mm" — el HH define en qué calendar day cae (si HH < 4,
+    // se construye en la madrugada del día siguiente al logical today).
+    const [hhStr, mmStr] = value.split(':');
+    const base = slotToAbsoluteTimestamp(logicalToday(), Number(hhStr));
+    return setMinutes(base, Number(mmStr));
   }
   return new Date(value);
 }
@@ -57,13 +69,14 @@ function buildSchema(slot: MealSlot | undefined, pastMode: boolean) {
   }
 
   if (slot) {
-    // value es "HH:mm"
+    const { logStart, logEnd } = slotLogicalBounds(slot);
+    const endLabel = slot.endHour === 24 ? 0 : slot.endHour;
     return z.object({
       value: z.string().refine((v) => {
         const hour = parseInt(v.split(':')[0], 10);
-        const end = slot.endHour === 24 ? 24 : slot.endHour;
-        return hour >= slot.startHour && hour < end;
-      }, { message: `Debe estar entre las ${slot.startHour}:00 y las ${slot.endHour === 24 ? '24:00' : slot.endHour + ':00'}` }),
+        const logH = logicalHour(hour);
+        return logH >= logStart && logH < logEnd;
+      }, { message: `Debe estar entre las ${pad(slot.startHour)}:00 y las ${pad(endLabel)}:00` }),
     });
   }
 
@@ -85,16 +98,15 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
 
     const inputType = pastMode ? 'datetime-local' : slot ? 'time' : 'datetime-local';
 
+    // En modo slot NO se ponen min/max: <input type="time"> no soporta rangos
+    // que crucen medianoche calendar (p. ej. Cena 20-04). La validación se hace
+    // en zod (buildSchema) al submit.
     const minAttr = pastMode
       ? format(startOfDay(subDays(new Date(), 7)), "yyyy-MM-dd'T'HH:mm")
-      : slot
-      ? `${String(slot.startHour).padStart(2, '0')}:00`
       : undefined;
 
     const maxAttr = pastMode
       ? format(endOfDay(subDays(new Date(), 1)), "yyyy-MM-dd'T'HH:mm")
-      : slot
-      ? `${slot.endHour === 24 ? '23' : String(slot.endHour - 1).padStart(2, '0')}:59`
       : undefined;
 
     useImperativeHandle(ref, () => ({

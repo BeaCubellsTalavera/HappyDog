@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import { format, subDays } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { db, auth } from '../lib/firebase';
+import { logicalToday } from '../lib/logicalDay';
 import type { Feeding } from '../types';
 
 interface WeekFeedingsState {
@@ -20,7 +21,10 @@ export const useWeekFeedings = create<WeekFeedingsState>(() => {
       useWeekFeedings.setState({ feedings: [], loading: false });
       return;
     }
-    const since = format(subDays(new Date(), 6), 'yyyy-MM-dd');
+    // 6 días LÓGICOS atrás desde el día lógico actual; el rango cubre
+    // hasta 8 calendar days por los feedings de madrugada, que weekGrid
+    // reagrupará por logicalDate(f.timestamp).
+    const since = format(subDays(parseISO(logicalToday()), 6), 'yyyy-MM-dd');
     const q = query(
       collection(db, 'feedings'),
       where('dateLocal', '>=', since),

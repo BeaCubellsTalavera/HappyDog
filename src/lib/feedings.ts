@@ -12,8 +12,9 @@ import {
   type DocumentSnapshot,
   type QueryConstraint,
 } from 'firebase/firestore';
-import { format } from 'date-fns';
+import { addDays, format, parseISO } from 'date-fns';
 import { db } from './firebase';
+import { logicalDate } from './logicalDay';
 import type { Feeding, NewFeeding } from '../types';
 
 type CreateFeedingInput = {
@@ -54,11 +55,33 @@ export async function createFeeding(input: CreateFeedingInput): Promise<Feeding>
   };
 }
 
-export async function getTodayFeedings(today: string): Promise<Feeding[]> {
-  const q = query(collection(db, 'feedings'), where('dateLocal', '==', today));
+/**
+ * Devuelve los feedings del DÍA LÓGICO indicado. Consulta ambos calendar days
+ * que pueden contener feedings de ese logical day (el propio y el siguiente,
+ * este último cubriendo la madrugada 00:00–03:59) y filtra en cliente por
+ * `logicalDate(f.timestamp)` para descartar el resto.
+ */
+export async function getTodayFeedings(logicalToday: string): Promise<Feeding[]> {
+  const nextCalendarDay = format(addDays(parseISO(logicalToday), 1), 'yyyy-MM-dd');
+  const q = query(
+    collection(db, 'feedings'),
+    where('dateLocal', 'in', [logicalToday, nextCalendarDay]),
+  );
   const snap = await getDocs(q);
   const feedings = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Feeding[];
-  return feedings.sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+  return feedings
+    .filter((f) => logicalDate(f.timestamp.toDate()) === logicalToday)
+    .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+}
+
+export async function getStatsFeedings(max = 300): Promise<Feeding[]> {
+  const q = query(
+    collection(db, 'feedings'),
+    orderBy('timestamp', 'desc'),
+    firestoreLimit(max),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Feeding[];
 }
 
 export async function getHistoryPage(

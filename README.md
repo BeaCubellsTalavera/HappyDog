@@ -227,6 +227,11 @@ docker compose up -d
 # Semilla de datos de prueba
 npm run seed
 
+# Semilla específica para Stats: borra los feedings existentes y genera
+# ~340 tomas repartidas en 100 días (supera el tope de 300 de la tab
+# Stats para poder verlo en acción). Ajusta DAYS en scripts/seed-stats.ts.
+npm run seed:stats
+
 # Dev con hot-reload conectado a los emuladores
 npm run dev          # http://localhost:5173
 ```

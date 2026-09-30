@@ -31,3 +31,54 @@
   flex-shrink: 0;
   background-color: #e5e7eb;
 }
+
+.clock-svg {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+}
+
+.clock-label {
+  font-size: 11px;
+  fill: #6b7280;
+  font-family: inherit;
+}
+
+.clock-frame {
+  fill: none;
+  stroke: #d1d5db;
+  stroke-dasharray: 2 4;
+}
+
+.clock-guide {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-dasharray: 1 3;
+}
+
+.clock-hover-bg {
+  fill: rgba(0, 0, 0, 0.06);
+}
+
+.clock-hover-label {
+  font-size: 11px;
+  fill: #6b7280;
+  font-family: inherit;
+}
+
+.clock-tick {
+  stroke: #d1d5db;
+  stroke-width: 1;
+}
+
+.clock-tick-major {
+  stroke: #9ca3af;
+  stroke-width: 1.5;
+}
+
+.clock-tick-aux {
+  stroke: #b0b6bf;
+  stroke-width: 1.25;
+}
