@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStatsFeedings } from '../hooks/useStatsFeedings';
 import { useMealConfig } from '../hooks/useMealConfig';
 import { buildSlots } from '../lib/mealSlots';
@@ -10,6 +10,7 @@ export default function Stats() {
   const meals = useMealConfig((s) => s.meals);
   const enabled = useMealConfig((s) => s.enabled);
   const activeSlots = buildSlots(meals).filter((s) => enabled[s.id]);
+  const [showOrphanBuckets, setShowOrphanBuckets] = useState(false);
 
   useEffect(() => {
     if (!loaded && !loading) reload();
@@ -32,7 +33,31 @@ export default function Stats() {
               Sin datos todavía
             </div>
           ) : (
-            <RadialHistogramChart feedings={feedings} activeSlots={activeSlots} />
+            <>
+              <RadialHistogramChart
+                feedings={feedings}
+                activeSlots={activeSlots}
+                showOrphanBuckets={showOrphanBuckets}
+              />
+              <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-600">
+                <span>Mostrar tomas fuera de horario</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={showOrphanBuckets}
+                  onClick={() => setShowOrphanBuckets((v) => !v)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                    showOrphanBuckets ? 'bg-orange-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                      showOrphanBuckets ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>

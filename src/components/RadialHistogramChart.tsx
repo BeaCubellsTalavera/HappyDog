@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Feeding, MealSlot } from '../types';
 import {
+  ORPHAN_BUCKET_COLOR,
   SLOT_COLORS,
   computeSlotMeans,
   feedingHour,
@@ -12,6 +13,7 @@ import { DAY_CUTOFF_HOUR, slotLogicalBounds } from '../lib/logicalDay';
 interface RadialHistogramChartProps {
   feedings: Feeding[];
   activeSlots: MealSlot[];
+  showOrphanBuckets?: boolean;
 }
 
 const SIZE = 300;
@@ -64,7 +66,11 @@ function annularSectorPath(r0: number, r1: number, a0: number, a1: number): stri
   ].join(' ');
 }
 
-export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramChartProps) {
+export function RadialHistogramChart({
+  feedings,
+  activeSlots,
+  showOrphanBuckets = false,
+}: RadialHistogramChartProps) {
   const [hovered, setHovered] = useState<number | null>(null);
 
   const orderedSlots = useMemo(
@@ -93,18 +99,18 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
         const { logStart, logEnd } = slotLogicalBounds(s);
         return centerHour >= logStart && centerHour < logEnd;
       });
-      if (!slot) continue;
+      if (!slot && !showOrphanBuckets) continue;
       const r1 = INNER_R + (c / max) * (MAX_BAR_R - INNER_R);
       const a0 = logicalHourToAngle(i * BUCKET_HOURS) + WEDGE_GAP_RAD / 2;
       const a1 = logicalHourToAngle((i + 1) * BUCKET_HOURS) - WEDGE_GAP_RAD / 2;
       items.push({
         key: `${i}`,
         d: annularSectorPath(INNER_R, r1, a0, a1),
-        color: SLOT_COLORS[slot.id],
+        color: slot ? SLOT_COLORS[slot.id] : ORPHAN_BUCKET_COLOR,
       });
     }
     return items;
-  }, [feedings, orderedSlots]);
+  }, [feedings, orderedSlots, showOrphanBuckets]);
 
   const meanMarks = useMemo(() => {
     const means = computeSlotMeans(feedings, orderedSlots);
@@ -242,6 +248,15 @@ export function RadialHistogramChart({ feedings, activeSlots }: RadialHistogramC
             {s.name}
           </li>
         ))}
+        {showOrphanBuckets && (
+          <li className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-2 h-2 rounded-full"
+              style={{ backgroundColor: ORPHAN_BUCKET_COLOR }}
+            />
+            Fuera de horario
+          </li>
+        )}
       </ul>
     </div>
   );
