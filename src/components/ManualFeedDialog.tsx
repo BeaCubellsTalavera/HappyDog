@@ -36,9 +36,9 @@ interface Props {
 function defaultValue(slot: MealSlot | undefined, pastMode: boolean): string {
   if (pastMode) return format(subDays(new Date(), 1), "yyyy-MM-dd'T'12:00");
   if (slot) {
-    // Con el corte a las 04:00, el día lógico puede empezar en la madrugada
-    // calendar del día siguiente: fijar el default al startHour del slot y
-    // dejar que toDate() lo mapee al día calendar correcto.
+    // Con el corte de día lógico, la mañana lógica puede empezar en la
+    // madrugada calendar del día siguiente: fijar el default al startHour
+    // del slot y dejar que toDate() lo mapee al día calendar correcto.
     return `${pad(slot.startHour)}:00`;
   }
   return format(new Date(), "yyyy-MM-dd'T'HH:mm");

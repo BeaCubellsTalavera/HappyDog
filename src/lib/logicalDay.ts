@@ -1,7 +1,7 @@
 import { addHours, format, parseISO, subHours } from 'date-fns';
 import type { Feeding, MealSlot } from '../types';
 
-export const DAY_CUTOFF_HOUR = 4;
+export const DAY_CUTOFF_HOUR = 3;
 
 export function logicalHour(calendarHour: number): number {
   return (calendarHour - DAY_CUTOFF_HOUR + 24) % 24;
@@ -29,7 +29,7 @@ export function slotLogicalBounds(slot: Pick<MealSlot, 'startHour' | 'endHour'>)
   const endAdjusted = slot.endHour === 24 ? 0 : slot.endHour;
   const logStart = (startAdjusted - DAY_CUTOFF_HOUR + 24) % 24;
   const raw = (endAdjusted - DAY_CUTOFF_HOUR + 24) % 24;
-  // endHour that maps to logical 0 means "fin del día lógico" (endHour === 4 or === 24).
+  // endHour que mapea a logical 0 significa "fin del día lógico" (endHour === DAY_CUTOFF_HOUR).
   const logEnd = raw === 0 ? 24 : raw;
   return { logStart, logEnd };
 }
@@ -42,7 +42,7 @@ export function feedingInSlot(f: Feeding, slot: Pick<MealSlot, 'startHour' | 'en
 
 /**
  * Construye el timestamp absoluto de una hora dentro de un slot para un día lógico.
- * Horas < 4 pertenecen a la madrugada del día calendar siguiente (mismo día lógico).
+ * Horas < DAY_CUTOFF_HOUR pertenecen a la madrugada del día calendar siguiente (mismo día lógico).
  */
 export function slotToAbsoluteTimestamp(logicalDayStr: string, hourInSlot: number): Date {
   return addHours(parseISO(logicalDayStr), DAY_CUTOFF_HOUR + logicalHour(hourInSlot));

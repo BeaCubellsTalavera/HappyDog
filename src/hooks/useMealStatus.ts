@@ -16,9 +16,9 @@ export function useMealStatus(): { slots: MealSlot[]; statuses: SlotStatus[] } {
     const interval = setInterval(() => {
       const nextNow = new Date();
       const nextLogicalToday = logicalToday(nextNow);
-      // Si al pasar 04:00 (o cualquier medianoche del día lógico) cambió el
-      // día operativo, recargamos el store de "hoy" para reflejar el nuevo
-      // slot activo sin exigir refresh manual.
+      // Si al cruzar la medianoche del día lógico cambió el día operativo,
+      // recargamos el store de "hoy" para reflejar el nuevo slot activo sin
+      // exigir refresh manual.
       if (nextLogicalToday !== prevLogicalToday) {
         prevLogicalToday = nextLogicalToday;
         useTodayFeedings.getState().reload();

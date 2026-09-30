@@ -9,7 +9,7 @@ export const SLOT_COLORS: Record<MealSlotId, string> = {
 };
 
 /**
- * Devuelve la hora del feeding en espacio LÓGICO (0..24), donde 0 = 04:00 calendar.
+ * Devuelve la hora del feeding en espacio LÓGICO (0..24), donde 0 = DAY_CUTOFF_HOUR calendar.
  */
 export function feedingHour(f: Feeding): number {
   const d = f.timestamp.toDate();
@@ -33,7 +33,7 @@ export function formatHourRange(startHour: number, sizeHours: number): string {
 
 /**
  * Convierte una hora en espacio lógico (0..24) a calendar hour (0..24).
- * logical 0 → calendar 04:00.
+ * logical 0 → calendar DAY_CUTOFF_HOUR.
  */
 export function logicalToCalendarHour(logicalH: number): number {
   return (logicalH + DAY_CUTOFF_HOUR) % 24;

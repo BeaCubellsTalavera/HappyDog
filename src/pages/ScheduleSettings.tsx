@@ -3,20 +3,20 @@ import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useMealConfig } from '../hooks/useMealConfig';
 import { BG_BY_ID, MEAL_IDS } from '../lib/mealSlots';
-import { slotLogicalBounds } from '../lib/logicalDay';
+import { DAY_CUTOFF_HOUR, slotLogicalBounds } from '../lib/logicalDay';
 import { validateSchedule } from '../lib/scheduleValidation';
 import type { MealSlotId } from '../types';
 
-// Picker rotado alrededor del corte de día lógico (04:00):
-// Start ofrece 04..23 seguido de 00..03 (mínimo posible del día lógico primero).
-// End ofrece 05..23 seguido de 00..04 (máximo posible del día lógico último).
+// Picker rotado alrededor del corte de día lógico:
+// Start ofrece [cutoff..23, 0..cutoff-1] (mínimo del día lógico primero).
+// End ofrece   [cutoff+1..23, 0..cutoff]  (máximo del día lógico último).
 const START_OPTIONS = [
-  ...Array.from({ length: 20 }, (_, i) => i + 4), // 4..23
-  0, 1, 2, 3,
+  ...Array.from({ length: 24 - DAY_CUTOFF_HOUR }, (_, i) => i + DAY_CUTOFF_HOUR),
+  ...Array.from({ length: DAY_CUTOFF_HOUR }, (_, i) => i),
 ];
 const END_OPTIONS = [
-  ...Array.from({ length: 19 }, (_, i) => i + 5), // 5..23
-  0, 1, 2, 3, 4,
+  ...Array.from({ length: 23 - DAY_CUTOFF_HOUR }, (_, i) => i + DAY_CUTOFF_HOUR + 1),
+  ...Array.from({ length: DAY_CUTOFF_HOUR + 1 }, (_, i) => i),
 ];
 
 function pad(n: number) {
