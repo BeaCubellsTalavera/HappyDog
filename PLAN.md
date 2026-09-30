@@ -601,7 +601,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 - [x] `src/lib/statsUtils.ts`: `feedingHour` devuelve logical; `computeSlotMeans` con `feedingInSlot`; `formatHourRange` soporta wrap
 - [x] `src/lib/scheduleValidation.ts`: rangos 0..23; regla `logEnd > logStart`; overlap con `slotLogicalBounds`
 - [x] `src/lib/skips.ts`: timestamp construido con `slotToAbsoluteTimestamp`
-- [ ] `src/lib/feedings.ts` `getTodayFeedings`: query `where('dateLocal','in', [logicalToday, logicalToday+1])` + filtro cliente por `logicalDate`
+- [x] `src/lib/feedings.ts` `getTodayFeedings`: query `where('dateLocal','in', [logicalToday, logicalToday+1])` + filtro cliente por `logicalDate`
 
 **Ola C — Hooks y páginas**
 
