@@ -22,19 +22,11 @@ export default function Stats() {
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-6">
         <div className="sticky top-0 bg-gray-50 z-20 pt-3 pb-2 px-4">
           <h1 className="text-lg font-semibold text-gray-900">Distribución horaria</h1>
-          <p className="text-sm text-gray-500">
-            {loaded ? `Últimas ${feedings.length} tomas` : 'Cargando…'}
-          </p>
-        </div>
-        <div className="relative px-2 pt-2">
-          {loading && !loaded ? (
-            <div className="h-80 grid place-items-center text-gray-400">Cargando…</div>
-          ) : feedings.length === 0 ? (
-            <div className="h-80 grid place-items-center text-gray-400">
-              Sin datos todavía
-            </div>
-          ) : (
-            <>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-gray-500">
+              {loaded ? `Últimas ${feedings.length} tomas` : 'Cargando…'}
+            </p>
+            {loaded && feedings.length > 0 && (
               <button
                 type="button"
                 role="switch"
@@ -42,18 +34,28 @@ export default function Stats() {
                 aria-label="Mostrar tomas fuera de horario"
                 title="Mostrar tomas fuera de horario"
                 onClick={() => setShowOrphanBuckets((v) => !v)}
-                className={`absolute top-2 left-2 z-10 p-1.5 rounded-md transition-colors hover:bg-gray-100 ${
+                className={`p-1 rounded-md transition-colors hover:bg-gray-100 ${
                   showOrphanBuckets ? 'text-gray-700' : 'text-gray-400'
                 }`}
               >
-                <EyeIcon open={showOrphanBuckets} className="w-5 h-5" />
+                <EyeIcon open={showOrphanBuckets} className="w-4 h-4" />
               </button>
-              <RadialHistogramChart
-                feedings={feedings}
-                activeSlots={activeSlots}
-                showOrphanBuckets={showOrphanBuckets}
-              />
-            </>
+            )}
+          </div>
+        </div>
+        <div className="px-2 pt-2">
+          {loading && !loaded ? (
+            <div className="h-80 grid place-items-center text-gray-400">Cargando…</div>
+          ) : feedings.length === 0 ? (
+            <div className="h-80 grid place-items-center text-gray-400">
+              Sin datos todavía
+            </div>
+          ) : (
+            <RadialHistogramChart
+              feedings={feedings}
+              activeSlots={activeSlots}
+              showOrphanBuckets={showOrphanBuckets}
+            />
           )}
         </div>
       </div>
