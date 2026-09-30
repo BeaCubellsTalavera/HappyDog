@@ -19,7 +19,27 @@ interface FeedingSpec {
   minute: number;
 }
 
+async function clearFeedings() {
+  const snap = await db.collection('feedings').get();
+  if (snap.empty) return 0;
+  let batch = db.batch();
+  let batchCount = 0;
+  for (const doc of snap.docs) {
+    batch.delete(doc.ref);
+    batchCount += 1;
+    if (batchCount === 400) {
+      await batch.commit();
+      batch = db.batch();
+      batchCount = 0;
+    }
+  }
+  if (batchCount > 0) await batch.commit();
+  return snap.size;
+}
+
 async function seed() {
+  const cleared = await clearFeedings();
+
   const users = [
     { uid: 'user-ana', email: 'ana@example.com', displayName: 'Ana' },
     { uid: 'user-luis', email: 'luis@example.com', displayName: 'Luis' },
@@ -87,7 +107,9 @@ async function seed() {
     token: 'dev-nfc-token-happydog',
   });
 
-  console.log(`Seed completado: ${users.length} usuarios, ${seeded} feedings, config/nfc`);
+  console.log(
+    `Seed completado: borrados ${cleared} feedings previos, ${users.length} usuarios, ${seeded} feedings nuevos, config/nfc`,
+  );
 }
 
 seed().catch(console.error);
