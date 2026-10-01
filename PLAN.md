@@ -646,7 +646,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 #### Checkboxes
 
-- [ ] `src/types/index.ts` — añadir `outOfSlot?: boolean` a `Feeding` y a `NewFeeding`
+- [x] `src/types/index.ts` — añadir `outOfSlot?: boolean` a `Feeding` y a `NewFeeding`
 - [ ] `src/lib/feedings.ts` — `createFeeding` acepta `outOfSlot` en el input y lo persiste solo cuando `true`
 - [ ] `src/lib/logicalDay.ts` — `feedingInSlot` devuelve `false` si `f.outOfSlot === true` (bloquea toda derivación cascada)
 - [ ] `src/lib/statsUtils.ts` — añadir constante `OUT_OF_SLOT_COLOR = '#9CA3AF'`
