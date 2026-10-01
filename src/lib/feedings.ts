@@ -22,6 +22,7 @@ type CreateFeedingInput = {
   feederUid: string;
   feederName: string;
   method: 'nfc' | 'manual' | 'skipped';
+  outOfSlot?: boolean;
 };
 
 const WRITE_TIMEOUT_MS = 4000;
@@ -36,6 +37,7 @@ export async function createFeeding(input: CreateFeedingInput): Promise<Feeding>
     feederName: input.feederName,
     method: input.method,
     createdAt: serverTimestamp(),
+    ...(input.outOfSlot ? { outOfSlot: true } : {}),
   };
   const docRef = await Promise.race([
     addDoc(collection(db, 'feedings'), newDoc),
@@ -52,6 +54,7 @@ export async function createFeeding(input: CreateFeedingInput): Promise<Feeding>
     feederName: input.feederName,
     method: input.method,
     createdAt: Timestamp.now(),
+    ...(input.outOfSlot ? { outOfSlot: true } : {}),
   };
 }
 
