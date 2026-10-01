@@ -17,6 +17,8 @@ import {
   slotLogicalBounds,
   slotToAbsoluteTimestamp,
 } from '../lib/logicalDay';
+import { buildSlots } from '../lib/mealSlots';
+import { useMealConfig } from '../hooks/useMealConfig';
 import type { MealSlot } from '../types';
 
 function pad(n: number): string {
@@ -156,12 +158,28 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
       if (!user) return;
       setSaving(true);
       try {
+        const chosenDate = toDate(value, slot, pastMode);
+        // En pastMode, si la hora elegida no cae en ningún slot activo, se
+        // marca como outOfSlot automáticamente — así una toma registrada
+        // retroactivamente a una hora "huérfana" preserva su intención
+        // aunque el usuario cambie los horarios después.
+        let effectiveOutOfSlot = outOfSlot;
+        if (pastMode && !outOfSlot) {
+          const { enabled, meals } = useMealConfig.getState();
+          const activeSlots = buildSlots(meals).filter((s) => enabled[s.id]);
+          const logH = logicalHour(chosenDate.getHours());
+          const insideAny = activeSlots.some((s) => {
+            const { logStart, logEnd } = slotLogicalBounds(s);
+            return logH >= logStart && logH < logEnd;
+          });
+          effectiveOutOfSlot = !insideAny;
+        }
         const feeding = await createFeeding({
-          timestamp: toDate(value, slot, pastMode),
+          timestamp: chosenDate,
           feederUid: user.uid,
           feederName: user.displayName ?? user.email ?? 'Desconocido',
           method: 'manual',
-          ...(outOfSlot ? { outOfSlot: true } : {}),
+          ...(effectiveOutOfSlot ? { outOfSlot: true } : {}),
         });
         if (pastMode) {
           injectHistoryFeeding(feeding);
