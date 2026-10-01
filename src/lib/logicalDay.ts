@@ -35,6 +35,7 @@ export function slotLogicalBounds(slot: Pick<MealSlot, 'startHour' | 'endHour'>)
 }
 
 export function feedingInSlot(f: Feeding, slot: Pick<MealSlot, 'startHour' | 'endHour'>): boolean {
+  if (f.outOfSlot) return false;
   const { logStart, logEnd } = slotLogicalBounds(slot);
   const logH = logicalHour(f.hourLocal);
   return logH >= logStart && logH < logEnd;

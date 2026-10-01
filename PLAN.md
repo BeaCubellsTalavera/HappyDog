@@ -648,7 +648,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 
 - [x] `src/types/index.ts` — añadir `outOfSlot?: boolean` a `Feeding` y a `NewFeeding`
 - [x] `src/lib/feedings.ts` — `createFeeding` acepta `outOfSlot` en el input y lo persiste solo cuando `true`
-- [ ] `src/lib/logicalDay.ts` — `feedingInSlot` devuelve `false` si `f.outOfSlot === true` (bloquea toda derivación cascada)
+- [x] `src/lib/logicalDay.ts` — `feedingInSlot` devuelve `false` si `f.outOfSlot === true` (bloquea toda derivación cascada)
 - [ ] `src/lib/statsUtils.ts` — añadir constante `OUT_OF_SLOT_COLOR = '#9CA3AF'`
 - [ ] `src/components/ManualFeedDialog.tsx` — nueva prop `outOfSlot?: boolean`: input `datetime-local` libre del día lógico de hoy, sin validación de bounds de slot, pasa `outOfSlot: true` a `createFeeding`
 - [ ] `src/components/ManualFeedDialog.tsx` — en `pastMode`, calcular contra slots activos al enviar y auto-marcar `outOfSlot: true` si la hora no cae en ninguno
