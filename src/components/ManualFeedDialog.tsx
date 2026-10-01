@@ -5,12 +5,13 @@ import {
   useState,
 } from 'react';
 import { z } from 'zod';
-import { format, subDays, startOfDay, endOfDay, setMinutes } from 'date-fns';
+import { addHours, format, subDays, startOfDay, endOfDay, setMinutes } from 'date-fns';
 import { useAuth } from '../hooks/useAuth';
 import { createFeeding } from '../lib/feedings';
 import { useTodayFeedings } from '../hooks/useFeedings';
 import { injectHistoryFeeding } from '../hooks/useHistory';
 import {
+  DAY_CUTOFF_HOUR,
   logicalHour,
   logicalToday,
   slotLogicalBounds,
@@ -30,10 +31,17 @@ interface Props {
   slot?: MealSlot;
   /** Modo historial: permite registrar entradas de ayer hasta 7 días atrás. */
   pastMode?: boolean;
+  /** Modo "fuera de slot": permite registrar a cualquier hora del día lógico actual sin asociar a ningún slot. */
+  outOfSlot?: boolean;
+}
+
+/** Inicio del día lógico actual (DAY_CUTOFF_HOUR del día calendar correspondiente). */
+function logicalDayStart(): Date {
+  return slotToAbsoluteTimestamp(logicalToday(), DAY_CUTOFF_HOUR);
 }
 
 /** Devuelve el valor inicial del input según el modo. */
-function defaultValue(slot: MealSlot | undefined, pastMode: boolean): string {
+function defaultValue(slot: MealSlot | undefined, pastMode: boolean, outOfSlot: boolean): string {
   if (pastMode) return format(subDays(new Date(), 1), "yyyy-MM-dd'T'12:00");
   if (slot) {
     // Con el corte de día lógico, la mañana lógica puede empezar en la
@@ -41,6 +49,7 @@ function defaultValue(slot: MealSlot | undefined, pastMode: boolean): string {
     // del slot y dejar que toDate() lo mapee al día calendar correcto.
     return `${pad(slot.startHour)}:00`;
   }
+  if (outOfSlot) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
   return format(new Date(), "yyyy-MM-dd'T'HH:mm");
 }
 
@@ -56,7 +65,7 @@ function toDate(value: string, slot: MealSlot | undefined, pastMode: boolean): D
   return new Date(value);
 }
 
-function buildSchema(slot: MealSlot | undefined, pastMode: boolean) {
+function buildSchema(slot: MealSlot | undefined, pastMode: boolean, outOfSlot: boolean) {
   if (pastMode) {
     const minDate = startOfDay(subDays(new Date(), 7));
     const maxDate = endOfDay(subDays(new Date(), 1));
@@ -65,6 +74,18 @@ function buildSchema(slot: MealSlot | undefined, pastMode: boolean) {
         .string()
         .refine((v) => new Date(v) >= minDate, { message: 'No puede ser de hace más de una semana' })
         .refine((v) => new Date(v) <= maxDate, { message: 'Solo se pueden registrar entradas de ayer para atrás' }),
+    });
+  }
+
+  if (outOfSlot) {
+    const minDate = logicalDayStart();
+    const maxDate = addHours(minDate, 24);
+    return z.object({
+      value: z
+        .string()
+        .refine((v) => new Date(v) >= minDate, { message: 'Debe ser del día de hoy' })
+        .refine((v) => new Date(v) < maxDate, { message: 'Debe ser del día de hoy' })
+        .refine((v) => new Date(v) <= new Date(), { message: 'No puede ser una fecha futura' }),
     });
   }
 
@@ -89,29 +110,33 @@ function buildSchema(slot: MealSlot | undefined, pastMode: boolean) {
 }
 
 export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
-  ({ slot, pastMode = false }, ref) => {
+  ({ slot, pastMode = false, outOfSlot = false }, ref) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const { user } = useAuth();
-    const [value, setValue] = useState(() => defaultValue(slot, pastMode));
+    const [value, setValue] = useState(() => defaultValue(slot, pastMode, outOfSlot));
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
-    const inputType = pastMode ? 'datetime-local' : slot ? 'time' : 'datetime-local';
+    const inputType = pastMode || outOfSlot ? 'datetime-local' : slot ? 'time' : 'datetime-local';
 
     // En modo slot NO se ponen min/max: <input type="time"> no soporta rangos
     // que crucen medianoche calendar (p. ej. Cena 20-04). La validación se hace
     // en zod (buildSchema) al submit.
-    const minAttr = pastMode
-      ? format(startOfDay(subDays(new Date(), 7)), "yyyy-MM-dd'T'HH:mm")
-      : undefined;
+    const minAttr = outOfSlot
+      ? format(logicalDayStart(), "yyyy-MM-dd'T'HH:mm")
+      : pastMode
+        ? format(startOfDay(subDays(new Date(), 7)), "yyyy-MM-dd'T'HH:mm")
+        : undefined;
 
-    const maxAttr = pastMode
-      ? format(endOfDay(subDays(new Date(), 1)), "yyyy-MM-dd'T'HH:mm")
-      : undefined;
+    const maxAttr = outOfSlot
+      ? format(new Date(), "yyyy-MM-dd'T'HH:mm")
+      : pastMode
+        ? format(endOfDay(subDays(new Date(), 1)), "yyyy-MM-dd'T'HH:mm")
+        : undefined;
 
     useImperativeHandle(ref, () => ({
       open() {
-        setValue(defaultValue(slot, pastMode));
+        setValue(defaultValue(slot, pastMode, outOfSlot));
         setError(null);
         dialogRef.current?.showModal();
       },
@@ -123,7 +148,7 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
 
     async function handleSubmit(e: React.FormEvent) {
       e.preventDefault();
-      const result = buildSchema(slot, pastMode).safeParse({ value });
+      const result = buildSchema(slot, pastMode, outOfSlot).safeParse({ value });
       if (!result.success) {
         setError(result.error.issues[0].message);
         return;
@@ -136,6 +161,7 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
           feederUid: user.uid,
           feederName: user.displayName ?? user.email ?? 'Desconocido',
           method: 'manual',
+          ...(outOfSlot ? { outOfSlot: true } : {}),
         });
         if (pastMode) {
           injectHistoryFeeding(feeding);
@@ -151,6 +177,12 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
       }
     }
 
+    const title = pastMode
+      ? 'Registrar toma pasada'
+      : outOfSlot
+        ? 'Registrar fuera de slot'
+        : 'Registrar';
+
     return (
       <dialog
         ref={dialogRef}
@@ -160,9 +192,7 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
         }}
       >
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {pastMode ? 'Registrar toma pasada' : 'Registrar'}
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-gray-700" htmlFor="feeding-input">
               {slot ? '¿A qué hora?' : '¿Cuándo?'}
@@ -182,6 +212,11 @@ export const ManualFeedDialog = forwardRef<ManualFeedDialogHandle, Props>(
             {pastMode && (
               <p className="text-xs text-gray-400">
                 De ayer hasta hace 7 días. Las de hoy se registran desde Inicio.
+              </p>
+            )}
+            {outOfSlot && (
+              <p className="text-xs text-gray-400">
+                Esta toma no cuenta como ningún slot y no desbloquea los pendientes.
               </p>
             )}
             {error && <p className="text-sm text-red-500">{error}</p>}
