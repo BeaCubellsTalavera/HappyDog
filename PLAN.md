@@ -33,8 +33,8 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** F-Cutoff completada en `phase/logical-day-cutoff` — pendiente verificación manual y merge a `develop`.
-- **Último paso completado:** F-Cutoff (corte de día lógico a las 04:00) en `phase/logical-day-cutoff`.
+- **Fase activa:** F-OutOfSlot en `phase/out-of-slot` (tomas fuera de slot con campo explícito `outOfSlot`).
+- **Último paso completado:** F-Cutoff (corte de día lógico a las 04:00).
 - **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial.
 - **Bloqueos:** ninguno.
 
@@ -629,6 +629,40 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 10. `/stats`: tick labels `04h, 10h, 16h, 22h`; feeding a las 02:00 aparece junto a `04h`; línea media Cena en la mitad superior del círculo
 11. Overlap: Desayuno `4/13` + Comida `12/18` → mensaje de solape con `windowLabel` correcto
 12. Segundo dispositivo: `onSnapshot` propaga cambios de horario sin recargar
+
+### F-OutOfSlot — Tomas fuera de slot con campo explícito · _3-4h_
+
+> Permitir registrar tomas que **no pertenecen a ningún slot**, inmunes a cambios futuros de configuración de slots. Caso motivador: una familia con solo "Desayuno" activo que un día da de comer a las 15:00 — hoy el relojito del slot rechaza esa hora y pulsar DAR deja el slot `missed` + una toma huérfana. Se añade un campo persistente `outOfSlot: boolean` en el feeding que marca la intención del usuario.
+>
+> Detalles: `C:\Users\Beatriz.Cubells\.claude\plans\si-los-slots-activos-swirling-wozniak.md`.
+
+#### Decisiones
+
+- Campo `outOfSlot?: boolean` en `Feeding`. Tomas con `outOfSlot: true` **nunca** se asocian a un slot aunque la hora encaje.
+- Botón global en Hoy, fuera de `MealCard` (no pertenece a ningún slot).
+- `pastMode` auto-detecta: al enviar, si la hora no cae en ningún slot activo, se marca `outOfSlot: true`.
+- Slots pendientes no se tocan: una toma `outOfSlot` no cumple ni skipea ningún slot.
+- En el radial de Stats, dos tonos de gris: `#D1D5DB` para huérfanas por slot inactivo (actual) y `#9CA3AF` para explícitas (nueva).
+
+#### Checkboxes
+
+- [ ] `src/types/index.ts` — añadir `outOfSlot?: boolean` a `Feeding` y a `NewFeeding`
+- [ ] `src/lib/feedings.ts` — `createFeeding` acepta `outOfSlot` en el input y lo persiste solo cuando `true`
+- [ ] `src/lib/logicalDay.ts` — `feedingInSlot` devuelve `false` si `f.outOfSlot === true` (bloquea toda derivación cascada)
+- [ ] `src/lib/statsUtils.ts` — añadir constante `OUT_OF_SLOT_COLOR = '#9CA3AF'`
+- [ ] `src/components/ManualFeedDialog.tsx` — nueva prop `outOfSlot?: boolean`: input `datetime-local` libre del día lógico de hoy, sin validación de bounds de slot, pasa `outOfSlot: true` a `createFeeding`
+- [ ] `src/components/ManualFeedDialog.tsx` — en `pastMode`, calcular contra slots activos al enviar y auto-marcar `outOfSlot: true` si la hora no cae en ninguno
+- [ ] `src/components/MealCarousel.tsx` + `src/index.css` — botón pequeño global "Fuera de slot" debajo del carrusel que abre `ManualFeedDialog` con prop `outOfSlot`
+- [ ] `src/components/RadialHistogramChart.tsx` — contar por bucket `outOfSlotCount` y `orphanCount` separados; wedges apilados (huérfanas abajo en gris claro, outOfSlot encima en gris medio); leyenda con dos entradas
+
+#### Verificar
+
+1. `docker compose up -d && npm run dev`
+2. Dejar solo `morning` enabled → en Hoy, pulsar botón "Fuera de slot", elegir 15:00 → toma aparece en Historial, slot desayuno sigue `pending`/`missed` (no `given`); en Stats aparece wedge gris medio a las 15h
+3. Repetir, luego activar `afternoon` cubriendo las 15h → la toma `outOfSlot` sigue en gris, no pasa a cumplir el nuevo slot (resistencia a cambios de config)
+4. Con solo `morning` enabled, ir a Historial → "Registrar toma pasada" → ayer 15:00 → doc Firestore guarda `outOfSlot: true`. Elegir ayer 08:00 → doc guarda sin el campo (feeding normal, cuenta como morning)
+5. Semillar feedings mixtos (unos con `outOfSlot:true`, otros sin campo pero fuera de slots activos) → en Stats con "Mostrar fuera de horario" activado, dos tonos de gris visibles + leyenda con dos entradas
+6. Regresión: DAR normal sigue registrando sin el campo y marcando slot `given`; relojito del slot sigue validando bounds; medias de slot no cambian
 
 ### F10 — Detalle y edición de tomas desde Historial · _2-3h_
 
