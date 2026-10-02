@@ -34,6 +34,8 @@ const USERS = [
 
 const DAYS = 100;
 const NFC_RATIO = 0.15;
+/** Tomas "fuera de slot" (outOfSlot=true) por semana en todo el periodo. */
+const OUT_OF_SLOT_PER_WEEK = 2;
 
 function gaussian(mu: number, sigma: number): number {
   const u1 = 1 - Math.random();
@@ -117,9 +119,49 @@ async function seed() {
       }
     }
   }
+  // Tomas "fuera de slot" (outOfSlot=true): esparcidas por el periodo a horas
+  // aleatorias uniformes (incluidas horas dentro de slots activos). En el
+  // radial aparecen en gris medio apiladas sobre el color del slot cuando
+  // el toggle "fuera de horario" está activo.
+  const outOfSlotCount = Math.round((DAYS / 7) * OUT_OF_SLOT_PER_WEEK);
+  let outOfSlotCreated = 0;
+  for (let i = 0; i < outOfSlotCount; i += 1) {
+    const dayOffset = Math.floor(Math.random() * DAYS);
+    const base = subDays(today, dayOffset);
+    const hh = Math.floor(Math.random() * 24);
+    const mm = Math.floor(Math.random() * 60);
+    const ts = new Date(base);
+    ts.setHours(hh, mm, Math.floor(Math.random() * 60), 0);
+    if (ts.getTime() > today.getTime()) continue;
+
+    const user = USERS[Math.floor(Math.random() * USERS.length)];
+    const ref = db.collection('feedings').doc();
+    batch.set(ref, {
+      timestamp: Timestamp.fromDate(ts),
+      dateLocal: format(ts, 'yyyy-MM-dd'),
+      hourLocal: ts.getHours(),
+      feederUid: user.uid,
+      feederName: user.name,
+      method: 'manual',
+      outOfSlot: true,
+      createdAt: Timestamp.now(),
+    });
+    created += 1;
+    outOfSlotCreated += 1;
+    batchCount += 1;
+    if (batchCount === 400) {
+      await batch.commit();
+      batch = db.batch();
+      batchCount = 0;
+    }
+  }
+
   if (batchCount > 0) await batch.commit();
 
-  console.log(`Seed stats completado: ${created} feedings a lo largo de ${DAYS} dias.`);
+  console.log(
+    `Seed stats completado: ${created} feedings a lo largo de ${DAYS} dias ` +
+      `(incluye ${outOfSlotCreated} fuera de slot).`,
+  );
 }
 
 seed().catch((err) => {
