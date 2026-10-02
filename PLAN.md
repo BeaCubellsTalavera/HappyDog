@@ -653,7 +653,7 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 - [x] `src/components/ManualFeedDialog.tsx` — nueva prop `outOfSlot?: boolean`: input `datetime-local` libre del día lógico de hoy, sin validación de bounds de slot, pasa `outOfSlot: true` a `createFeeding`
 - [x] `src/components/ManualFeedDialog.tsx` — en `pastMode`, calcular contra slots activos al enviar y auto-marcar `outOfSlot: true` si la hora no cae en ninguno
 - [x] `src/components/MealCarousel.tsx` + `src/index.css` — botón pequeño global "Fuera de slot" debajo del carrusel que abre `ManualFeedDialog` con prop `outOfSlot`
-- [ ] `src/components/RadialHistogramChart.tsx` — contar por bucket `outOfSlotCount` y `orphanCount` separados; wedges apilados (huérfanas abajo en gris claro, outOfSlot encima en gris medio); leyenda con dos entradas
+- [x] `src/components/RadialHistogramChart.tsx` — contar por bucket `outOfSlotCount` y `orphanCount` separados; wedges apilados (huérfanas abajo en gris claro, outOfSlot encima en gris medio); leyenda con dos entradas
 
 #### Verificar
 

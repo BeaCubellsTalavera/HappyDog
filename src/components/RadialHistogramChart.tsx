@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { Feeding, MealSlot } from '../types';
 import {
   ORPHAN_BUCKET_COLOR,
+  OUT_OF_SLOT_COLOR,
   SLOT_COLORS,
   computeSlotMeans,
   feedingHour,
@@ -83,32 +84,84 @@ export function RadialHistogramChart({
   );
 
   const wedges = useMemo(() => {
-    const counts = new Array<number>(BUCKET_COUNT).fill(0);
+    type BucketBreakdown = {
+      slotColor: string | null;
+      slotCount: number;
+      orphanCount: number;
+      outOfSlotCount: number;
+    };
+    const buckets: BucketBreakdown[] = Array.from({ length: BUCKET_COUNT }, () => ({
+      slotColor: null,
+      slotCount: 0,
+      orphanCount: 0,
+      outOfSlotCount: 0,
+    }));
+
     for (const f of feedings) {
       const h = feedingHour(f);
       const idx = Math.floor(h / BUCKET_HOURS);
       if (idx < 0 || idx >= BUCKET_COUNT) continue;
-      counts[idx]++;
-    }
-    const max = Math.max(1, ...counts);
-    const items: { key: string; d: string; color: string }[] = [];
-    for (let i = 0; i < BUCKET_COUNT; i++) {
-      const c = counts[i];
-      if (c === 0) continue;
-      const centerHour = (i + 0.5) * BUCKET_HOURS;
+      if (f.outOfSlot) {
+        buckets[idx].outOfSlotCount++;
+        continue;
+      }
+      const centerHour = (idx + 0.5) * BUCKET_HOURS;
       const slot = orderedSlots.find((s) => {
         const { logStart, logEnd } = slotLogicalBounds(s);
         return centerHour >= logStart && centerHour < logEnd;
       });
-      if (!slot && !showOrphanBuckets) continue;
-      const r1 = INNER_R + (c / max) * (MAX_BAR_R - INNER_R);
+      if (slot) {
+        buckets[idx].slotCount++;
+        buckets[idx].slotColor = SLOT_COLORS[slot.id];
+      } else {
+        buckets[idx].orphanCount++;
+      }
+    }
+
+    const effectiveCounts = buckets.map((b) =>
+      showOrphanBuckets ? b.slotCount + b.orphanCount + b.outOfSlotCount : b.slotCount,
+    );
+    const max = Math.max(1, ...effectiveCounts);
+    const scale = (MAX_BAR_R - INNER_R) / max;
+
+    const items: { key: string; d: string; color: string }[] = [];
+    for (let i = 0; i < BUCKET_COUNT; i++) {
+      const b = buckets[i];
+      const visibleTotal = showOrphanBuckets
+        ? b.slotCount + b.orphanCount + b.outOfSlotCount
+        : b.slotCount;
+      if (visibleTotal === 0) continue;
       const a0 = logicalHourToAngle(i * BUCKET_HOURS) + WEDGE_GAP_RAD / 2;
       const a1 = logicalHourToAngle((i + 1) * BUCKET_HOURS) - WEDGE_GAP_RAD / 2;
-      items.push({
-        key: `${i}`,
-        d: annularSectorPath(INNER_R, r1, a0, a1),
-        color: slot ? SLOT_COLORS[slot.id] : ORPHAN_BUCKET_COLOR,
-      });
+      let rCurrent = INNER_R;
+
+      if (b.slotCount > 0 && b.slotColor) {
+        const rNext = rCurrent + b.slotCount * scale;
+        items.push({
+          key: `${i}-slot`,
+          d: annularSectorPath(rCurrent, rNext, a0, a1),
+          color: b.slotColor,
+        });
+        rCurrent = rNext;
+      }
+      if (showOrphanBuckets && b.orphanCount > 0) {
+        const rNext = rCurrent + b.orphanCount * scale;
+        items.push({
+          key: `${i}-orphan`,
+          d: annularSectorPath(rCurrent, rNext, a0, a1),
+          color: ORPHAN_BUCKET_COLOR,
+        });
+        rCurrent = rNext;
+      }
+      if (showOrphanBuckets && b.outOfSlotCount > 0) {
+        const rNext = rCurrent + b.outOfSlotCount * scale;
+        items.push({
+          key: `${i}-oos`,
+          d: annularSectorPath(rCurrent, rNext, a0, a1),
+          color: OUT_OF_SLOT_COLOR,
+        });
+        rCurrent = rNext;
+      }
     }
     return items;
   }, [feedings, orderedSlots, showOrphanBuckets]);
@@ -268,13 +321,22 @@ export function RadialHistogramChart({
           </li>
         ))}
         {showOrphanBuckets && (
-          <li className="flex items-center gap-1.5">
-            <span
-              className="inline-block w-2 h-2 rounded-full"
-              style={{ backgroundColor: ORPHAN_BUCKET_COLOR }}
-            />
-            Fuera de horario
-          </li>
+          <>
+            <li className="flex items-center gap-1.5">
+              <span
+                className="inline-block w-2 h-2 rounded-full"
+                style={{ backgroundColor: ORPHAN_BUCKET_COLOR }}
+              />
+              Fuera de horario
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span
+                className="inline-block w-2 h-2 rounded-full"
+                style={{ backgroundColor: OUT_OF_SLOT_COLOR }}
+              />
+              Fuera de slot
+            </li>
+          </>
         )}
       </ul>
     </div>
