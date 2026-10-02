@@ -14,6 +14,7 @@ import {
 } from '../lib/logicalDay';
 import { StepIndicator } from './StepIndicator';
 import { MealCard } from './MealCard';
+import { ManualFeedDialog, type ManualFeedDialogHandle } from './ManualFeedDialog';
 
 export function MealCarousel() {
   const { user } = useAuth();
@@ -23,6 +24,7 @@ export function MealCarousel() {
   const { slots, statuses } = useMealStatus();
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const outOfSlotDialogRef = useRef<ManualFeedDialogHandle>(null);
   const [viewingIndex, setViewingIndex] = useState(() =>
     getActiveSlotIndex(slots, new Date())
   );
@@ -159,6 +161,18 @@ export function MealCarousel() {
           </button>
         )}
       </div>
+
+      <div className="shrink-0 pb-3 pt-1 flex justify-center">
+        <button
+          type="button"
+          onClick={() => outOfSlotDialogRef.current?.open()}
+          className="btn-out-of-slot"
+        >
+          + Fuera de slot
+        </button>
+      </div>
+
+      <ManualFeedDialog ref={outOfSlotDialogRef} outOfSlot />
     </div>
   );
 }
