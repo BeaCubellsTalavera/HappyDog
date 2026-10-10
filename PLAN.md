@@ -33,8 +33,8 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** F-Cutoff completada en `phase/logical-day-cutoff` — pendiente verificación manual y merge a `develop`.
-- **Último paso completado:** F-Cutoff (corte de día lógico a las 04:00) en `phase/logical-day-cutoff`.
+- **Fase activa:** F-SlotIds completada en `phase/meal-count` (junto a F-MealCount).
+- **Último paso completado:** F-SlotIds — IDs posicionales, heurística de imagen sin repetición, store sparse.
 - **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial.
 - **Bloqueos:** ninguno.
 
@@ -629,6 +629,81 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 10. `/stats`: tick labels `04h, 10h, 16h, 22h`; feeding a las 02:00 aparece junto a `04h`; línea media Cena en la mitad superior del círculo
 11. Overlap: Desayuno `4/13` + Comida `12/18` → mensaje de solape con `windowLabel` correcto
 12. Segundo dispositivo: `onSnapshot` propaga cambios de horario sin recargar
+
+### F-MealCount — Configurar número de tomas al día · _2-3h_
+
+> Reemplazar el modelo "4 slots con enabled/disabled" por un modelo limpio: hay exactamente N tomas, todas siempre activas. El usuario elige N (1-4) con un picker en `/settings/schedule` y la app asigna ventanas opinionadas que cubren el día lógico completo (03:00–03:00) sin huecos. No hay concepto de desactivar una toma individual. Breaking change limpio: `config/schedule` pasa a almacenar `{ mealCount, meals }` sin campo `enabled`.
+
+#### Defaults de tomas
+
+| N | Ventanas |
+|---|---|
+| 1 | Todo el día (03→03) |
+| 2 | Mañana (03→15) · Tarde (15→03) |
+| 3 | Desayuno (03→10) · Comida (10→18) · Cena (18→03) |
+| 4 | Desayuno (03→10) · Mediodía (10→13) · Comida (13→18) · Cena (18→03) |
+
+#### Checkboxes
+
+- [x] `src/lib/mealSlots.ts` — añadir `MealCount = 1|2|3|4`, `DEFAULT_MEAL_COUNT = 2`, `computeDefaultSlots(count)`
+- [x] `src/lib/scheduleValidation.ts` — fix `spanValid` (eliminar guard `startHour===endHour`); cambiar firma a `validateSchedule(mealCount, meals)`, solo valida/compara los primeros `mealCount` slots
+- [x] `src/hooks/useMealConfig.ts` — eliminar `enabled`/`draftEnabled`/`toggleEnabled`; añadir `mealCount`/`applyEqualDistribution`; `save()` escribe `{ mealCount, meals }`
+- [x] `src/hooks/useMealStatus.ts` — reemplazar filtro `enabled[s.id]` por `MEAL_IDS.indexOf(s.id) < mealCount`
+- [x] `src/pages/History.tsx` — mismo cambio de filtro
+- [x] `src/pages/Stats.tsx` — mismo cambio de filtro
+- [x] `src/pages/Settings.tsx` — eliminar toggles individuales de tomas; mostrar lista read-only de slots activos + link a ScheduleSettings
+- [x] `src/pages/ScheduleSettings.tsx` — añadir picker de tomas (pills 1-4), filtrar slots a los primeros `mealCount`, actualizar llamada a `validateSchedule`
+
+**Ola B — Eliminar outOfSlot** → no aplica: la feature `phase/out-of-slot` nunca se hizo merge a `develop`; el código de `outOfSlot` no existe en esta rama.
+
+#### Verificar
+
+1. `docker compose up -d && npm run dev`
+2. Elegir **1** → una tarjeta en carrusel, feeding a cualquier hora → `given`
+3. Elegir **2** → dos tarjetas Mañana (03–15) y Tarde (15–03)
+4. Elegir **3** → tres tarjetas de Desayuno/Comida/Cena
+5. Bajar de 3→2 → tercera tarjeta desaparece del carrusel Y de ScheduleSettings
+6. Ajuste fino de nombre/hora tras preset → botón "Guardar" funciona normal
+7. Recargar → count persiste desde Firestore
+8. Settings → sección Comidas muestra lista read-only + link, sin toggles
+
+### F-SlotIds — IDs posicionales para slots de comida · _1-2h_
+
+> Renombrar los IDs de slot de semánticos (`morning`, `midday`, `afternoon`, `night`) a posicionales (`slot1`, `slot2`, `slot3`, `slot4`). El ID ya no implica ningún horario — solo indica "soy la N-ésima toma del día". La imagen de fondo se asigna en render mediante una heurística gastronómica basada en la ventana horaria del slot. Breaking change limpio: claves `morning`/`midday`/`afternoon`/`night` en Firestore quedan obsoletas y se borran al primer guardado (igual que en F-MealCount, `setDoc` sin merge).
+
+#### Heurística de imagen (gastronómica)
+
+Nueva función `getBgForSlot(slot)` que reemplaza el lookup `BG_BY_ID[id]`. Usa `logStart = (startHour - DAY_CUTOFF_HOUR + 24) % 24`:
+
+| logStart (hora lógica del inicio) | Hora real de inicio | Imagen |
+|---|---|---|
+| 0–7 | 03:00–10:00 | `morning.png` |
+| 7–10 | 10:00–13:00 | `midday.png` |
+| 10–15 | 13:00–18:00 | `afternoon.png` |
+| 15–24 | 18:00–03:00 | `night.png` |
+
+Pendiente de fase futura: permitir que el usuario elija la imagen por slot.
+
+#### Modelo de store limpio
+
+Con IDs posicionales, el store solo tiene los N slots activos — no hay slots inactivos rellenos con defaults invisibles. Nadie en la app pide `draftMeals['slot3']` cuando `mealCount=2` porque todo itera sobre `MEAL_IDS.slice(0, mealCount)`. `MealsMap` pasa a ser `Partial<Record<MealSlotId, MealFields>>` (o simplemente un objeto con solo las claves activas). `parseMeals` ya no necesita rellenar slots que no están en Firestore.
+
+#### Checkboxes
+
+- [x] `src/types/index.ts` — `MealSlotId = 'slot1' | 'slot2' | 'slot3' | 'slot4'`
+- [x] `src/lib/mealSlots.ts` — actualizar `MEAL_IDS`, `DEFAULT_MEALS`, `computeDefaultSlots`; reemplazar `BG_BY_ID` por `getBgImages(slots[])` con heurística gastronómica y deduplicación backward+forward
+- [x] `src/hooks/useMealConfig.ts` — `MealsMap` solo contiene los N slots activos; `parseMeals` solo parsea las claves presentes en Firestore; `cloneMeals` itera las claves del objeto en lugar de los 4 IDs fijos
+- [x] `src/components/MealCard.tsx` y `src/pages/ScheduleSettings.tsx` — usar `getBgImages`/`getBgGradients` en lugar de `BG_BY_ID[id]`
+- [x] TypeScript check completo: sin referencias a `'morning'` / `'midday'` / `'afternoon'` / `'night'` como `MealSlotId`
+
+#### Verificar
+
+1. `docker compose up -d && npm run dev`
+2. `mealCount=4` → cuatro tarjetas con imágenes morning/midday/afternoon/night respectivamente (coinciden con los defaults gastronómicos)
+3. Cambiar horario de slot1 a las 19:00 (noche) → imagen pasa a `night.png` al guardar
+4. `mealCount=1` (Todo el día, empieza a las 03:00) → imagen `morning.png`
+
+---
 
 ### F10 — Detalle y edición de tomas desde Historial · _2-3h_
 

@@ -18,13 +18,6 @@ interface Props {
 }
 
 
-const GRADIENTS: Record<string, string> = {
-  morning:   'from-orange-300 via-yellow-200 to-sky-300',
-  midday:    'from-sky-300 via-blue-200 to-sky-400',
-  afternoon: 'from-orange-400 via-rose-300 to-purple-400',
-  night:     'from-indigo-900 via-blue-900 to-slate-900',
-};
-
 export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoading }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -60,8 +53,6 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
     try { await onSkip(); } finally { setSaving(false); }
   }
 
-  const gradient = GRADIENTS[slot.id] ?? GRADIENTS.morning;
-
   return (
     <div className="relative w-full h-full flex-shrink-0 overflow-hidden rounded-3xl">
       {/* Background image with gradient fallback */}
@@ -71,7 +62,7 @@ export function MealCard({ slot, status, feeding, skip, onFeed, onSkip, isLoadin
         className="absolute inset-0 w-full h-full object-cover"
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
       />
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} [z-index:-1]`} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${slot.gradient} [z-index:-1]`} />
 
       {/* Dark overlay for legibility */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
