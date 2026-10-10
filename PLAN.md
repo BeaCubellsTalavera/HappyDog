@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** F-MealCount en `phase/meal-count`.
-- **Último paso completado:** F-OutOfSlot (botón "Fuera de slot" en carrusel + auto-detect en pastMode) en `phase/out-of-slot`.
-- **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial (tras completar F-MealCount).
+- **Fase activa:** F-SlotIds completada en `phase/meal-count` (junto a F-MealCount).
+- **Último paso completado:** F-SlotIds — IDs posicionales, heurística de imagen sin repetición, store sparse.
+- **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial.
 - **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -690,11 +690,11 @@ Con IDs posicionales, el store solo tiene los N slots activos — no hay slots i
 
 #### Checkboxes
 
-- [ ] `src/types/index.ts` — `MealSlotId = 'slot1' | 'slot2' | 'slot3' | 'slot4'`
-- [ ] `src/lib/mealSlots.ts` — actualizar `MEAL_IDS`, `DEFAULT_MEALS`, `computeDefaultSlots`; reemplazar `BG_BY_ID` por `getBgForSlot(slot: { startHour: number }): string`
-- [ ] `src/hooks/useMealConfig.ts` — `MealsMap` solo contiene los N slots activos; `parseMeals` solo parsea las claves presentes en Firestore; `cloneMeals` itera las claves del objeto en lugar de los 4 IDs fijos
-- [ ] `src/components/MealCard.tsx` y `src/pages/ScheduleSettings.tsx` — usar `getBgForSlot(slot)` en lugar de `BG_BY_ID[id]`
-- [ ] TypeScript check completo: sin referencias a `'morning'` / `'midday'` / `'afternoon'` / `'night'` como `MealSlotId`
+- [x] `src/types/index.ts` — `MealSlotId = 'slot1' | 'slot2' | 'slot3' | 'slot4'`
+- [x] `src/lib/mealSlots.ts` — actualizar `MEAL_IDS`, `DEFAULT_MEALS`, `computeDefaultSlots`; reemplazar `BG_BY_ID` por `getBgImages(slots[])` con heurística gastronómica y deduplicación backward+forward
+- [x] `src/hooks/useMealConfig.ts` — `MealsMap` solo contiene los N slots activos; `parseMeals` solo parsea las claves presentes en Firestore; `cloneMeals` itera las claves del objeto en lugar de los 4 IDs fijos
+- [x] `src/components/MealCard.tsx` y `src/pages/ScheduleSettings.tsx` — usar `getBgImages`/`getBgGradients` en lugar de `BG_BY_ID[id]`
+- [x] TypeScript check completo: sin referencias a `'morning'` / `'midday'` / `'afternoon'` / `'night'` como `MealSlotId`
 
 #### Verificar
 
