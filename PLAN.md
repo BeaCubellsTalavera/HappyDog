@@ -667,6 +667,42 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 7. Recargar → count persiste desde Firestore
 8. Settings → sección Comidas muestra lista read-only + link, sin toggles
 
+### F-SlotIds — IDs posicionales para slots de comida · _1-2h_
+
+> Renombrar los IDs de slot de semánticos (`morning`, `midday`, `afternoon`, `night`) a posicionales (`slot1`, `slot2`, `slot3`, `slot4`). El ID ya no implica ningún horario — solo indica "soy la N-ésima toma del día". La imagen de fondo se asigna en render mediante una heurística gastronómica basada en la ventana horaria del slot. Breaking change limpio: claves `morning`/`midday`/`afternoon`/`night` en Firestore quedan obsoletas y se borran al primer guardado (igual que en F-MealCount, `setDoc` sin merge).
+
+#### Heurística de imagen (gastronómica)
+
+Nueva función `getBgForSlot(slot)` que reemplaza el lookup `BG_BY_ID[id]`. Usa `logStart = (startHour - DAY_CUTOFF_HOUR + 24) % 24`:
+
+| logStart (hora lógica del inicio) | Hora real de inicio | Imagen |
+|---|---|---|
+| 0–7 | 03:00–10:00 | `morning.png` |
+| 7–10 | 10:00–13:00 | `midday.png` |
+| 10–15 | 13:00–18:00 | `afternoon.png` |
+| 15–24 | 18:00–03:00 | `night.png` |
+
+Pendiente de fase futura: permitir que el usuario elija la imagen por slot.
+
+#### Modelo de store limpio
+
+Con IDs posicionales, el store solo tiene los N slots activos — no hay slots inactivos rellenos con defaults invisibles. Nadie en la app pide `draftMeals['slot3']` cuando `mealCount=2` porque todo itera sobre `MEAL_IDS.slice(0, mealCount)`. `MealsMap` pasa a ser `Partial<Record<MealSlotId, MealFields>>` (o simplemente un objeto con solo las claves activas). `parseMeals` ya no necesita rellenar slots que no están en Firestore.
+
+#### Checkboxes
+
+- [ ] `src/types/index.ts` — `MealSlotId = 'slot1' | 'slot2' | 'slot3' | 'slot4'`
+- [ ] `src/lib/mealSlots.ts` — actualizar `MEAL_IDS`, `DEFAULT_MEALS`, `computeDefaultSlots`; reemplazar `BG_BY_ID` por `getBgForSlot(slot: { startHour: number }): string`
+- [ ] `src/hooks/useMealConfig.ts` — `MealsMap` solo contiene los N slots activos; `parseMeals` solo parsea las claves presentes en Firestore; `cloneMeals` itera las claves del objeto en lugar de los 4 IDs fijos
+- [ ] `src/components/MealCard.tsx` y `src/pages/ScheduleSettings.tsx` — usar `getBgForSlot(slot)` en lugar de `BG_BY_ID[id]`
+- [ ] TypeScript check completo: sin referencias a `'morning'` / `'midday'` / `'afternoon'` / `'night'` como `MealSlotId`
+
+#### Verificar
+
+1. `docker compose up -d && npm run dev`
+2. `mealCount=4` → cuatro tarjetas con imágenes morning/midday/afternoon/night respectivamente (coinciden con los defaults gastronómicos)
+3. Cambiar horario de slot1 a las 19:00 (noche) → imagen pasa a `night.png` al guardar
+4. `mealCount=1` (Todo el día, empieza a las 03:00) → imagen `morning.png`
+
 ---
 
 ### F10 — Detalle y edición de tomas desde Historial · _2-3h_
