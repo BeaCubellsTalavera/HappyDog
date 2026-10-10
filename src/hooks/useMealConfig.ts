@@ -3,7 +3,6 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../lib/firebase';
 import {
-  DEFAULT_MEALS,
   DEFAULT_MEAL_COUNT,
   MEAL_IDS,
   computeDefaultSlots,
@@ -16,11 +15,11 @@ import type { MealSlotId } from '../types';
 const SCHEDULE_DOC = doc(db, 'config', 'schedule');
 
 function mealsDiffer(a: MealsMap, b: MealsMap): boolean {
-  return MEAL_IDS.some(
+  return (Object.keys(a) as MealSlotId[]).some(
     (k) =>
-      a[k].name !== b[k].name ||
-      a[k].startHour !== b[k].startHour ||
-      a[k].endHour !== b[k].endHour,
+      a[k]!.name !== b[k]?.name ||
+      a[k]!.startHour !== b[k]?.startHour ||
+      a[k]!.endHour !== b[k]?.endHour,
   );
 }
 
@@ -34,30 +33,26 @@ function computeIsDirty(state: {
 }
 
 function cloneMeals(m: MealsMap): MealsMap {
-  return {
-    morning:   { ...m.morning },
-    midday:    { ...m.midday },
-    afternoon: { ...m.afternoon },
-    night:     { ...m.night },
-  };
+  return Object.fromEntries(
+    (Object.keys(m) as MealSlotId[]).map(k => [k, { ...m[k]! }])
+  ) as MealsMap;
 }
 
 function normalizeEndHour(h: number): number {
   return h === 24 ? 0 : h;
 }
 
-function parseMeals(raw: unknown): MealsMap {
+function parseMeals(raw: unknown, count: MealCount): MealsMap {
   const src =
     raw && typeof raw === 'object'
       ? (raw as Partial<Record<MealSlotId, Partial<MealFields>>>)
       : {};
-  const out = {} as MealsMap;
-  for (const id of MEAL_IDS) {
+  const defaults = computeDefaultSlots(count);
+  const out: MealsMap = {};
+  for (const id of MEAL_IDS.slice(0, count)) {
     const patch = src[id];
-    const base = DEFAULT_MEALS[id];
-    const rawEnd = Number.isFinite(patch?.endHour)
-      ? (patch!.endHour as number)
-      : base.endHour;
+    const base = defaults[id]!;
+    const rawEnd = Number.isFinite(patch?.endHour) ? (patch!.endHour as number) : base.endHour;
     out[id] = {
       name: typeof patch?.name === 'string' && patch.name.length > 0 ? patch.name : base.name,
       startHour: Number.isFinite(patch?.startHour) ? (patch!.startHour as number) : base.startHour,
@@ -94,7 +89,7 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
       unsubFirestore = onSnapshot(SCHEDULE_DOC, (snap) => {
         const data = snap.data();
         const newMealCount = parseMealCount(data?.mealCount);
-        const newMeals = parseMeals(data?.meals);
+        const newMeals = parseMeals(data?.meals, newMealCount);
         set((s) => ({
           mealCount: newMealCount,
           meals: newMeals,
@@ -108,8 +103,9 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
       unsubFirestore = null;
       set({
         mealCount: DEFAULT_MEAL_COUNT,
-        meals: cloneMeals(DEFAULT_MEALS),
-        draftMeals: cloneMeals(DEFAULT_MEALS),
+        draftMealCount: DEFAULT_MEAL_COUNT,
+        meals: computeDefaultSlots(DEFAULT_MEAL_COUNT),
+        draftMeals: cloneMeals(computeDefaultSlots(DEFAULT_MEAL_COUNT)),
         loading: true,
         isDirty: false,
       });
@@ -124,8 +120,8 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
   return {
     mealCount: DEFAULT_MEAL_COUNT,
     draftMealCount: DEFAULT_MEAL_COUNT,
-    meals: cloneMeals(DEFAULT_MEALS),
-    draftMeals: cloneMeals(DEFAULT_MEALS),
+    meals: computeDefaultSlots(DEFAULT_MEAL_COUNT),
+    draftMeals: cloneMeals(computeDefaultSlots(DEFAULT_MEAL_COUNT)),
     loading: true,
     isDirty: false,
 
