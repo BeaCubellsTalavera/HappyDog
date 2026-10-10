@@ -17,7 +17,7 @@ export type NewFeeding = Omit<Feeding, 'id' | 'createdAt' | 'timestamp'> & {
   createdAt: FieldValue;
 };
 
-export type MealSlotId = 'morning' | 'midday' | 'afternoon' | 'night';
+export type MealSlotId = 'slot1' | 'slot2' | 'slot3' | 'slot4';
 
 export interface MealSlot {
   id: MealSlotId;
@@ -25,6 +25,7 @@ export interface MealSlot {
   startHour: number;
   endHour: number;
   bg: string;
+  gradient: string;
 }
 
 export type SlotStatus = 'not-yet' | 'pending' | 'given' | 'missed' | 'skipped';

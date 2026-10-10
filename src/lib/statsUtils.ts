@@ -2,10 +2,10 @@ import type { Feeding, MealSlot, MealSlotId } from '../types';
 import { DAY_CUTOFF_HOUR, feedingInSlot, logicalHour } from './logicalDay';
 
 export const SLOT_COLORS: Record<MealSlotId, string> = {
-  morning: '#FB923C',
-  midday: '#FCD34D',
-  afternoon: '#F472B6',
-  night: '#818CF8',
+  slot1: '#FB923C',
+  slot2: '#FCD34D',
+  slot3: '#F472B6',
+  slot4: '#818CF8',
 };
 
 /** Color para buckets con feedings que no caen en ningún slot activo. */
