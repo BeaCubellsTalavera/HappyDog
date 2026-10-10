@@ -33,6 +33,7 @@ export function validateSchedule(mealCount: MealCount, meals: MealsMap): Validat
 
   for (const id of activeIds) {
     const m = meals[id];
+    if (!m) continue;
     if (!m.name || m.name.trim().length === 0) {
       errorsBySlot[id].push('El nombre no puede estar vacío');
     }
@@ -55,7 +56,7 @@ export function validateSchedule(mealCount: MealCount, meals: MealsMap): Validat
     for (let j = i + 1; j < activeIds.length; j++) {
       const a = meals[activeIds[i]];
       const b = meals[activeIds[j]];
-      if (!spanValid(a) || !spanValid(b)) continue;
+      if (!a || !b || !spanValid(a) || !spanValid(b)) continue;
       if (overlaps(a, b)) {
         const rangeA = windowLabel(a.startHour, a.endHour);
         const rangeB = windowLabel(b.startHour, b.endHour);
