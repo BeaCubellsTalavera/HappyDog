@@ -1,11 +1,9 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useFcmToken } from '../hooks/useFcmToken';
 import { useMealConfig } from '../hooks/useMealConfig';
-import { buildSlots } from '../lib/mealSlots';
+import { buildSlots, MEAL_IDS } from '../lib/mealSlots';
 import { windowLabel } from '../lib/timeFormat';
-import type { MealSlotId } from '../types';
 
 export default function Settings() {
   const permission = useFcmToken((s) => s.permission);
@@ -15,25 +13,9 @@ export default function Settings() {
   const enableNotifications = useFcmToken((s) => s.enableNotifications);
   const disableNotifications = useFcmToken((s) => s.disableNotifications);
 
-  const draft = useMealConfig((s) => s.draftEnabled);
   const meals = useMealConfig((s) => s.meals);
-  const isDirty = useMealConfig((s) => s.isDirty);
-  const saving = useMealConfig((s) => s.loading);
-  const toggle = useMealConfig((s) => s.toggleEnabled);
-  const save = useMealConfig((s) => s.save);
-  const discard = useMealConfig((s) => s.discard);
-
-  const slotList = buildSlots(meals);
-
-  // Al salir de Settings sin guardar, descartar cambios pendientes
-  useEffect(() => () => { discard(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const draftEnabledCount = Object.values(draft).filter(Boolean).length;
-
-  function handleToggle(id: MealSlotId) {
-    if (draft[id] && draftEnabledCount === 1) return;
-    toggle(id);
-  }
+  const mealCount = useMealConfig((s) => s.mealCount);
+  const activeSlots = buildSlots(meals).filter((s) => MEAL_IDS.indexOf(s.id) < mealCount);
 
   return (
     <Layout>
@@ -100,55 +82,32 @@ export default function Settings() {
           <div className="px-4 pt-4 pb-2">
             <h3 className="font-medium text-gray-800">Comidas</h3>
             <p className="text-sm text-gray-500 mt-0.5">
-              Activa o desactiva las tomas que aplican a tus perros.
+              {mealCount} toma{mealCount !== 1 ? 's' : ''} al día
             </p>
           </div>
 
           <ul>
-            {slotList.map((slot, i) => {
-              const isOn = draft[slot.id];
-              const isLast = isOn && draftEnabledCount === 1;
-              return (
-                <li
-                  key={slot.id}
-                  className={`flex items-center justify-between px-4 py-3 ${
-                    i < slotList.length - 1 ? 'border-b border-gray-100' : ''
-                  }`}
-                >
-                  <div className="flex-1 mr-4">
-                    <p className="font-medium text-gray-800 text-sm">{slot.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {windowLabel(slot.startHour, slot.endHour)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={isOn}
-                    disabled={isLast}
-                    onClick={() => handleToggle(slot.id)}
-                    title={isLast ? 'Debe haber al menos una toma activa' : undefined}
-                    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-40 ${
-                      isOn ? 'bg-orange-500' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-6 w-6 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-                        isOn ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </li>
-              );
-            })}
+            {activeSlots.map((slot, i) => (
+              <li
+                key={slot.id}
+                className={`flex items-center justify-between px-4 py-3 ${
+                  i < activeSlots.length - 1 ? 'border-b border-gray-100' : ''
+                }`}
+              >
+                <div>
+                  <p className="font-medium text-gray-800 text-sm">{slot.name}</p>
+                  <p className="text-xs text-gray-400">{windowLabel(slot.startHour, slot.endHour)}</p>
+                </div>
+              </li>
+            ))}
             <li className="border-t border-gray-100">
               <Link
                 to="/settings/schedule"
                 className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
               >
                 <div className="flex-1 mr-4">
-                  <p className="font-medium text-gray-800 text-sm">Editar horarios y nombres</p>
-                  <p className="text-xs text-gray-400">Ajusta la ventana horaria de cada toma</p>
+                  <p className="font-medium text-gray-800 text-sm">Editar tomas y horarios</p>
+                  <p className="text-xs text-gray-400">Número de tomas, horarios y nombres</p>
                 </div>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-gray-400 shrink-0">
                   <polyline points="9 18 15 12 9 6" />
@@ -156,24 +115,6 @@ export default function Settings() {
               </Link>
             </li>
           </ul>
-
-          {isDirty && (
-            <div className="px-4 pb-4 pt-3 flex gap-3 border-t border-gray-100">
-              <button
-                onClick={discard}
-                className="flex-1 py-2.5 rounded-2xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-              >
-                Descartar
-              </button>
-              <button
-                onClick={save}
-                disabled={saving}
-                className="flex-1 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
-              >
-                {saving ? 'Guardando…' : 'Guardar'}
-              </button>
-            </div>
-          )}
         </div>
       </section>
     </Layout>

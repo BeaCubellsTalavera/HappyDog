@@ -33,9 +33,9 @@
 
 ## 📍 Estado Actual
 
-- **Fase activa:** F-Cutoff completada en `phase/logical-day-cutoff` — pendiente verificación manual y merge a `develop`.
-- **Último paso completado:** F-Cutoff (corte de día lógico a las 04:00) en `phase/logical-day-cutoff`.
-- **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial.
+- **Fase activa:** F-MealCount en `phase/meal-count`.
+- **Último paso completado:** F-OutOfSlot (botón "Fuera de slot" en carrusel + auto-detect en pastMode) en `phase/out-of-slot`.
+- **Próximo paso:** F10 — bottom sheet de detalle y edición de tomas desde Historial (tras completar F-MealCount).
 - **Bloqueos:** ninguno.
 
 > ⚠️ Actualiza esta sección al terminar cada paso: mueve **Último paso completado** y **Próximo paso**.
@@ -629,6 +629,45 @@ Para `dayStr === todayStr`: usar `deriveSlotStatus` existente de `mealSlots.ts`.
 10. `/stats`: tick labels `04h, 10h, 16h, 22h`; feeding a las 02:00 aparece junto a `04h`; línea media Cena en la mitad superior del círculo
 11. Overlap: Desayuno `4/13` + Comida `12/18` → mensaje de solape con `windowLabel` correcto
 12. Segundo dispositivo: `onSnapshot` propaga cambios de horario sin recargar
+
+### F-MealCount — Configurar número de tomas al día · _2-3h_
+
+> Reemplazar el modelo "4 slots con enabled/disabled" por un modelo limpio: hay exactamente N tomas, todas siempre activas. El usuario elige N (1-4) con un picker en `/settings/schedule` y la app asigna ventanas opinionadas que cubren el día lógico completo (03:00–03:00) sin huecos. No hay concepto de desactivar una toma individual. Breaking change limpio: `config/schedule` pasa a almacenar `{ mealCount, meals }` sin campo `enabled`.
+
+#### Defaults de tomas
+
+| N | Ventanas |
+|---|---|
+| 1 | Todo el día (03→03) |
+| 2 | Mañana (03→15) · Tarde (15→03) |
+| 3 | Desayuno (03→10) · Comida (10→18) · Cena (18→03) |
+| 4 | Desayuno (03→10) · Mediodía (10→13) · Comida (13→18) · Cena (18→03) |
+
+#### Checkboxes
+
+- [x] `src/lib/mealSlots.ts` — añadir `MealCount = 1|2|3|4`, `DEFAULT_MEAL_COUNT = 2`, `computeDefaultSlots(count)`
+- [x] `src/lib/scheduleValidation.ts` — fix `spanValid` (eliminar guard `startHour===endHour`); cambiar firma a `validateSchedule(mealCount, meals)`, solo valida/compara los primeros `mealCount` slots
+- [x] `src/hooks/useMealConfig.ts` — eliminar `enabled`/`draftEnabled`/`toggleEnabled`; añadir `mealCount`/`applyEqualDistribution`; `save()` escribe `{ mealCount, meals }`
+- [x] `src/hooks/useMealStatus.ts` — reemplazar filtro `enabled[s.id]` por `MEAL_IDS.indexOf(s.id) < mealCount`
+- [x] `src/pages/History.tsx` — mismo cambio de filtro
+- [x] `src/pages/Stats.tsx` — mismo cambio de filtro
+- [x] `src/pages/Settings.tsx` — eliminar toggles individuales de tomas; mostrar lista read-only de slots activos + link a ScheduleSettings
+- [x] `src/pages/ScheduleSettings.tsx` — añadir picker de tomas (pills 1-4), filtrar slots a los primeros `mealCount`, actualizar llamada a `validateSchedule`
+
+**Ola B — Eliminar outOfSlot** → no aplica: la feature `phase/out-of-slot` nunca se hizo merge a `develop`; el código de `outOfSlot` no existe en esta rama.
+
+#### Verificar
+
+1. `docker compose up -d && npm run dev`
+2. Elegir **1** → una tarjeta en carrusel, feeding a cualquier hora → `given`
+3. Elegir **2** → dos tarjetas Mañana (03–15) y Tarde (15–03)
+4. Elegir **3** → tres tarjetas de Desayuno/Comida/Cena
+5. Bajar de 3→2 → tercera tarjeta desaparece del carrusel Y de ScheduleSettings
+6. Ajuste fino de nombre/hora tras preset → botón "Guardar" funciona normal
+7. Recargar → count persiste desde Firestore
+8. Settings → sección Comidas muestra lista read-only + link, sin toggles
+
+---
 
 ### F10 — Detalle y edición de tomas desde Historial · _2-3h_
 

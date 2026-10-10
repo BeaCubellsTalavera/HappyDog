@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStatsFeedings } from '../hooks/useStatsFeedings';
 import { useMealConfig } from '../hooks/useMealConfig';
-import { buildSlots } from '../lib/mealSlots';
+import { buildSlots, MEAL_IDS } from '../lib/mealSlots';
 import { Layout } from '../components/Layout';
 import { RadialHistogramChart } from '../components/RadialHistogramChart';
 import { EyeIcon } from '../components/icons/EyeIcon';
@@ -9,8 +9,8 @@ import { EyeIcon } from '../components/icons/EyeIcon';
 export default function Stats() {
   const { feedings, loading, loaded, reload } = useStatsFeedings();
   const meals = useMealConfig((s) => s.meals);
-  const enabled = useMealConfig((s) => s.enabled);
-  const activeSlots = buildSlots(meals).filter((s) => enabled[s.id]);
+  const mealCount = useMealConfig((s) => s.mealCount);
+  const activeSlots = buildSlots(meals).filter((s) => MEAL_IDS.indexOf(s.id) < mealCount);
   const [showOrphanBuckets, setShowOrphanBuckets] = useState(false);
 
   useEffect(() => {

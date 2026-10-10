@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { buildSlots, deriveSlotStatus } from '../lib/mealSlots';
+import { buildSlots, deriveSlotStatus, MEAL_IDS } from '../lib/mealSlots';
 import { logicalToday } from '../lib/logicalDay';
 import { useTodayFeedings } from './useFeedings';
 import { useMealConfig } from './useMealConfig';
@@ -8,7 +8,7 @@ import type { MealSlot, SlotStatus } from '../types';
 export function useMealStatus(): { slots: MealSlot[]; statuses: SlotStatus[] } {
   const feedings = useTodayFeedings((s) => s.feedings);
   const meals = useMealConfig((s) => s.meals);
-  const enabled = useMealConfig((s) => s.enabled);
+  const mealCount = useMealConfig((s) => s.mealCount);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -29,8 +29,8 @@ export function useMealStatus(): { slots: MealSlot[]; statuses: SlotStatus[] } {
   }, []);
 
   const slots = useMemo(
-    () => buildSlots(meals).filter((s) => enabled[s.id]),
-    [meals, enabled],
+    () => buildSlots(meals).filter((s) => MEAL_IDS.indexOf(s.id) < mealCount),
+    [meals, mealCount],
   );
   const today = logicalToday(now);
   const statuses = slots.map((slot) => deriveSlotStatus(slot, feedings, today, now));

@@ -1,5 +1,6 @@
 import type { Feeding, MealSlot, MealSlotId, SlotStatus } from '../types';
 import {
+  DAY_CUTOFF_HOUR,
   feedingInSlot,
   logicalDate,
   logicalHour,
@@ -43,6 +44,38 @@ export function buildSlots(meals: MealsMap): MealSlot[] {
 }
 
 export const MEAL_SLOTS: MealSlot[] = buildSlots(DEFAULT_MEALS);
+
+export type MealCount = 1 | 2 | 3 | 4;
+export const DEFAULT_MEAL_COUNT: MealCount = 2;
+
+const SLOT_DEFAULTS: Record<MealCount, MealFields[]> = {
+  1: [{ name: 'Todo el día', startHour: DAY_CUTOFF_HOUR, endHour: DAY_CUTOFF_HOUR }],
+  2: [
+    { name: 'Mañana', startHour: 3, endHour: 15 },
+    { name: 'Tarde', startHour: 15, endHour: 3 },
+  ],
+  3: [
+    { name: 'Desayuno', startHour: 3, endHour: 10 },
+    { name: 'Comida', startHour: 10, endHour: 18 },
+    { name: 'Cena', startHour: 18, endHour: 3 },
+  ],
+  4: [
+    { name: 'Desayuno', startHour: 3, endHour: 10 },
+    { name: 'Mediodía', startHour: 10, endHour: 13 },
+    { name: 'Comida', startHour: 13, endHour: 18 },
+    { name: 'Cena', startHour: 18, endHour: 3 },
+  ],
+};
+
+export function computeDefaultSlots(count: MealCount): MealsMap {
+  const defs = SLOT_DEFAULTS[count];
+  return {
+    morning:   count >= 1 ? defs[0] : { ...DEFAULT_MEALS.morning },
+    midday:    count >= 2 ? defs[1] : { ...DEFAULT_MEALS.midday },
+    afternoon: count >= 3 ? defs[2] : { ...DEFAULT_MEALS.afternoon },
+    night:     count >= 4 ? defs[3] : { ...DEFAULT_MEALS.night },
+  };
+}
 
 export function getActiveSlotIndex(slots: MealSlot[], now: Date): number {
   const logNow = logicalHour(now.getHours());

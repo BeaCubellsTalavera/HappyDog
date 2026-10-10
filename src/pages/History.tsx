@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { useHistory } from '../hooks/useHistory';
 import { useWeekFeedings } from '../hooks/useWeekFeedings';
 import { useMealConfig } from '../hooks/useMealConfig';
-import { buildSlots } from '../lib/mealSlots';
+import { buildSlots, MEAL_IDS } from '../lib/mealSlots';
 import { buildWeekGrid } from '../lib/weekGrid';
 import { logicalToday } from '../lib/logicalDay';
 import { Layout } from '../components/Layout';
@@ -19,8 +19,8 @@ export default function History() {
 
   const { feedings: weekFeedings, loading: weekLoading } = useWeekFeedings();
   const meals = useMealConfig((s) => s.meals);
-  const enabled = useMealConfig((s) => s.enabled);
-  const enabledSlots = buildSlots(meals).filter((s) => enabled[s.id]);
+  const mealCount = useMealConfig((s) => s.mealCount);
+  const enabledSlots = buildSlots(meals).filter((s) => MEAL_IDS.indexOf(s.id) < mealCount);
 
   const now = new Date();
   const todayStr = logicalToday(now);

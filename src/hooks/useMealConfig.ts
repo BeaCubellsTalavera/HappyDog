@@ -2,23 +2,18 @@ import { create } from 'zustand';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../lib/firebase';
-import { DEFAULT_MEALS, MEAL_IDS, type MealsMap, type MealFields } from '../lib/mealSlots';
+import {
+  DEFAULT_MEALS,
+  DEFAULT_MEAL_COUNT,
+  MEAL_IDS,
+  computeDefaultSlots,
+  type MealsMap,
+  type MealFields,
+  type MealCount,
+} from '../lib/mealSlots';
 import type { MealSlotId } from '../types';
 
 const SCHEDULE_DOC = doc(db, 'config', 'schedule');
-
-const DEFAULT_ENABLED: Record<MealSlotId, boolean> = {
-  morning: true,
-  midday: true,
-  afternoon: true,
-  night: true,
-};
-
-type EnabledMap = Record<MealSlotId, boolean>;
-
-function enabledDiffers(a: EnabledMap, b: EnabledMap): boolean {
-  return MEAL_IDS.some((k) => a[k] !== b[k]);
-}
 
 function mealsDiffer(a: MealsMap, b: MealsMap): boolean {
   return MEAL_IDS.some(
@@ -38,16 +33,10 @@ function cloneMeals(m: MealsMap): MealsMap {
   };
 }
 
-/**
- * Normaliza `endHour === 24` a `0` (misma medianoche, representación consistente
- * con el picker rotado alrededor del corte de día lógico). Migración lazy:
- * cuando el usuario guarda, el 0 sustituye al 24 en Firestore.
- */
 function normalizeEndHour(h: number): number {
   return h === 24 ? 0 : h;
 }
 
-/** Parsea el `meals` del snapshot rellenando con defaults los slots ausentes. */
 function parseMeals(raw: unknown): MealsMap {
   const src =
     raw && typeof raw === 'object'
@@ -69,20 +58,22 @@ function parseMeals(raw: unknown): MealsMap {
   return out;
 }
 
+function parseMealCount(raw: unknown): MealCount {
+  if (typeof raw === 'number' && raw >= 1 && raw <= 4) return raw as MealCount;
+  return DEFAULT_MEAL_COUNT;
+}
+
 interface MealConfigState {
-  /** Última versión guardada en Firestore. */
-  enabled: EnabledMap;
+  mealCount: MealCount;
   meals: MealsMap;
-  /** Draft local — sólo visible en este dispositivo hasta que se guarde. */
-  draftEnabled: EnabledMap;
   draftMeals: MealsMap;
   loading: boolean;
   isDirty: boolean;
 
-  toggleEnabled: (id: MealSlotId) => void;
   updateMeal: (id: MealSlotId, patch: Partial<MealFields>) => void;
   save: () => Promise<void>;
   discard: () => void;
+  applyEqualDistribution: (count: MealCount) => Promise<void>;
 }
 
 export const useMealConfig = create<MealConfigState>()((set, get) => {
@@ -92,12 +83,11 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
     if (user) {
       unsubFirestore = onSnapshot(SCHEDULE_DOC, (snap) => {
         const data = snap.data();
-        const newEnabled = (data?.enabled as EnabledMap) ?? DEFAULT_ENABLED;
+        const newMealCount = parseMealCount(data?.mealCount);
         const newMeals = parseMeals(data?.meals);
         set((s) => ({
-          enabled: newEnabled,
+          mealCount: newMealCount,
           meals: newMeals,
-          draftEnabled: s.isDirty ? s.draftEnabled : newEnabled,
           draftMeals: s.isDirty ? s.draftMeals : cloneMeals(newMeals),
           loading: false,
         }));
@@ -106,9 +96,8 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
       unsubFirestore?.();
       unsubFirestore = null;
       set({
-        enabled: DEFAULT_ENABLED,
+        mealCount: DEFAULT_MEAL_COUNT,
         meals: cloneMeals(DEFAULT_MEALS),
-        draftEnabled: DEFAULT_ENABLED,
         draftMeals: cloneMeals(DEFAULT_MEALS),
         loading: true,
         isDirty: false,
@@ -116,48 +105,51 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
     }
   });
 
-  function recomputeDirty(nextEnabled: EnabledMap, nextMeals: MealsMap): boolean {
-    const { enabled, meals } = get();
-    return enabledDiffers(nextEnabled, enabled) || mealsDiffer(nextMeals, meals);
+  function recomputeDirty(nextMeals: MealsMap): boolean {
+    const { meals } = get();
+    return mealsDiffer(nextMeals, meals);
   }
 
   return {
-    enabled: DEFAULT_ENABLED,
+    mealCount: DEFAULT_MEAL_COUNT,
     meals: cloneMeals(DEFAULT_MEALS),
-    draftEnabled: DEFAULT_ENABLED,
     draftMeals: cloneMeals(DEFAULT_MEALS),
     loading: true,
     isDirty: false,
 
-    toggleEnabled: (id) =>
-      set((s) => {
-        const nextEnabled = { ...s.draftEnabled, [id]: !s.draftEnabled[id] };
-        return { draftEnabled: nextEnabled, isDirty: recomputeDirty(nextEnabled, s.draftMeals) };
-      }),
-
     updateMeal: (id, patch) =>
       set((s) => {
         const nextMeals = { ...s.draftMeals, [id]: { ...s.draftMeals[id], ...patch } };
-        return { draftMeals: nextMeals, isDirty: recomputeDirty(s.draftEnabled, nextMeals) };
+        return { draftMeals: nextMeals, isDirty: recomputeDirty(nextMeals) };
       }),
 
     save: async () => {
-      const { draftEnabled, draftMeals } = get();
+      const { mealCount, draftMeals } = get();
       await setDoc(
         SCHEDULE_DOC,
-        { enabled: draftEnabled, meals: draftMeals },
+        { mealCount, meals: draftMeals },
         { merge: true },
       );
       set({
-        enabled: draftEnabled,
         meals: cloneMeals(draftMeals),
         isDirty: false,
       });
     },
 
     discard: () => {
-      const { enabled, meals } = get();
-      set({ draftEnabled: { ...enabled }, draftMeals: cloneMeals(meals), isDirty: false });
+      const { meals } = get();
+      set({ draftMeals: cloneMeals(meals), isDirty: false });
+    },
+
+    applyEqualDistribution: async (count) => {
+      const newMeals = computeDefaultSlots(count);
+      await setDoc(SCHEDULE_DOC, { mealCount: count, meals: newMeals }, { merge: true });
+      set({
+        mealCount: count,
+        meals: cloneMeals(newMeals),
+        draftMeals: cloneMeals(newMeals),
+        isDirty: false,
+      });
     },
   };
 });

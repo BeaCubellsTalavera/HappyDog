@@ -1,15 +1,12 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useMealConfig } from '../hooks/useMealConfig';
-import { BG_BY_ID, MEAL_IDS } from '../lib/mealSlots';
+import { BG_BY_ID, MEAL_IDS, type MealCount } from '../lib/mealSlots';
 import { DAY_CUTOFF_HOUR, slotLogicalBounds } from '../lib/logicalDay';
 import { validateSchedule } from '../lib/scheduleValidation';
 import type { MealSlotId } from '../types';
 
-// Picker rotado alrededor del corte de día lógico:
-// Start ofrece [cutoff..23, 0..cutoff-1] (mínimo del día lógico primero).
-// End ofrece   [cutoff+1..23, 0..cutoff]  (máximo del día lógico último).
 const START_OPTIONS = [
   ...Array.from({ length: 24 - DAY_CUTOFF_HOUR }, (_, i) => i + DAY_CUTOFF_HOUR),
   ...Array.from({ length: DAY_CUTOFF_HOUR }, (_, i) => i),
@@ -28,26 +25,41 @@ function formatHour(h: number): string {
 }
 
 export default function ScheduleSettings() {
-  const draftEnabled = useMealConfig((s) => s.draftEnabled);
+  const mealCount = useMealConfig((s) => s.mealCount);
   const draftMeals = useMealConfig((s) => s.draftMeals);
   const isDirty = useMealConfig((s) => s.isDirty);
+  const loading = useMealConfig((s) => s.loading);
   const updateMeal = useMealConfig((s) => s.updateMeal);
   const save = useMealConfig((s) => s.save);
   const discard = useMealConfig((s) => s.discard);
+  const applyEqualDistribution = useMealConfig((s) => s.applyEqualDistribution);
 
-  // Descarta cambios pendientes al salir de la subpágina.
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => () => { discard(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validation = useMemo(
-    () => validateSchedule(draftEnabled, draftMeals),
-    [draftEnabled, draftMeals],
+    () => validateSchedule(mealCount, draftMeals),
+    [mealCount, draftMeals],
   );
 
   const sortedIds = useMemo(() => {
-    return [...MEAL_IDS].sort(
-      (a, b) => slotLogicalBounds(draftMeals[a]).logStart - slotLogicalBounds(draftMeals[b]).logStart,
-    );
-  }, [draftMeals]);
+    return [...MEAL_IDS]
+      .filter((id) => MEAL_IDS.indexOf(id) < mealCount)
+      .sort(
+        (a, b) => slotLogicalBounds(draftMeals[a]).logStart - slotLogicalBounds(draftMeals[b]).logStart,
+      );
+  }, [mealCount, draftMeals]);
+
+  async function handleCountSelect(count: MealCount) {
+    if (saving || loading) return;
+    setSaving(true);
+    try {
+      await applyEqualDistribution(count);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <Layout>
@@ -70,11 +82,37 @@ export default function ScheduleSettings() {
             Ajusta el nombre y la ventana horaria de cada toma. Los cambios afectan también a cómo se muestran las tomas pasadas en el Historial.
           </p>
 
+          {/* Picker de número de tomas */}
+          <div className="bg-white rounded-2xl shadow-sm px-4 py-4 flex flex-col gap-3">
+            <span className="text-sm font-medium text-gray-700">Tomas al día</span>
+            <div className="flex gap-2">
+              {([1, 2, 3, 4] as MealCount[]).map((n) => (
+                <button
+                  key={n}
+                  disabled={saving || loading}
+                  onClick={() => handleCountSelect(n)}
+                  aria-pressed={mealCount === n}
+                  className={[
+                    'flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-colors',
+                    'disabled:opacity-40 disabled:cursor-not-allowed',
+                    mealCount === n
+                      ? 'bg-orange-500 text-white shadow-sm'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100',
+                  ].join(' ')}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400">
+              Redistribuye el día en ventanas predefinidas y guarda automáticamente. Puedes ajustar los horarios después.
+            </p>
+          </div>
+
           {sortedIds.map((id) => (
             <SlotEditor
               key={id}
               id={id}
-              enabled={draftEnabled[id]}
               name={draftMeals[id].name}
               startHour={draftMeals[id].startHour}
               endHour={draftMeals[id].endHour}
@@ -116,7 +154,6 @@ export default function ScheduleSettings() {
 
 interface SlotEditorProps {
   id: MealSlotId;
-  enabled: boolean;
   name: string;
   startHour: number;
   endHour: number;
@@ -124,7 +161,7 @@ interface SlotEditorProps {
   onChange: (patch: { name?: string; startHour?: number; endHour?: number }) => void;
 }
 
-function SlotEditor({ id, enabled, name, startHour, endHour, errors, onChange }: SlotEditorProps) {
+function SlotEditor({ id, name, startHour, endHour, errors, onChange }: SlotEditorProps) {
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
       <div className="relative h-16">
@@ -135,15 +172,10 @@ function SlotEditor({ id, enabled, name, startHour, endHour, errors, onChange }:
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
-        <div className="absolute inset-0 flex items-center justify-between px-4">
+        <div className="absolute inset-0 flex items-center px-4">
           <span className="text-white font-bold tracking-wide drop-shadow">
             {name.trim() ? name.toUpperCase() : '—'}
           </span>
-          {!enabled && (
-            <span className="text-xs font-medium bg-white/80 text-gray-700 px-2 py-0.5 rounded-full">
-              Desactivada
-            </span>
-          )}
         </div>
       </div>
 
