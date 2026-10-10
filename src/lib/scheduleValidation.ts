@@ -26,12 +26,9 @@ function overlaps(
 /** Valida el draft de las primeras `mealCount` tomas. */
 export function validateSchedule(mealCount: MealCount, meals: MealsMap): ValidationResult {
   const activeIds = MEAL_IDS.slice(0, mealCount);
-  const errorsBySlot: Record<MealSlotId, string[]> = {
-    morning: [],
-    midday: [],
-    afternoon: [],
-    night: [],
-  };
+  const errorsBySlot = Object.fromEntries(
+    MEAL_IDS.map(id => [id, [] as string[]])
+  ) as Record<MealSlotId, string[]>;
   const globalErrors: string[] = [];
 
   for (const id of activeIds) {

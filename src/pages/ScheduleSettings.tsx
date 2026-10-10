@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useMealConfig } from '../hooks/useMealConfig';
-import { BG_BY_ID, MEAL_IDS, type MealCount } from '../lib/mealSlots';
+import { getBgImages, getBgGradients, MEAL_IDS, type MealCount } from '../lib/mealSlots';
 import { DAY_CUTOFF_HOUR, slotLogicalBounds } from '../lib/logicalDay';
 import { validateSchedule } from '../lib/scheduleValidation';
 import type { MealSlotId } from '../types';
@@ -45,9 +45,18 @@ export default function ScheduleSettings() {
     return [...MEAL_IDS]
       .filter((id) => MEAL_IDS.indexOf(id) < draftMealCount)
       .sort(
-        (a, b) => slotLogicalBounds(draftMeals[a]).logStart - slotLogicalBounds(draftMeals[b]).logStart,
+        (a, b) => slotLogicalBounds(draftMeals[a]!).logStart - slotLogicalBounds(draftMeals[b]!).logStart,
       );
   }, [draftMealCount, draftMeals]);
+
+  const slotBgs = useMemo(
+    () => getBgImages(sortedIds.map(id => draftMeals[id]!)),
+    [sortedIds, draftMeals],
+  );
+  const slotGradients = useMemo(
+    () => getBgGradients(sortedIds.map(id => draftMeals[id]!)),
+    [sortedIds, draftMeals],
+  );
 
   function handleCountSelect(count: MealCount) {
     if (loading) return;
@@ -102,13 +111,15 @@ export default function ScheduleSettings() {
             </p>
           </div>
 
-          {sortedIds.map((id) => (
+          {sortedIds.map((id, i) => (
             <SlotEditor
               key={id}
               id={id}
-              name={draftMeals[id].name}
-              startHour={draftMeals[id].startHour}
-              endHour={draftMeals[id].endHour}
+              bg={slotBgs[i]}
+              gradient={slotGradients[i]}
+              name={draftMeals[id]!.name}
+              startHour={draftMeals[id]!.startHour}
+              endHour={draftMeals[id]!.endHour}
               errors={validation.errorsBySlot[id]}
               onChange={(patch) => updateMeal(id, patch)}
             />
@@ -147,6 +158,8 @@ export default function ScheduleSettings() {
 
 interface SlotEditorProps {
   id: MealSlotId;
+  bg: string;
+  gradient: string;
   name: string;
   startHour: number;
   endHour: number;
@@ -154,16 +167,17 @@ interface SlotEditorProps {
   onChange: (patch: { name?: string; startHour?: number; endHour?: number }) => void;
 }
 
-function SlotEditor({ id, name, startHour, endHour, errors, onChange }: SlotEditorProps) {
+function SlotEditor({ id: _id, bg, gradient, name, startHour, endHour, errors, onChange }: SlotEditorProps) {
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
       <div className="relative h-16">
         <img
-          src={BG_BY_ID[id]}
+          src={bg}
           alt=""
           className="absolute inset-0 w-full h-full object-cover opacity-70"
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
         />
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} [z-index:-1]`} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
         <div className="absolute inset-0 flex items-center px-4">
           <span className="text-white font-bold tracking-wide drop-shadow">
