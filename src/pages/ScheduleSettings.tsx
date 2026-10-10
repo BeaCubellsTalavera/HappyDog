@@ -27,6 +27,7 @@ function formatHour(h: number): string {
 export default function ScheduleSettings() {
   const draftMealCount = useMealConfig((s) => s.draftMealCount);
   const draftMeals = useMealConfig((s) => s.draftMeals);
+  const meals = useMealConfig((s) => s.meals);
   const isDirty = useMealConfig((s) => s.isDirty);
   const loading = useMealConfig((s) => s.loading);
   const updateMeal = useMealConfig((s) => s.updateMeal);
@@ -41,13 +42,16 @@ export default function ScheduleSettings() {
     [draftMealCount, draftMeals],
   );
 
+  // Orden anclado a `meals` (committed): no se reordena mientras el usuario edita campos.
+  // Solo cambia al guardar o al seleccionar un número de tomas diferente.
   const sortedIds = useMemo(() => {
-    return [...MEAL_IDS]
-      .filter((id) => MEAL_IDS.indexOf(id) < draftMealCount)
-      .sort(
-        (a, b) => slotLogicalBounds(draftMeals[a]!).logStart - slotLogicalBounds(draftMeals[b]!).logStart,
-      );
-  }, [draftMealCount, draftMeals]);
+    return MEAL_IDS.slice(0, draftMealCount).sort(
+      (a, b) =>
+        slotLogicalBounds(meals[a] ?? draftMeals[a]!).logStart -
+        slotLogicalBounds(meals[b] ?? draftMeals[b]!).logStart,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftMealCount, meals]);
 
   const slotBgs = useMemo(
     () => getBgImages(sortedIds.map(id => draftMeals[id]!)),
