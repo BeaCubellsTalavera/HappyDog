@@ -24,6 +24,15 @@ function mealsDiffer(a: MealsMap, b: MealsMap): boolean {
   );
 }
 
+function computeIsDirty(state: {
+  draftMealCount: MealCount;
+  mealCount: MealCount;
+  draftMeals: MealsMap;
+  meals: MealsMap;
+}): boolean {
+  return state.draftMealCount !== state.mealCount || mealsDiffer(state.draftMeals, state.meals);
+}
+
 function cloneMeals(m: MealsMap): MealsMap {
   return {
     morning:   { ...m.morning },
@@ -65,6 +74,7 @@ function parseMealCount(raw: unknown): MealCount {
 
 interface MealConfigState {
   mealCount: MealCount;
+  draftMealCount: MealCount;
   meals: MealsMap;
   draftMeals: MealsMap;
   loading: boolean;
@@ -73,7 +83,7 @@ interface MealConfigState {
   updateMeal: (id: MealSlotId, patch: Partial<MealFields>) => void;
   save: () => Promise<void>;
   discard: () => void;
-  applyEqualDistribution: (count: MealCount) => Promise<void>;
+  applyEqualDistribution: (count: MealCount) => void;
 }
 
 export const useMealConfig = create<MealConfigState>()((set, get) => {
@@ -88,6 +98,7 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
         set((s) => ({
           mealCount: newMealCount,
           meals: newMeals,
+          draftMealCount: s.isDirty ? s.draftMealCount : newMealCount,
           draftMeals: s.isDirty ? s.draftMeals : cloneMeals(newMeals),
           loading: false,
         }));
@@ -106,12 +117,13 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
   });
 
   function recomputeDirty(nextMeals: MealsMap): boolean {
-    const { meals } = get();
-    return mealsDiffer(nextMeals, meals);
+    const { meals, mealCount, draftMealCount } = get();
+    return draftMealCount !== mealCount || mealsDiffer(nextMeals, meals);
   }
 
   return {
     mealCount: DEFAULT_MEAL_COUNT,
+    draftMealCount: DEFAULT_MEAL_COUNT,
     meals: cloneMeals(DEFAULT_MEALS),
     draftMeals: cloneMeals(DEFAULT_MEALS),
     loading: true,
@@ -124,33 +136,30 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
       }),
 
     save: async () => {
-      const { mealCount, draftMeals } = get();
+      const { draftMealCount, draftMeals } = get();
       const activeMeals = Object.fromEntries(
-        MEAL_IDS.slice(0, mealCount).map((id) => [id, draftMeals[id]]),
+        MEAL_IDS.slice(0, draftMealCount).map((id) => [id, draftMeals[id]]),
       );
-      await setDoc(SCHEDULE_DOC, { mealCount, meals: activeMeals });
+      await setDoc(SCHEDULE_DOC, { mealCount: draftMealCount, meals: activeMeals });
       set({
+        mealCount: draftMealCount,
         meals: cloneMeals(draftMeals),
         isDirty: false,
       });
     },
 
     discard: () => {
-      const { meals } = get();
-      set({ draftMeals: cloneMeals(meals), isDirty: false });
+      const { mealCount, meals } = get();
+      set({ draftMealCount: mealCount, draftMeals: cloneMeals(meals), isDirty: false });
     },
 
-    applyEqualDistribution: async (count) => {
+    applyEqualDistribution: (count) => {
       const newMeals = computeDefaultSlots(count);
-      const activeMeals = Object.fromEntries(
-        MEAL_IDS.slice(0, count).map((id) => [id, newMeals[id]]),
-      );
-      await setDoc(SCHEDULE_DOC, { mealCount: count, meals: activeMeals });
+      const { mealCount, meals } = get();
       set({
-        mealCount: count,
-        meals: cloneMeals(newMeals),
+        draftMealCount: count,
         draftMeals: cloneMeals(newMeals),
-        isDirty: false,
+        isDirty: computeIsDirty({ draftMealCount: count, mealCount, draftMeals: newMeals, meals }),
       });
     },
   };

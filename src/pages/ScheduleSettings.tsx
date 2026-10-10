@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useMealConfig } from '../hooks/useMealConfig';
@@ -25,7 +25,7 @@ function formatHour(h: number): string {
 }
 
 export default function ScheduleSettings() {
-  const mealCount = useMealConfig((s) => s.mealCount);
+  const draftMealCount = useMealConfig((s) => s.draftMealCount);
   const draftMeals = useMealConfig((s) => s.draftMeals);
   const isDirty = useMealConfig((s) => s.isDirty);
   const loading = useMealConfig((s) => s.loading);
@@ -34,31 +34,24 @@ export default function ScheduleSettings() {
   const discard = useMealConfig((s) => s.discard);
   const applyEqualDistribution = useMealConfig((s) => s.applyEqualDistribution);
 
-  const [saving, setSaving] = useState(false);
-
   useEffect(() => () => { discard(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validation = useMemo(
-    () => validateSchedule(mealCount, draftMeals),
-    [mealCount, draftMeals],
+    () => validateSchedule(draftMealCount, draftMeals),
+    [draftMealCount, draftMeals],
   );
 
   const sortedIds = useMemo(() => {
     return [...MEAL_IDS]
-      .filter((id) => MEAL_IDS.indexOf(id) < mealCount)
+      .filter((id) => MEAL_IDS.indexOf(id) < draftMealCount)
       .sort(
         (a, b) => slotLogicalBounds(draftMeals[a]).logStart - slotLogicalBounds(draftMeals[b]).logStart,
       );
-  }, [mealCount, draftMeals]);
+  }, [draftMealCount, draftMeals]);
 
-  async function handleCountSelect(count: MealCount) {
-    if (saving || loading) return;
-    setSaving(true);
-    try {
-      await applyEqualDistribution(count);
-    } finally {
-      setSaving(false);
-    }
+  function handleCountSelect(count: MealCount) {
+    if (loading) return;
+    applyEqualDistribution(count);
   }
 
   return (
@@ -89,13 +82,13 @@ export default function ScheduleSettings() {
               {([1, 2, 3, 4] as MealCount[]).map((n) => (
                 <button
                   key={n}
-                  disabled={saving || loading}
+                  disabled={loading}
                   onClick={() => handleCountSelect(n)}
-                  aria-pressed={mealCount === n}
+                  aria-pressed={draftMealCount === n}
                   className={[
                     'flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-colors',
                     'disabled:opacity-40 disabled:cursor-not-allowed',
-                    mealCount === n
+                    draftMealCount === n
                       ? 'bg-orange-500 text-white shadow-sm'
                       : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100',
                   ].join(' ')}
@@ -105,7 +98,7 @@ export default function ScheduleSettings() {
               ))}
             </div>
             <p className="text-xs text-gray-400">
-              Redistribuye el día en ventanas predefinidas y guarda automáticamente. Puedes ajustar los horarios después.
+              Redistribuye el día en ventanas predefinidas. Ajusta los horarios si quieres y pulsa Guardar.
             </p>
           </div>
 
