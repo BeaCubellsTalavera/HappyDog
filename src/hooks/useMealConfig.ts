@@ -125,11 +125,10 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
 
     save: async () => {
       const { mealCount, draftMeals } = get();
-      await setDoc(
-        SCHEDULE_DOC,
-        { mealCount, meals: draftMeals },
-        { merge: true },
+      const activeMeals = Object.fromEntries(
+        MEAL_IDS.slice(0, mealCount).map((id) => [id, draftMeals[id]]),
       );
+      await setDoc(SCHEDULE_DOC, { mealCount, meals: activeMeals });
       set({
         meals: cloneMeals(draftMeals),
         isDirty: false,
@@ -143,7 +142,10 @@ export const useMealConfig = create<MealConfigState>()((set, get) => {
 
     applyEqualDistribution: async (count) => {
       const newMeals = computeDefaultSlots(count);
-      await setDoc(SCHEDULE_DOC, { mealCount: count, meals: newMeals }, { merge: true });
+      const activeMeals = Object.fromEntries(
+        MEAL_IDS.slice(0, count).map((id) => [id, newMeals[id]]),
+      );
+      await setDoc(SCHEDULE_DOC, { mealCount: count, meals: activeMeals });
       set({
         mealCount: count,
         meals: cloneMeals(newMeals),
